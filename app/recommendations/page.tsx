@@ -171,6 +171,7 @@ export default function RecommendationsPage() {
   }
 
   // 중분류별로 그룹화하고 각 그룹 내에서 rank 순서로 정렬
+  // 상품명이 동일한 경우 판매가가 큰 것만 표시
   const groupedRecommendedProducts = useMemo(() => {
     const grouped: GroupedProducts = {}
     
@@ -182,9 +183,30 @@ export default function RecommendationsPage() {
       grouped[category].push(product)
     })
 
-    // 각 카테고리 내에서 rank 순서로 정렬
+    // 각 카테고리 내에서 상품명별로 필터링 및 정렬
     Object.keys(grouped).forEach((category) => {
-      grouped[category].sort((a, b) => {
+      const products = grouped[category]
+      
+      // 상품명별로 그룹화하고 판매가가 큰 것만 선택
+      const productMap = new Map<string, Product>()
+      products.forEach((product) => {
+        const itemName = product.item_nm
+        const existingProduct = productMap.get(itemName)
+        
+        if (!existingProduct) {
+          productMap.set(itemName, product)
+        } else {
+          // 기존 상품과 비교하여 판매가가 큰 것 선택
+          const currentPrice = product.sale_price ?? 0
+          const existingPrice = existingProduct.sale_price ?? 0
+          if (currentPrice > existingPrice) {
+            productMap.set(itemName, product)
+          }
+        }
+      })
+      
+      // 필터링된 상품들을 배열로 변환하고 rank 순서로 정렬
+      grouped[category] = Array.from(productMap.values()).sort((a, b) => {
         const rankA = a.rank ?? Infinity
         const rankB = b.rank ?? Infinity
         return rankA - rankB
@@ -205,9 +227,30 @@ export default function RecommendationsPage() {
       grouped[category].push(product)
     })
 
-    // 각 카테고리 내에서 rank 순서로 정렬
+    // 각 카테고리 내에서 상품명별로 필터링 및 정렬
     Object.keys(grouped).forEach((category) => {
-      grouped[category].sort((a, b) => {
+      const products = grouped[category]
+      
+      // 상품명별로 그룹화하고 판매가가 큰 것만 선택
+      const productMap = new Map<string, Product>()
+      products.forEach((product) => {
+        const itemName = product.item_nm
+        const existingProduct = productMap.get(itemName)
+        
+        if (!existingProduct) {
+          productMap.set(itemName, product)
+        } else {
+          // 기존 상품과 비교하여 판매가가 큰 것 선택
+          const currentPrice = product.sale_price ?? 0
+          const existingPrice = existingProduct.sale_price ?? 0
+          if (currentPrice > existingPrice) {
+            productMap.set(itemName, product)
+          }
+        }
+      })
+      
+      // 필터링된 상품들을 배열로 변환하고 rank 순서로 정렬
+      grouped[category] = Array.from(productMap.values()).sort((a, b) => {
         const rankA = a.rank ?? Infinity
         const rankB = b.rank ?? Infinity
         return rankA - rankB
@@ -254,9 +297,30 @@ export default function RecommendationsPage() {
       }
     })
 
-    // 각 카테고리 내에서 rank 순서로 정렬
+    // 각 카테고리 내에서 상품명별로 필터링 및 정렬
     Object.keys(filtered).forEach((category) => {
-      filtered[category].sort((a, b) => {
+      const products = filtered[category]
+      
+      // 상품명별로 그룹화하고 판매가가 큰 것만 선택
+      const productMap = new Map<string, Product>()
+      products.forEach((product) => {
+        const itemName = product.item_nm
+        const existingProduct = productMap.get(itemName)
+        
+        if (!existingProduct) {
+          productMap.set(itemName, product)
+        } else {
+          // 기존 상품과 비교하여 판매가가 큰 것 선택
+          const currentPrice = product.sale_price ?? 0
+          const existingPrice = existingProduct.sale_price ?? 0
+          if (currentPrice > existingPrice) {
+            productMap.set(itemName, product)
+          }
+        }
+      })
+      
+      // 필터링된 상품들을 배열로 변환하고 rank 순서로 정렬
+      filtered[category] = Array.from(productMap.values()).sort((a, b) => {
         const rankA = a.rank ?? Infinity
         const rankB = b.rank ?? Infinity
         return rankA - rankB
