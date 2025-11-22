@@ -28,7 +28,7 @@ interface GroupedProducts {
 export default function RecommendationsPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const storeCode = searchParams.get('storeCode') || ''
+  const urlStoreCode = searchParams.get('storeCode') || ''
   
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([])
   const [excludedProducts, setExcludedProducts] = useState<Product[]>([])
@@ -41,15 +41,27 @@ export default function RecommendationsPage() {
   const [selectedLargeCategory, setSelectedLargeCategory] = useState<string | null>(null)
 
   useEffect(() => {
+    // URL에서 storeCode 가져오기, 없으면 sessionStorage에서 가져오기
+    let storeCode = urlStoreCode
+    if (!storeCode && typeof window !== 'undefined') {
+      storeCode = sessionStorage.getItem('storeCode') || ''
+    }
+
     if (!storeCode) {
       router.push('/')
+      return
+    }
+
+    // URL에 storeCode가 없으면 sessionStorage에서 가져온 값으로 URL 업데이트
+    if (!urlStoreCode && storeCode) {
+      router.replace(`/recommendations?storeCode=${encodeURIComponent(storeCode)}`)
       return
     }
 
     fetchStoreData(storeCode)
     // 탭 변경 시 visibleItems 초기화
     setVisibleItems(new Set())
-  }, [storeCode, router, activeTab])
+  }, [urlStoreCode, router, activeTab])
 
   const fetchStoreData = async (code: string) => {
     setLoading(true)
@@ -427,7 +439,7 @@ export default function RecommendationsPage() {
             </div>
             <p className="text-xs md:text-sm text-gray-600 mb-3 md:mb-0">
               매장: <span className="text-green-500">{storeName}</span> | 
-              매장 코드: <span className="text-green-500">{storeCode}</span>
+              매장 코드: <span className="text-green-500">{urlStoreCode || (typeof window !== 'undefined' ? sessionStorage.getItem('storeCode') || '' : '')}</span>
             </p>
           </div>
 

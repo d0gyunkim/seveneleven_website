@@ -1,16 +1,43 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [storeCode, setStoreCode] = useState<string | null>(null)
+
+  useEffect(() => {
+    // URL에서 storeCode 가져오기
+    const code = searchParams.get('storeCode')
+    if (code) {
+      // URL에 storeCode가 있으면 sessionStorage에 저장
+      sessionStorage.setItem('storeCode', code)
+      setStoreCode(code)
+    } else {
+      // URL에 없으면 sessionStorage에서 가져오기
+      const storedCode = sessionStorage.getItem('storeCode')
+      if (storedCode) {
+        setStoreCode(storedCode)
+      }
+    }
+  }, [searchParams])
+
+  const getNavHref = (href: string) => {
+    // storeCode가 있고, 홈이 아닌 페이지라면 storeCode 파라미터 추가
+    if (storeCode && href !== '/') {
+      return `${href}?storeCode=${encodeURIComponent(storeCode)}`
+    }
+    return href
+  }
 
   const navItems = [
     { href: '/', label: '홈' },
     { href: '/recommendations', label: '발주 추천' },
+    { href: '/similar-stores', label: '유사매장 정보' },
   ]
 
   return (
@@ -54,10 +81,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <nav className="space-y-2">
             {navItems.map((item) => {
               const isActive = pathname === item.href
+              const href = getNavHref(item.href)
               return (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={href}
                   onClick={() => setIsMenuOpen(false)}
                   className={`block px-4 py-3 rounded-lg transition-colors text-base ${
                     isActive

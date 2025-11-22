@@ -11,6 +11,8 @@ export default function LoginPage() {
     e.preventDefault()
     const code = storeCode.trim()
     if (code && code.length === 5 && /^\d+$/.test(code)) {
+      // sessionStorage에 storeCode 저장
+      sessionStorage.setItem('storeCode', code)
       router.push(`/recommendations?storeCode=${encodeURIComponent(code)}`)
     }
   }
