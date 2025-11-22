@@ -263,20 +263,28 @@ export default function RecommendationsPage() {
 
   const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
     entries.forEach((entry) => {
+      const itemId = entry.target.getAttribute('data-item-id')
+      if (!itemId) return
+
       if (entry.isIntersecting) {
-        const itemId = entry.target.getAttribute('data-item-id')
-        if (itemId) {
-          setVisibleItems((prev) => new Set(prev).add(itemId))
-        }
+        // 뷰포트에 들어오면 표시
+        setVisibleItems((prev) => new Set(prev).add(itemId))
+      } else {
+        // 뷰포트에서 벗어나면 제거 (메모리 절약)
+        setVisibleItems((prev) => {
+          const next = new Set(prev)
+          next.delete(itemId)
+          return next
+        })
       }
     })
   }, [])
 
   useEffect(() => {
-    // Observer 초기화
+    // Observer 초기화 - 뷰포트 근처 100px 전에만 미리 로드
     observerRef.current = new IntersectionObserver(handleIntersection, {
-      rootMargin: '50px', // 뷰포트 밖 50px 전에 미리 로드
-      threshold: 0.1,
+      rootMargin: '100px', // 뷰포트 밖 100px 전에 미리 로드
+      threshold: 0.01, // 1%만 보여도 로드
     })
 
     // 모든 아이템 요소 관찰
@@ -295,7 +303,9 @@ export default function RecommendationsPage() {
   const setItemRef = useCallback((itemId: string, element: HTMLDivElement | null) => {
     if (element) {
       itemRefs.current.set(itemId, element)
-      observerRef.current?.observe(element)
+      if (observerRef.current) {
+        observerRef.current.observe(element)
+      }
     } else {
       itemRefs.current.delete(itemId)
     }
@@ -540,9 +550,11 @@ export default function RecommendationsPage() {
                               </div>
                             </>
                           ) : (
-                            // 로딩 플레이스홀더
-                            <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                              <div className="animate-pulse text-gray-400 text-sm">로딩 중...</div>
+                            // 경량 플레이스홀더 - 스크롤 전까지 표시
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50" style={{ minHeight: '280px' }}>
+                              <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg mb-2 animate-pulse"></div>
+                              <div className="w-3/4 h-3 bg-gray-200 rounded mb-1 animate-pulse"></div>
+                              <div className="w-1/2 h-3 bg-gray-200 rounded animate-pulse"></div>
                             </div>
                           )}
                         </div>
