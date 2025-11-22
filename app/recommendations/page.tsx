@@ -694,43 +694,53 @@ export default function RecommendationsPage() {
                                     const beforeTherefore = selectedProduct.rec_reason.split('따라서')[0].trim()
                                     const parts: string[] = []
                                     
+                                    // 공백 정규화 (연속된 공백을 하나로, 단어 사이 공백 보장)
+                                    let normalized = beforeTherefore.replace(/\s+/g, ' ')
+                                    // "발생했고한달" 같은 경우를 "발생했고 한달"로 변환
+                                    normalized = normalized.replace(/([가-힣])([한일])/g, '$1 $2')
+                                    
                                     // 정규표현식으로 텍스트 구조 파싱
-                                    // 1. 첫 번째 줄: "점주님, 추천드린 ... 은(는)"
-                                    const firstLineMatch = beforeTherefore.match(/^점주님[^점]*?은\(는\)\s*/)
+                                    // 1. 첫 번째 줄: "사장님/점주님, 추천드린 ... 은(는)"
+                                    const firstLineMatch = normalized.match(/^(사장님|점주님)[^은]*?은\(는\)\s*/)
                                     if (firstLineMatch) {
                                       parts.push(firstLineMatch[0].trim())
-                                      let remaining = beforeTherefore.substring(firstLineMatch[0].length).trim()
+                                      let remaining = normalized.substring(firstLineMatch[0].length).trim()
                                       
-                                      // 2. 두 번째 줄: "점주님 매장의 유사매장들에서 ... 발생하고 있으며"
+                                      // 2. 두 번째 줄: "점주님 매장의 유사매장들에서 ... 발생했고"
                                       const secondLineMatch = remaining.match(/^점주님 매장의 유사매장들?에서.*?발생했고\s*/)
                                       if (secondLineMatch) {
                                         parts.push(secondLineMatch[0].trim())
                                         remaining = remaining.substring(secondLineMatch[0].length).trim()
                                       }
                                       
-                                      // 3. 세 번째 줄: "한달 동안 ... 판매되고 있고"
+                                      // 3. 세 번째 줄: "한달 동안 ... 판매됐고"
                                       const thirdLineMatch = remaining.match(/^한달 동안.*?판매됐고\s*/)
                                       if (thirdLineMatch) {
                                         parts.push(thirdLineMatch[0].trim())
                                         remaining = remaining.substring(thirdLineMatch[0].length).trim()
                                       }
                                       
-                                      // 4. 네 번째 줄: "한달 동안 해당 상품은 ... 일으켰습니다."
+                                      // 4. 네 번째 줄: "한달 동안 해당 상품은 ... 일으켰습니다." 또는 나머지
                                       if (remaining.trim()) {
                                         // "일으켰습니다"로 끝나는 부분 찾기
                                         const fourthLineMatch = remaining.match(/^한달 동안.*?일으켰습니다\.?\s*/)
                                         if (fourthLineMatch) {
                                           parts.push(fourthLineMatch[0].trim())
                                         } else {
-                                          // "일으켰습니다" 패턴이 없으면 나머지 전체를 네 번째 줄로
-                                          parts.push(remaining.trim())
+                                          // 숫자와 "원"이 포함된 매출 정보 찾기
+                                          const salesMatch = remaining.match(/.*?\d+원.*?일으켰습니다\.?\s*/)
+                                          if (salesMatch) {
+                                            parts.push(salesMatch[0].trim())
+                                          } else {
+                                            // 나머지 전체를 네 번째 줄로
+                                            parts.push(remaining.trim())
+                                          }
                                         }
                                       }
                                     } else {
-                                      // 첫 번째 패턴이 없으면 "이며", "이고" 등으로 나누기
-                                      const fallbackParts = beforeTherefore
-                                        .replace(/\s+/g, ' ')
-                                        .split(/(?<=이며|이고|그리고|있으며|있고|발생하고|판매되고|일으켰습니다\.)/)
+                                      // 첫 번째 패턴이 없으면 "발생했고", "판매됐고", "일으켰습니다" 등으로 나누기
+                                      const fallbackParts = normalized
+                                        .split(/(?<=발생했고|판매됐고|일으켰습니다\.)/)
                                         .map(s => s.trim())
                                         .filter(s => s.length > 0)
                                       parts.push(...fallbackParts)
