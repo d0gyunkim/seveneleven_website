@@ -37,7 +37,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: '/', label: '홈' },
     { href: '/recommendations', label: '발주 추천' },
-    { href: '/similar-stores', label: '유사매장 정보' },
   ]
 
   return (
