@@ -464,7 +464,7 @@ export default function RecommendationsPage() {
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                부진재고 ({totalExcludedProducts})
+                부진재고
               </button>
             </div>
 
