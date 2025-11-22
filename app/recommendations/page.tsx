@@ -16,6 +16,7 @@ interface Product {
   item_mddv_cd: number | null
   item_mddv_nm: string | null
   item_lrdv_nm: string | null
+  item_smdv_nm: string | null
   cost: number | null
   sale_price: number | null
   rec_reason: string | null
@@ -235,8 +236,9 @@ export default function RecommendationsPage() {
 
   // 선택된 대분류에 따라 필터링된 중분류 그룹
   const filteredGroupedProducts = useMemo(() => {
+    // 대분류가 선택되지 않았으면 빈 객체 반환
     if (!selectedLargeCategory) {
-      return currentGroupedProducts
+      return {}
     }
 
     const filtered: GroupedProducts = {}
@@ -262,12 +264,26 @@ export default function RecommendationsPage() {
     })
 
     return filtered
-  }, [selectedLargeCategory, activeTab, currentGroupedProducts, recommendedProducts, excludedProducts])
+  }, [selectedLargeCategory, activeTab, recommendedProducts, excludedProducts])
 
-  // 탭 변경 시 대분류 선택 초기화
+  // 탭 변경 시 대분류 선택 초기화 (첫 번째 대분류로 설정)
   useEffect(() => {
-    setSelectedLargeCategory(null)
-  }, [activeTab])
+    const currentCategories = activeTab === 'recommended' 
+      ? recommendedProducts 
+      : excludedProducts
+    const categories = new Set<string>()
+    currentCategories.forEach((product) => {
+      if (product.item_lrdv_nm) {
+        categories.add(product.item_lrdv_nm)
+      }
+    })
+    const sortedCategories = Array.from(categories).sort()
+    if (sortedCategories.length > 0) {
+      setSelectedLargeCategory(sortedCategories[0])
+    } else {
+      setSelectedLargeCategory(null)
+    }
+  }, [activeTab, recommendedProducts, excludedProducts])
 
   // Intersection Observer로 뷰포트에 들어온 아이템 추적
   const observerRef = useRef<IntersectionObserver | null>(null)
@@ -374,7 +390,7 @@ export default function RecommendationsPage() {
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                추천 상품 ({totalRecommendedProducts})
+                추천 상품
               </button>
               <button
                 onClick={() => setActiveTab('excluded')}
@@ -393,16 +409,6 @@ export default function RecommendationsPage() {
               <div className="mb-4 md:mb-6">
                 <h3 className="text-base md:text-lg font-bold text-gray-900 mb-2 md:mb-3">대분류 카테고리</h3>
                 <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                  <button
-                    onClick={() => setSelectedLargeCategory(null)}
-                    className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-sm md:text-base font-medium whitespace-nowrap transition-colors ${
-                      selectedLargeCategory === null
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    전체
-                  </button>
                   {largeCategories.map((category) => (
                     <button
                       key={category}
@@ -486,12 +492,12 @@ export default function RecommendationsPage() {
                           ref={(el) => setItemRef(itemId, el)}
                           data-item-id={itemId}
                           onClick={() => setSelectedProduct(product)}
-                          className={`bg-white rounded-lg overflow-hidden border transition-colors cursor-pointer shadow-sm hover:shadow-md active:scale-95 ${
+                          className={`bg-white rounded-lg overflow-hidden border transition-colors cursor-pointer shadow-sm hover:shadow-md active:scale-95 flex flex-col ${
                             activeTab === 'recommended'
                               ? 'border-gray-200 hover:border-green-400'
                               : 'border-gray-200 hover:border-green-500'
                           }`}
-                          style={{ minHeight: '280px' }}
+                          style={{ minHeight: '320px' }}
                         >
                           {isVisible ? (
                             <>
@@ -523,30 +529,34 @@ export default function RecommendationsPage() {
                               </div>
 
                               {/* 상품 정보 */}
-                              <div className="p-2 md:p-3">
+                              <div className="p-2 md:p-3 flex flex-col h-full">
                                 <h4 className="text-xs md:text-sm font-semibold text-gray-900 mb-1 md:mb-2 line-clamp-2 min-h-[2rem] md:min-h-[2.5rem]">
                                   {product.item_nm}
                                 </h4>
                                 
                                 {/* 가격 정보 */}
-                                <div className="mb-1 md:mb-2">
+                                <div className="mb-2 md:mb-3 space-y-1">
                                   {product.sale_price !== null && (
-                                    <div className="text-sm md:text-base font-bold text-green-500">
-                                      {product.sale_price.toLocaleString()}원
+                                    <div className="text-xs md:text-sm text-gray-600">
+                                      <span className="font-medium">판매가:</span> <span className="text-sm md:text-base font-bold text-green-500">{product.sale_price.toLocaleString()}원</span>
                                     </div>
                                   )}
-                                  {product.cost !== null && product.sale_price !== null && (
-                                    <div className="text-xs text-gray-500 mt-0.5 md:mt-1">
-                                      원가: {product.cost.toLocaleString()}원
+                                  {product.cost !== null && (
+                                    <div className="text-xs text-gray-500">
+                                      <span className="font-medium">원가:</span> {product.cost.toLocaleString()}원
                                     </div>
                                   )}
                                 </div>
 
-                                {/* 상태 및 액션 버튼 */}
-                                <div className="flex items-center justify-between mt-2 md:mt-3">
-                                  <span className="text-xs text-gray-600 bg-gray-100 px-1.5 md:px-2 py-0.5 md:py-1 rounded">
-                                    냉동
-                                  </span>
+                                {/* 소분류 및 액션 버튼 */}
+                                <div className="flex items-center justify-between mt-auto">
+                                  {product.item_smdv_nm ? (
+                                    <span className="text-xs text-gray-600 bg-gray-100 px-1.5 md:px-2 py-0.5 md:py-1 rounded">
+                                      {product.item_smdv_nm}
+                                    </span>
+                                  ) : (
+                                    <span></span>
+                                  )}
                                   <button
                                     className={`p-1.5 md:p-2 rounded-full transition-colors ${
                                       activeTab === 'recommended'
@@ -603,11 +613,18 @@ export default function RecommendationsPage() {
                   <div className="flex items-start justify-between mb-3 md:mb-4">
                     <div className="flex-1 pr-2">
                       <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">{selectedProduct.item_nm}</h3>
-                      {selectedProduct.item_mddv_nm && (
-                        <span className="text-xs md:text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                          {selectedProduct.item_mddv_nm}
-                        </span>
-                      )}
+                      <div className="flex flex-wrap gap-2">
+                        {selectedProduct.item_mddv_nm && (
+                          <span className="text-xs md:text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                            {selectedProduct.item_mddv_nm}
+                          </span>
+                        )}
+                        {selectedProduct.item_smdv_nm && (
+                          <span className="text-xs md:text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-200">
+                            {selectedProduct.item_smdv_nm}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <button
                       onClick={() => setSelectedProduct(null)}
@@ -643,15 +660,21 @@ export default function RecommendationsPage() {
                   <div className="space-y-3 md:space-y-4">
                     <div>
                       <h4 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">가격 정보</h4>
-                      <div className="bg-gray-50 rounded-lg p-2 md:p-3">
+                      <div className="bg-gray-50 rounded-lg p-3 md:p-4 space-y-2">
                         {selectedProduct.sale_price !== null && (
-                          <div className="text-base md:text-lg font-bold text-green-500 mb-1">
-                            판매가: {selectedProduct.sale_price.toLocaleString()}원
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm md:text-base text-gray-700 font-medium">판매가:</span>
+                            <span className="text-base md:text-lg font-bold text-green-500">
+                              {selectedProduct.sale_price.toLocaleString()}원
+                            </span>
                           </div>
                         )}
                         {selectedProduct.cost !== null && (
-                          <div className="text-xs md:text-sm text-gray-600">
-                            원가: {selectedProduct.cost.toLocaleString()}원
+                          <div className="flex items-center justify-between border-t border-gray-200 pt-2">
+                            <span className="text-sm text-gray-600 font-medium">원가:</span>
+                            <span className="text-sm md:text-base text-gray-600">
+                              {selectedProduct.cost.toLocaleString()}원
+                            </span>
                           </div>
                         )}
                       </div>
@@ -661,11 +684,101 @@ export default function RecommendationsPage() {
                       <h4 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">
                         {activeTab === 'recommended' ? '추천 근거' : '부진 근거'}
                       </h4>
-                      <div className="bg-gray-50 rounded-lg p-3 md:p-4">
+                      <div className="bg-green-50 border-l-4 border-green-500 rounded-lg p-5 md:p-6">
                         {selectedProduct.rec_reason ? (
-                          <p className="text-sm md:text-base text-gray-900 leading-relaxed whitespace-pre-wrap">
-                            {selectedProduct.rec_reason}
-                          </p>
+                          <div className="text-base md:text-lg text-gray-800 leading-loose">
+                            {selectedProduct.rec_reason.includes('따라서') ? (
+                              <>
+                                <div className="mb-5 space-y-3 text-gray-700">
+                                  {(() => {
+                                    const beforeTherefore = selectedProduct.rec_reason.split('따라서')[0].trim()
+                                    const parts: string[] = []
+                                    
+                                    // 정규표현식으로 텍스트 구조 파싱
+                                    // 1. 첫 번째 줄: "점주님, 추천드린 ... 은(는)"
+                                    const firstLineMatch = beforeTherefore.match(/^점주님[^점]*?은\(는\)\s*/)
+                                    if (firstLineMatch) {
+                                      parts.push(firstLineMatch[0].trim())
+                                      let remaining = beforeTherefore.substring(firstLineMatch[0].length).trim()
+                                      
+                                      // 2. 두 번째 줄: "점주님 매장의 유사매장들에서 ... 발생하고 있으며"
+                                      const secondLineMatch = remaining.match(/^점주님 매장의 유사매장들?에서.*?발생했고\s*/)
+                                      if (secondLineMatch) {
+                                        parts.push(secondLineMatch[0].trim())
+                                        remaining = remaining.substring(secondLineMatch[0].length).trim()
+                                      }
+                                      
+                                      // 3. 세 번째 줄: "한달 동안 ... 판매되고 있고"
+                                      const thirdLineMatch = remaining.match(/^한달 동안.*?판매됐고\s*/)
+                                      if (thirdLineMatch) {
+                                        parts.push(thirdLineMatch[0].trim())
+                                        remaining = remaining.substring(thirdLineMatch[0].length).trim()
+                                      }
+                                      
+                                      // 4. 네 번째 줄: "한달 동안 해당 상품은 ... 일으켰습니다."
+                                      if (remaining.trim()) {
+                                        // "일으켰습니다"로 끝나는 부분 찾기
+                                        const fourthLineMatch = remaining.match(/^한달 동안.*?일으켰습니다\.?\s*/)
+                                        if (fourthLineMatch) {
+                                          parts.push(fourthLineMatch[0].trim())
+                                        } else {
+                                          // "일으켰습니다" 패턴이 없으면 나머지 전체를 네 번째 줄로
+                                          parts.push(remaining.trim())
+                                        }
+                                      }
+                                    } else {
+                                      // 첫 번째 패턴이 없으면 "이며", "이고" 등으로 나누기
+                                      const fallbackParts = beforeTherefore
+                                        .replace(/\s+/g, ' ')
+                                        .split(/(?<=이며|이고|그리고|있으며|있고|발생하고|판매되고|일으켰습니다\.)/)
+                                        .map(s => s.trim())
+                                        .filter(s => s.length > 0)
+                                      parts.push(...fallbackParts)
+                                    }
+                                    
+                                    return parts.map((part, idx) => {
+                                      // 숫자와 중요한 정보 강조 (React Fragment 사용)
+                                      const partsWithHighlight: (string | JSX.Element)[] = []
+                                      const regex = /(\d+\.?\d*)(일|회|원)/g
+                                      let lastIndex = 0
+                                      let match
+                                      
+                                      while ((match = regex.exec(part)) !== null) {
+                                        // 매치 전 텍스트 추가
+                                        if (match.index > lastIndex) {
+                                          partsWithHighlight.push(part.substring(lastIndex, match.index))
+                                        }
+                                        // 강조된 숫자 추가
+                                        partsWithHighlight.push(
+                                          <span key={`${idx}-${match.index}`} className="font-semibold text-green-700">
+                                            {match[1]}{match[2]}
+                                          </span>
+                                        )
+                                        lastIndex = match.index + match[0].length
+                                      }
+                                      // 나머지 텍스트 추가
+                                      if (lastIndex < part.length) {
+                                        partsWithHighlight.push(part.substring(lastIndex))
+                                      }
+                                      
+                                      return (
+                                        <p key={idx} className="leading-loose text-gray-800">
+                                          {partsWithHighlight.length > 0 ? partsWithHighlight : part}
+                                        </p>
+                                      )
+                                    })
+                                  })()}
+                                </div>
+                                <p className="pt-4 mt-4 border-t-2 border-green-300 text-lg md:text-xl font-bold text-green-700 leading-relaxed">
+                                  따라서 {selectedProduct.rec_reason.split('따라서')[1]?.trim()}
+                                </p>
+                              </>
+                            ) : (
+                              <p className="text-gray-700 whitespace-pre-wrap leading-loose">
+                                {selectedProduct.rec_reason}
+                              </p>
+                            )}
+                          </div>
                         ) : (
                           <p className="text-gray-500">
                             {activeTab === 'recommended' ? '추천 근거가 없습니다.' : '부진 근거가 없습니다.'}
