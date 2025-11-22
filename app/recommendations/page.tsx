@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import Image from 'next/image'
 import Layout from '@/components/Layout'
 import { supabase } from '@/lib/supabase'
 
@@ -477,18 +476,22 @@ export default function RecommendationsPage() {
                               {/* 상품 이미지 */}
                               <div className="relative aspect-square bg-white overflow-hidden flex items-center justify-center">
                                 {product.item_img ? (
-                                  <Image
+                                  <img
                                     src={product.item_img}
                                     alt={product.item_nm}
-                                    fill
-                                    className="object-contain p-2"
-                                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                    className="w-full h-full object-contain p-2"
                                     loading="lazy"
                                     onError={(e) => {
                                       // 에러 발생 시 placeholder 표시
                                       e.currentTarget.style.display = 'none'
+                                      const parent = e.currentTarget.parentElement
+                                      if (parent && !parent.querySelector('.image-placeholder')) {
+                                        const placeholder = document.createElement('div')
+                                        placeholder.className = 'image-placeholder w-full h-full flex items-center justify-center text-gray-400 text-sm'
+                                        placeholder.textContent = '이미지 없음'
+                                        parent.appendChild(placeholder)
+                                      }
                                     }}
-                                    unoptimized={product.item_img.startsWith('data:')}
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
@@ -593,16 +596,20 @@ export default function RecommendationsPage() {
 
                   {selectedProduct.item_img && (
                     <div className="mb-4 relative w-full h-64 rounded-lg overflow-hidden bg-white flex items-center justify-center">
-                      <Image
+                      <img
                         src={selectedProduct.item_img}
                         alt={selectedProduct.item_nm}
-                        fill
-                        className="object-contain p-4 rounded-lg"
-                        sizes="(max-width: 768px) 100vw, 672px"
+                        className="w-full h-full object-contain p-4 rounded-lg"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none'
+                          const parent = e.currentTarget.parentElement
+                          if (parent && !parent.querySelector('.image-placeholder')) {
+                            const placeholder = document.createElement('div')
+                            placeholder.className = 'image-placeholder w-full h-full flex items-center justify-center text-gray-400 text-sm'
+                            placeholder.textContent = '이미지 없음'
+                            parent.appendChild(placeholder)
+                          }
                         }}
-                        unoptimized={selectedProduct.item_img.startsWith('data:')}
                       />
                     </div>
                   )}
