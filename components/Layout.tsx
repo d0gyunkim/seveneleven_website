@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [storeCode, setStoreCode] = useState<string | null>(null)
+  const [storeName, setStoreName] = useState<string | null>(null)
 
   useEffect(() => {
     // URL에서 storeCode 가져오기
@@ -25,6 +27,45 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       }
     }
   }, [searchParams])
+
+  useEffect(() => {
+    // storeCode가 있으면 매장명 조회
+    if (!storeCode) {
+      setStoreName(null)
+      return
+    }
+
+    const fetchStoreName = async () => {
+      try {
+        // 알려진 매장명 목록
+        const knownStores = ['대치본점', '대치은마사거리점']
+        
+        for (const storeName of knownStores) {
+          const recTable = `${storeName}_추천상품`
+          
+          // storecode를 문자열과 숫자 둘 다 시도
+          const codeVariants = [storeCode, storeCode.toString(), parseInt(storeCode).toString()]
+          
+          for (const codeVariant of codeVariants) {
+            const { data, error } = await supabase
+              .from(recTable)
+              .select('store_nm, store_code')
+              .eq('store_code', codeVariant)
+              .limit(1)
+
+            if (!error && data && data.length > 0) {
+              setStoreName(data[0].store_nm || storeName)
+              return
+            }
+          }
+        }
+      } catch (err) {
+        console.error('매장명 조회 오류:', err)
+      }
+    }
+
+    fetchStoreName()
+  }, [storeCode])
 
   const getNavHref = (href: string) => {
     // storeCode가 있고, 홈이 아닌 페이지라면 storeCode 파라미터 추가
@@ -77,6 +118,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="hidden lg:block mb-8">
             <h1 className="text-xl md:text-2xl font-bold text-green-500">세븐일레븐</h1>
           </div>
+          {/* 매장 정보 */}
+          {storeCode && (
+            <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
+              {storeName && (
+                <p className="text-sm text-gray-700 font-semibold mb-2">
+                  매장: <span className="text-green-500">{storeName}</span>
+                </p>
+              )}
+              <p className="text-sm text-gray-700 font-semibold mb-2">
+                매장 코드: <span className="text-green-500">{storeCode}</span>
+              </p>
+              <p className="text-sm text-gray-700 font-semibold">
+                기준일자: <span className="text-green-500">2025년 9월 1일</span>
+              </p>
+            </div>
+          )}
+          
           <nav className="space-y-2">
             {navItems.map((item) => {
               const isActive = pathname === item.href

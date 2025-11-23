@@ -444,13 +444,6 @@ export default function RecommendationsPage() {
         <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6">
           {/* 헤더 */}
           <div className="mb-4 md:mb-6">
-            {/* 매장 정보 */}
-            <p className="text-base md:text-lg text-gray-700 mb-4 md:mb-6 font-semibold">
-              매장: <span className="text-green-500">{storeName}</span> | 
-              매장 코드: <span className="text-green-500">{urlStoreCode || (typeof window !== 'undefined' ? sessionStorage.getItem('storeCode') || '' : '')}</span> | 
-              기준일자: <span className="text-green-500">2025년 9월 1일</span>
-            </p>
-            
             {/* 탭 */}
             <div className="flex gap-2 md:gap-4 mb-4 md:mb-6 border-b border-gray-200 overflow-x-auto">
               <button
