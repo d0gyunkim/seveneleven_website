@@ -343,12 +343,37 @@ export default function RecommendationsPage() {
         }
       })
       
-      // 필터링된 상품들을 배열로 변환하고 rank 순서로 정렬
-      filtered[category] = Array.from(productMap.values()).sort((a, b) => {
-        const rankA = a.rank ?? Infinity
-        const rankB = b.rank ?? Infinity
-        return rankA - rankB
-      })
+      let sortedProducts: Product[]
+      
+      if (activeTab === 'excluded') {
+        // 부진재고: rank 0부터, rank가 같으면 판매가가 작은 순으로 정렬
+        sortedProducts = Array.from(productMap.values()).sort((a, b) => {
+          const rankA = a.rank ?? Infinity
+          const rankB = b.rank ?? Infinity
+          
+          // rank가 같으면 판매가가 작은 순으로
+          if (rankA === rankB) {
+            const priceA = a.sale_price ?? 0
+            const priceB = b.sale_price ?? 0
+            return priceA - priceB
+          }
+          
+          // rank 순서대로 (0 -> 1 -> 2 ...)
+          return rankA - rankB
+        })
+        
+        // 중분류별로 최대 5개만 선택
+        sortedProducts = sortedProducts.slice(0, 5)
+      } else {
+        // 추천 상품: 기존 로직 유지 (rank 순서로 정렬)
+        sortedProducts = Array.from(productMap.values()).sort((a, b) => {
+          const rankA = a.rank ?? Infinity
+          const rankB = b.rank ?? Infinity
+          return rankA - rankB
+        })
+      }
+      
+      filtered[category] = sortedProducts
     })
 
     // 추천 상품의 중분류 순서 기준으로 정렬
@@ -837,9 +862,37 @@ export default function RecommendationsPage() {
                               )
                             })() : (() => {
                               // 부진재고: R, F, M 값 추출
-                              // 예시: "최근 10.5일 내 판매가 발생했고, 한 달 동안 2.0회 판매되었으며 6750원의 매출을 기록했습니다"
+                              // 예시 1: "최근 10.5일 내 판매가 발생했고, 한 달 동안 2.0회 판매되었으며 6750원의 매출을 기록했습니다"
+                              // 예시 2: "최근 한달 사이에 판매가 이루어지지 않았습니다" (rank 0인 경우)
                               const recReason = selectedProduct.rec_reason
                               
+                              // 판매가 이루어지지 않은 경우 체크
+                              const isNoSale = recReason.includes('판매가 이루어지지 않았습니다') || 
+                                             recReason.includes('판매가 발생하지 않았습니다') ||
+                                             recReason.includes('판매가 없었습니다')
+                              
+                              // 상품명에서 "은(는)" 처리
+                              const itemName = selectedProduct.item_nm
+                              const isEndWithVowel = /[가-힣][가-힣]?[ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅣ]$/.test(itemName)
+                              const itemNameSuffix = isEndWithVowel ? '은' : '는'
+                              
+                              // 판매가 이루어지지 않은 경우
+                              if (isNoSale) {
+                                return (
+                                  <>
+                                    <p className="leading-relaxed">
+                                      <span className="font-semibold text-orange-700">{storeName} 점주님!</span>{' '}
+                                      <span className="font-semibold">{itemName}</span>{itemNameSuffix} 내 매장에서 최근 한달 사이에 판매가 이루어지지 않았습니다.
+                                    </p>
+                                    
+                                    <p className="leading-relaxed pt-2 border-t border-orange-300 font-semibold">
+                                      점주님의 매장 효율화를 위해 발주 제외를 권장드립니다.
+                                    </p>
+                                  </>
+                                )
+                              }
+                              
+                              // R, F, M 값이 있는 경우
                               // R 값: "최근 X일 내" 또는 "X일 내" 패턴에서 소수점 포함 숫자 찾기
                               const rMatch = recReason.match(/(\d+\.?\d*)\s*일\s*내/)
                               const rValue = rMatch ? rMatch[1] : ''
@@ -851,11 +904,6 @@ export default function RecommendationsPage() {
                               // M 값: "X원의 매출" 또는 "X원" 패턴에서 숫자 찾기
                               const mMatch = recReason.match(/(\d+)\s*원/)
                               const mValue = mMatch ? mMatch[1] : ''
-                              
-                              // 상품명에서 "은(는)" 처리
-                              const itemName = selectedProduct.item_nm
-                              const isEndWithVowel = /[가-힣][가-힣]?[ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅣ]$/.test(itemName)
-                              const itemNameSuffix = isEndWithVowel ? '은' : '는'
                               
                               // 숫자 포맷팅 함수 (소수점 처리)
                               const formatNumber = (value: string) => {
@@ -898,11 +946,30 @@ export default function RecommendationsPage() {
                       </div>
                     </div>
 
-                    {selectedProduct.rank !== null && (
-                      <div className="text-sm text-gray-600">
-                        추천 순위: <span className="text-green-500 font-semibold">{selectedProduct.rank}위</span>
-                      </div>
-                    )}
+                    {(() => {
+                      if (activeTab === 'recommended') {
+                        // 추천 상품: 기존 rank 사용
+                        return selectedProduct.rank !== null ? (
+                          <div className="text-sm text-gray-600">
+                            추천 순위: <span className="text-green-500 font-semibold">{selectedProduct.rank}위</span>
+                          </div>
+                        ) : null
+                      } else {
+                        // 부진재고: 보여지는 순서대로 순위 계산
+                        const category = selectedProduct.item_mddv_nm || '기타'
+                        const categoryProducts = filteredGroupedProducts[category] || []
+                        const displayRank = categoryProducts.findIndex(p => 
+                          p.store_code === selectedProduct.store_code && 
+                          p.item_cd === selectedProduct.item_cd
+                        ) + 1
+                        
+                        return displayRank > 0 ? (
+                          <div className="text-sm text-gray-600">
+                            발주 제외 권장: <span className="text-orange-500 font-semibold">{displayRank}위</span>
+                          </div>
+                        ) : null
+                      }
+                    })()}
                   </div>
                 </div>
               </div>
