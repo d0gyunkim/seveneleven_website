@@ -170,12 +170,39 @@ export default function RecommendationsPage() {
     }
   }
 
+  // R, F, M 값 추출 함수
+  const extractRFMValues = useCallback((recReason: string | null) => {
+    if (!recReason) return { r: null, f: null, m: null }
+    
+    // R 값: "일" 단위로 끝나는 숫자 찾기
+    const rMatch = recReason.match(/(\d+\.?\d*)\s*일/)
+    const rValue = rMatch ? parseFloat(rMatch[1]) : null
+    
+    // F 값: "회" 단위로 끝나는 숫자 찾기
+    const fMatch = recReason.match(/(\d+\.?\d*)\s*회/)
+    const fValue = fMatch ? parseFloat(fMatch[1]) : null
+    
+    // M 값: "원" 앞의 숫자 찾기 (천단위 구분자 제거)
+    const mMatch = recReason.match(/([\d,]+)\s*원/)
+    const mValue = mMatch ? parseFloat(mMatch[1].replace(/,/g, '')) : null
+    
+    return { r: rValue, f: fValue, m: mValue }
+  }, [])
+
   // 중분류별로 그룹화하고 각 그룹 내에서 rank 순서로 정렬
   // 상품명이 동일한 경우 판매가가 큰 것만 표시
+  // R, F, M 값 중 하나라도 0이면 제외
   const groupedRecommendedProducts = useMemo(() => {
     const grouped: GroupedProducts = {}
     
-    recommendedProducts.forEach((product) => {
+    // R, F, M 값 중 하나라도 0이 있는 상품 제외
+    const filteredProducts = recommendedProducts.filter((product) => {
+      const { r, f, m } = extractRFMValues(product.rec_reason)
+      // R, F, M 값 중 하나라도 0이면 제외
+      return !(r === 0 || f === 0 || m === 0)
+    })
+    
+    filteredProducts.forEach((product) => {
       const category = product.item_mddv_nm || '기타'
       if (!grouped[category]) {
         grouped[category] = []
@@ -309,7 +336,16 @@ export default function RecommendationsPage() {
     }
 
     const filtered: GroupedProducts = {}
-    const currentProducts = activeTab === 'recommended' ? recommendedProducts : excludedProducts
+    let currentProducts = activeTab === 'recommended' ? recommendedProducts : excludedProducts
+    
+    // 추천 상품인 경우 R, F, M 값 중 하나라도 0이 있는 상품 제외
+    if (activeTab === 'recommended') {
+      currentProducts = currentProducts.filter((product) => {
+        const { r, f, m } = extractRFMValues(product.rec_reason)
+        // R, F, M 값 중 하나라도 0이면 제외
+        return !(r === 0 || f === 0 || m === 0)
+      })
+    }
     
     currentProducts.forEach((product) => {
       if (product.item_lrdv_nm === selectedLargeCategory) {
@@ -348,8 +384,8 @@ export default function RecommendationsPage() {
       if (activeTab === 'excluded') {
         // 부진재고: rank 0부터, rank가 같으면 판매가가 작은 순으로 정렬
         sortedProducts = Array.from(productMap.values()).sort((a, b) => {
-          const rankA = a.rank ?? Infinity
-          const rankB = b.rank ?? Infinity
+        const rankA = a.rank ?? Infinity
+        const rankB = b.rank ?? Infinity
           
           // rank가 같으면 판매가가 작은 순으로
           if (rankA === rankB) {
@@ -359,8 +395,8 @@ export default function RecommendationsPage() {
           }
           
           // rank 순서대로 (0 -> 1 -> 2 ...)
-          return rankA - rankB
-        })
+        return rankA - rankB
+      })
         
         // 중분류별로 최대 5개만 선택
         sortedProducts = sortedProducts.slice(0, 5)
@@ -912,9 +948,9 @@ export default function RecommendationsPage() {
                                 if (isNaN(num)) return value
                                 // 소수점이 있으면 그대로, 없으면 정수로 표시
                                 return num % 1 === 0 ? num.toLocaleString() : num.toString()
-                              }
-                              
-                              return (
+                                      }
+                                      
+                                      return (
                                 <>
                                   {rValue && (
                                     <p className="leading-relaxed">
@@ -936,7 +972,7 @@ export default function RecommendationsPage() {
                                   </p>
                                 </>
                               )
-                            })()}
+                                  })()}
                           </div>
                         ) : (
                           <p className="text-gray-500">
@@ -950,9 +986,9 @@ export default function RecommendationsPage() {
                       if (activeTab === 'recommended') {
                         // 추천 상품: 기존 rank 사용
                         return selectedProduct.rank !== null ? (
-                          <div className="text-sm text-gray-600">
-                            추천 순위: <span className="text-green-500 font-semibold">{selectedProduct.rank}위</span>
-                          </div>
+                      <div className="text-sm text-gray-600">
+                        추천 순위: <span className="text-green-500 font-semibold">{selectedProduct.rank}위</span>
+                      </div>
                         ) : null
                       } else {
                         // 부진재고: 보여지는 순서대로 순위 계산
