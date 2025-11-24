@@ -76,7 +76,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }
 
   const navItems = [
-    { href: '/', label: '홈' },
+    { href: '/', label: '로그아웃' },
     { href: '/recommendations', label: '발주 추천' },
   ]
 

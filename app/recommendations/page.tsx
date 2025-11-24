@@ -471,7 +471,7 @@ export default function RecommendationsPage() {
             {/* 대분류 카테고리 */}
             {largeCategories.length > 0 && (
               <div className="mb-4 md:mb-6">
-                <h3 className="text-base md:text-lg font-bold text-gray-900 mb-2 md:mb-3">대분류 카테고리</h3>
+                <h3 className="text-base md:text-lg font-bold text-gray-900 mb-2 md:mb-3">카테고리 선택</h3>
                 <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {largeCategories.map((category) => (
                     <button
@@ -513,9 +513,7 @@ export default function RecommendationsPage() {
           {activeTab === 'recommended' && (
             <div className="bg-green-50 border-l-4 border-green-500 p-3 md:p-4 mb-4 md:mb-6 rounded-r-lg">
               <p className="text-sm md:text-base text-gray-800 leading-relaxed">
-                <span className="font-semibold text-green-600">점주님의 매장과 유사한 고객 패턴, 상권, 매출을 가진 매장</span>에서 
-                <span className="font-semibold"> 인기 있는 상품</span>입니다. 
-                점주님도 함께 취급해보시는 것을 추천드립니다.
+                <span className="font-semibold text-green-600">{storeName} 점주님께 추천드리는</span> 내 매장과 유사한 상권/매출을 내는 매장에서 인기 있는 상품입니다.
               </p>
             </div>
           )}
@@ -523,8 +521,8 @@ export default function RecommendationsPage() {
           {activeTab === 'excluded' && (
             <div className="bg-orange-50 border-l-4 border-orange-500 p-3 md:p-4 mb-4 md:mb-6 rounded-r-lg">
               <p className="text-sm md:text-base text-gray-800 leading-relaxed">
-                <span className="font-semibold text-orange-600">점주님의 매장에서 중분류별로 발주 제외를 권장드리는 상품</span>입니다. 
-                매장 운영 효율화를 위해 참고해 주시기 바랍니다.
+                <span className="font-semibold text-orange-600">내 매장의 상품군 별 발주 제외 권장 대상 상품</span>입니다. 
+                매장 운영 효율화 시 참고해 주시기 바랍니다.
               </p>
             </div>
           )}
@@ -744,110 +742,104 @@ export default function RecommendationsPage() {
                       <h4 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">
                         {activeTab === 'recommended' ? '추천 근거' : '부진 근거'}
                       </h4>
-                      <div className="bg-green-50 border-l-4 border-green-500 rounded-lg p-5 md:p-6">
+                      <div className={`${activeTab === 'recommended' ? 'bg-green-50 border-l-4 border-green-500' : 'bg-orange-50 border-l-4 border-orange-500'} rounded-lg p-5 md:p-6`}>
                         {selectedProduct.rec_reason ? (
-                          <div className="text-base md:text-lg text-gray-800 leading-loose">
-                            {selectedProduct.rec_reason.includes('따라서') ? (
-                              <>
-                                <div className="mb-5 space-y-3 text-gray-700">
-                                  {(() => {
-                                    const beforeTherefore = selectedProduct.rec_reason.split('따라서')[0].trim()
-                                    const parts: string[] = []
-                                    
-                                    // 공백 정규화 (연속된 공백을 하나로, 단어 사이 공백 보장)
-                                    let normalized = beforeTherefore.replace(/\s+/g, ' ')
-                                    // "발생했고한달" 같은 경우를 "발생했고 한달"로 변환
-                                    normalized = normalized.replace(/([가-힣])([한일])/g, '$1 $2')
-                                    
-                                    // 정규표현식으로 텍스트 구조 파싱
-                                    // 1. 첫 번째 줄: "사장님/점주님, 추천드린 ... 은(는)"
-                                    const firstLineMatch = normalized.match(/^(사장님|점주님)[^은]*?은\(는\)\s*/)
-                                    if (firstLineMatch) {
-                                      parts.push(firstLineMatch[0].trim())
-                                      let remaining = normalized.substring(firstLineMatch[0].length).trim()
-                                      
-                                      // 2. 두 번째 줄: "점주님 매장의 유사매장들에서 ... 발생했고"
-                                      const secondLineMatch = remaining.match(/^점주님 매장의 유사매장들?에서.*?발생했고\s*/)
-                                      if (secondLineMatch) {
-                                        parts.push(secondLineMatch[0].trim())
-                                        remaining = remaining.substring(secondLineMatch[0].length).trim()
-                                      }
-                                      
-                                      // 3. 세 번째 줄: "한달 동안 ... 판매됐고"
-                                      const thirdLineMatch = remaining.match(/^한달 동안.*?판매됐고\s*/)
-                                      if (thirdLineMatch) {
-                                        parts.push(thirdLineMatch[0].trim())
-                                        remaining = remaining.substring(thirdLineMatch[0].length).trim()
-                                      }
-                                      
-                                      // 4. 네 번째 줄: "한달 동안 해당 상품은 ... 일으켰습니다." 또는 나머지
-                                      if (remaining.trim()) {
-                                        // "일으켰습니다"로 끝나는 부분 찾기
-                                        const fourthLineMatch = remaining.match(/^한달 동안.*?일으켰습니다\.?\s*/)
-                                        if (fourthLineMatch) {
-                                          parts.push(fourthLineMatch[0].trim())
-                                        } else {
-                                          // 숫자와 "원"이 포함된 매출 정보 찾기
-                                          const salesMatch = remaining.match(/.*?\d+원.*?일으켰습니다\.?\s*/)
-                                          if (salesMatch) {
-                                            parts.push(salesMatch[0].trim())
-                                          } else {
-                                            // 나머지 전체를 네 번째 줄로
-                                            parts.push(remaining.trim())
-                                          }
-                                        }
-                                      }
-                                    } else {
-                                      // 첫 번째 패턴이 없으면 "발생했고", "판매됐고", "일으켰습니다" 등으로 나누기
-                                      const fallbackParts = normalized
-                                        .split(/(?<=발생했고|판매됐고|일으켰습니다\.)/)
-                                        .map(s => s.trim())
-                                        .filter(s => s.length > 0)
-                                      parts.push(...fallbackParts)
-                                    }
-                                    
-                                    return parts.map((part, idx) => {
-                                      // 숫자와 중요한 정보 강조 (React Fragment 사용)
-                                      const partsWithHighlight: (string | JSX.Element)[] = []
-                                      const regex = /(\d+\.?\d*)(일|회|원)/g
-                                      let lastIndex = 0
-                                      let match
-                                      
-                                      while ((match = regex.exec(part)) !== null) {
-                                        // 매치 전 텍스트 추가
-                                        if (match.index > lastIndex) {
-                                          partsWithHighlight.push(part.substring(lastIndex, match.index))
-                                        }
-                                        // 강조된 숫자 추가
-                                        partsWithHighlight.push(
-                                          <span key={`${idx}-${match.index}`} className="font-semibold text-green-700">
-                                            {match[1]}{match[2]}
-                                          </span>
-                                        )
-                                        lastIndex = match.index + match[0].length
-                                      }
-                                      // 나머지 텍스트 추가
-                                      if (lastIndex < part.length) {
-                                        partsWithHighlight.push(part.substring(lastIndex))
-                                      }
-                                      
-                                      return (
-                                        <p key={idx} className="leading-loose text-gray-800">
-                                          {partsWithHighlight.length > 0 ? partsWithHighlight : part}
-                                        </p>
-                                      )
-                                    })
-                                  })()}
-                                </div>
-                                <p className="pt-4 mt-4 border-t-2 border-green-300 text-lg md:text-xl font-bold text-green-700 leading-relaxed">
-                                  따라서 {selectedProduct.rec_reason.split('따라서')[1]?.trim()}
-                                </p>
-                              </>
-                            ) : (
-                              <p className="text-gray-700 whitespace-pre-wrap leading-loose">
-                                {selectedProduct.rec_reason}
-                              </p>
-                            )}
+                          <div className="text-base md:text-lg text-gray-800 leading-loose space-y-4">
+                            {activeTab === 'recommended' ? (() => {
+                              // R, F, M 값 추출
+                              const recReason = selectedProduct.rec_reason
+                              
+                              // R 값: "일" 단위로 끝나는 숫자 찾기
+                              const rMatch = recReason.match(/(\d+)\s*일/)
+                              const rValue = rMatch ? rMatch[1] : '30' // 기본값 30일
+                              
+                              // F 값: "회" 단위로 끝나는 숫자 찾기
+                              const fMatch = recReason.match(/(\d+)\s*회/)
+                              const fValue = fMatch ? fMatch[1] : ''
+                              
+                              // M 값: "원" 앞의 숫자 찾기 (천단위 구분자 제거)
+                              const mMatch = recReason.match(/([\d,]+)\s*원/)
+                              const mValue = mMatch ? mMatch[1].replace(/,/g, '') : ''
+                              
+                              // 상품명에서 "은(는)" 처리
+                              const itemName = selectedProduct.item_nm
+                              const isEndWithVowel = /[가-힣][가-힣]?[ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅣ]$/.test(itemName)
+                              const itemNameSuffix = isEndWithVowel ? '은' : '는'
+                              
+                              return (
+                                <>
+                                  <p className="leading-relaxed">
+                                    <span className="font-semibold text-green-700">{storeName} 점주님!</span>{' '}
+                                    <span className="font-semibold">{itemName}</span>{itemNameSuffix} 내 매장과 유사한 매장에서 최근{' '}
+                                    <span className="font-semibold text-green-700">{rValue}일</span> 내에 꾸준하게 판매되고 있는 상품입니다.
+                                  </p>
+                                  
+                                  {fValue && mValue && (
+                                    <p className="leading-relaxed">
+                                      해당 상품은 한 달 동안 <span className="font-semibold text-green-700">{parseInt(fValue).toLocaleString()}회</span> 이상 꾸준하게 판매되었으며, 총 매출은{' '}
+                                      <span className="font-semibold text-green-700">{parseInt(mValue).toLocaleString()}원</span>입니다.
+                                    </p>
+                                  )}
+                                  
+                                  <p className="leading-relaxed pt-2 border-t border-green-300 font-semibold">
+                                    종합적으로 해당 상품은 <span className="text-green-700">{storeName}</span>의 상품 대비 높은 판매 잠재력을 가지므로 발주를 권장드립니다.
+                                  </p>
+                                </>
+                              )
+                            })() : (() => {
+                              // 부진재고: R, F, M 값 추출
+                              // 예시: "최근 10.5일 내 판매가 발생했고, 한 달 동안 2.0회 판매되었으며 6750원의 매출을 기록했습니다"
+                              const recReason = selectedProduct.rec_reason
+                              
+                              // R 값: "최근 X일 내" 또는 "X일 내" 패턴에서 소수점 포함 숫자 찾기
+                              const rMatch = recReason.match(/(\d+\.?\d*)\s*일\s*내/)
+                              const rValue = rMatch ? rMatch[1] : ''
+                              
+                              // F 값: "X회 판매" 패턴에서 소수점 포함 숫자 찾기
+                              const fMatch = recReason.match(/(\d+\.?\d*)\s*회\s*판매/)
+                              const fValue = fMatch ? fMatch[1] : ''
+                              
+                              // M 값: "X원의 매출" 또는 "X원" 패턴에서 숫자 찾기
+                              const mMatch = recReason.match(/(\d+)\s*원/)
+                              const mValue = mMatch ? mMatch[1] : ''
+                              
+                              // 상품명에서 "은(는)" 처리
+                              const itemName = selectedProduct.item_nm
+                              const isEndWithVowel = /[가-힣][가-힣]?[ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅣ]$/.test(itemName)
+                              const itemNameSuffix = isEndWithVowel ? '은' : '는'
+                              
+                              // 숫자 포맷팅 함수 (소수점 처리)
+                              const formatNumber = (value: string) => {
+                                if (!value) return ''
+                                const num = parseFloat(value)
+                                if (isNaN(num)) return value
+                                // 소수점이 있으면 그대로, 없으면 정수로 표시
+                                return num % 1 === 0 ? num.toLocaleString() : num.toString()
+                              }
+                              
+                              return (
+                                <>
+                                  {rValue && (
+                                    <p className="leading-relaxed">
+                                      <span className="font-semibold text-orange-700">{storeName} 점주님!</span>{' '}
+                                      <span className="font-semibold">{itemName}</span>{itemNameSuffix} 내 매장에서 최근{' '}
+                                      <span className="font-semibold text-orange-700">{rValue}일</span> 내에 판매된 상품입니다.
+                                    </p>
+                                  )}
+                                  
+                                  {fValue && mValue && (
+                                    <p className="leading-relaxed">
+                                      해당 상품은 한 달 동안 <span className="font-semibold text-orange-700">{formatNumber(fValue)}회</span> 판매되었고, 총 매출은{' '}
+                                      <span className="font-semibold text-orange-700">{parseInt(mValue).toLocaleString()}원</span> 입니다.
+                                    </p>
+                                  )}
+                                  
+                                  <p className="leading-relaxed pt-2 border-t border-orange-300 font-semibold">
+                                    점주님의 매장 효율화를 위해 발주 제외를 권장드립니다.
+                                  </p>
+                                </>
+                              )
+                            })()}
                           </div>
                         ) : (
                           <p className="text-gray-500">
