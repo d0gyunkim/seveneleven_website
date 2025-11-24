@@ -277,6 +277,30 @@ export default function RecommendationsPage() {
   const currentGroupedProducts = activeTab === 'recommended' ? groupedRecommendedProducts : groupedExcludedProducts
   const totalProducts = activeTab === 'recommended' ? totalRecommendedProducts : totalExcludedProducts
 
+  // 추천 상품에서 대분류별 중분류 순서 추출 (최초 등장 순서 기준)
+  const recommendedCategoryOrder = useMemo(() => {
+    const orderMap = new Map<string, string[]>()
+    
+    // 대분류별로 중분류 순서 저장
+    recommendedProducts.forEach((product) => {
+      const largeCategory = product.item_lrdv_nm
+      const middleCategory = product.item_mddv_nm || '기타'
+      
+      if (largeCategory) {
+        if (!orderMap.has(largeCategory)) {
+          orderMap.set(largeCategory, [])
+        }
+        
+        const middleCategories = orderMap.get(largeCategory)!
+        if (!middleCategories.includes(middleCategory)) {
+          middleCategories.push(middleCategory)
+        }
+      }
+    })
+    
+    return orderMap
+  }, [recommendedProducts])
+
   // 선택된 대분류에 따라 필터링된 중분류 그룹
   const filteredGroupedProducts = useMemo(() => {
     // 대분류가 선택되지 않았으면 빈 객체 반환
@@ -327,8 +351,33 @@ export default function RecommendationsPage() {
       })
     })
 
-    return filtered
-  }, [selectedLargeCategory, activeTab, recommendedProducts, excludedProducts])
+    // 추천 상품의 중분류 순서 기준으로 정렬
+    const recommendedOrder = recommendedCategoryOrder.get(selectedLargeCategory) || []
+    const sortedFiltered: GroupedProducts = {}
+    
+    // 추천 상품에 있는 중분류를 먼저 순서대로 추가
+    const sortedKeys: string[] = []
+    
+    // 1. 추천 상품에 있는 중분류를 순서대로 추가
+    recommendedOrder.forEach(category => {
+      if (filtered[category]) {
+        sortedKeys.push(category)
+      }
+    })
+    
+    // 2. 추천 상품에 없는 중분류를 맨 뒤에 추가
+    Object.keys(filtered).forEach(category => {
+      if (!recommendedOrder.includes(category)) {
+        sortedKeys.push(category)
+      }
+    })
+    
+    sortedKeys.forEach(key => {
+      sortedFiltered[key] = filtered[key]
+    })
+
+    return sortedFiltered
+  }, [selectedLargeCategory, activeTab, recommendedProducts, excludedProducts, recommendedCategoryOrder])
 
   // 탭 변경 시 대분류 선택 초기화 (첫 번째 대분류로 설정)
   useEffect(() => {
