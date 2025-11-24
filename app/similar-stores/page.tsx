@@ -3,12 +3,16 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Layout from '@/components/Layout'
+import KakaoMap from '@/components/KakaoMap'
 import { supabase } from '@/lib/supabase'
 
 interface SimilarStore {
   store_code: string
   store_nm: string
   rank: number
+  address?: string
+  latitude?: number
+  longitude?: number
 }
 
 interface StoreDetail {
@@ -33,6 +37,7 @@ export default function SimilarStoresPage() {
   
   const [similarStores, setSimilarStores] = useState<SimilarStore[]>([])
   const [currentStoreName, setCurrentStoreName] = useState<string>('')
+  const [currentStoreInfo, setCurrentStoreInfo] = useState<SimilarStore | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedStore, setSelectedStore] = useState<StoreDetail | null>(null)
@@ -142,6 +147,33 @@ export default function SimilarStoresPage() {
       // 매장명 설정
       const storeName = foundStore.store_nm || ''
       setCurrentStoreName(storeName)
+      
+      // 현재 매장 정보 저장 (지도 표시용)
+      const foundStoreData = foundStore as any
+      const latRaw = foundStoreData['위도'] || foundStoreData.latitude
+      const lngRaw = foundStoreData['경도'] || foundStoreData.longitude
+      
+      let latitude: number | undefined
+      let longitude: number | undefined
+      
+      if (latRaw) {
+        const latNum = typeof latRaw === 'number' ? latRaw : parseFloat(String(latRaw))
+        latitude = isNaN(latNum) ? undefined : latNum
+      }
+      
+      if (lngRaw) {
+        const lngNum = typeof lngRaw === 'number' ? lngRaw : parseFloat(String(lngRaw))
+        longitude = isNaN(lngNum) ? undefined : lngNum
+      }
+      
+      setCurrentStoreInfo({
+        store_code: String(foundStoreData.store_code),
+        store_nm: storeName,
+        rank: 0, // 현재 매장은 순위 0으로 표시
+        address: foundStoreData['주소'] || foundStoreData.address || undefined,
+        latitude,
+        longitude,
+      })
 
       // 가장 최신 월의 유사매장 목록 가져오기 (초기 로드)
       if (currentStoreAvailableMonths.length > 0) {
@@ -191,7 +223,7 @@ export default function SimilarStoresPage() {
       
       const { data: similarStoreData, error: similarStoreError } = await supabase
         .from('매장마스터')
-        .select('store_code, store_nm')
+        .select('*')
         .eq('store_code', similarCode)
         .limit(1)
 
@@ -201,13 +233,33 @@ export default function SimilarStoresPage() {
       }
 
       if (similarStoreData && similarStoreData.length > 0) {
-        const similarStore = similarStoreData[0]
+        const similarStore = similarStoreData[0] as any
         const similarStoreNm = similarStore.store_nm || ''
+        
+        // 위도/경도 숫자 변환 (text 타입이므로 안전하게 변환)
+        const latRaw = similarStore['위도'] || similarStore.latitude
+        const lngRaw = similarStore['경도'] || similarStore.longitude
+        
+        let latitude: number | undefined
+        let longitude: number | undefined
+        
+        if (latRaw) {
+          const latNum = typeof latRaw === 'number' ? latRaw : parseFloat(String(latRaw))
+          latitude = isNaN(latNum) ? undefined : latNum
+        }
+        
+        if (lngRaw) {
+          const lngNum = typeof lngRaw === 'number' ? lngRaw : parseFloat(String(lngRaw))
+          longitude = isNaN(lngNum) ? undefined : lngNum
+        }
         
         similarStoresData.push({
           store_code: String(similarStore.store_code),
           store_nm: similarStoreNm,
           rank: i + 1, // 순위는 1부터 시작
+          address: similarStore['주소'] || similarStore.address || undefined,
+          latitude,
+          longitude,
         })
       }
     }
@@ -345,51 +397,53 @@ export default function SimilarStoresPage() {
       <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6">
           {/* 헤더 */}
-          <div className="mb-4 md:mb-6 flex items-center justify-between">
-            <h2 className="text-xl md:text-2xl font-bold text-green-500 mb-1">
-              유사 매장 순위
-            </h2>
-            <button
-              onClick={() => setShowInfoModal(true)}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-              title="유사 매장 산정 방법 알아보기"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          <div className="mb-8 md:mb-10">
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex-1">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 tracking-tight">
+                  유사 매장 순위
+                </h2>
+                <p className="text-base md:text-lg text-gray-600 leading-relaxed">
+                  판매 패턴과 상권 특성이 유사한 매장들을 확인하세요
+                </p>
+              </div>
+              <button
+                onClick={() => setShowInfoModal(true)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200 border border-gray-200 hover:border-green-300 ml-4"
+                title="유사 매장 산정 방법 알아보기"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span className="hidden md:inline">산정 방법</span>
-            </button>
-          </div>
-
-          {/* 안내 문구 */}
-          <div className="mb-4 md:mb-6">
-            <p className="text-sm md:text-base text-gray-700 mb-3">
-              점주님과 유사한 매장은 다음과 같습니다
-            </p>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="hidden md:inline">산정 방법</span>
+              </button>
+            </div>
+            
             {/* 월별 탭 */}
             {currentStoreAvailableMonths.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-sm font-medium text-gray-600">분석 기준 월:</span>
                 {currentStoreAvailableMonths.map((month) => (
                   <button
                     key={month}
                     onClick={() => handleCurrentMonthChange(month)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 whitespace-nowrap shadow-sm ${
                       currentSelectedMonth === month
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-green-500 text-white shadow-md scale-105'
+                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-green-300'
                     }`}
                   >
-                    {month} 기준
+                    {month}
                   </button>
                 ))}
               </div>
@@ -398,33 +452,38 @@ export default function SimilarStoresPage() {
 
           {/* 유사매장 목록 */}
           {similarStores.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-600">유사 매장 정보가 없습니다.</p>
+            <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
+              <p className="text-gray-500 text-base">유사 매장 정보가 없습니다.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {similarStores.map((store) => (
                 <div
                   key={store.store_code}
-                  className={`bg-white border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                  className={`bg-white border-2 rounded-xl p-5 cursor-pointer transition-all duration-200 ${
                     selectedStore?.store_code === store.store_code
-                      ? 'border-green-500 bg-green-50 shadow-md'
+                      ? 'border-green-500 bg-green-50 shadow-lg'
                       : 'border-gray-200 hover:border-green-300 hover:shadow-md'
                   }`}
                   onClick={() => handleStoreClick(store.store_code)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="text-sm md:text-base text-gray-900 font-medium">
-                        세븐일레븐 {store.store_nm} <span className="text-green-500">유사 매장 순위 : {store.rank}위</span>
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        클릭하여 상세 정보 보기
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-green-100 text-green-600 font-bold text-sm">
+                          {store.rank}
+                        </span>
+                        <p className="text-base md:text-lg text-gray-900 font-semibold">
+                          세븐일레븐 {store.store_nm}
+                        </p>
+                      </div>
+                      <p className="text-sm text-gray-500 ml-11">
+                        클릭하여 매장 상세 정보 확인
                       </p>
                     </div>
                     <div className="ml-4">
                       <svg
-                        className={`w-5 h-5 transition-transform ${
+                        className={`w-6 h-6 transition-transform duration-200 ${
                           selectedStore?.store_code === store.store_code
                             ? 'text-green-500 rotate-90'
                             : 'text-gray-400'
@@ -447,18 +506,40 @@ export default function SimilarStoresPage() {
             </div>
           )}
 
+          {/* 지도 섹션 */}
+          {similarStores.length > 0 && (
+            <div className="mt-10 md:mt-12">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
+                  유사 매장 위치 지도
+                </h3>
+                {currentSelectedMonth && (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
+                    <span className="text-sm font-medium text-gray-600">분석 기준:</span>
+                    <span className="text-base font-bold text-green-600">{currentSelectedMonth}</span>
+                  </div>
+                )}
+              </div>
+              <KakaoMap 
+                stores={currentStoreInfo ? [currentStoreInfo, ...similarStores] : similarStores}
+                currentStoreName={currentStoreName}
+                className="w-full"
+              />
+            </div>
+          )}
+
           {/* 매장 상세 정보 */}
           {selectedStore && availableMonths.length > 0 && (
-            <div className="mt-8 md:mt-12">
+            <div className="mt-10 md:mt-14">
               {/* 상세 정보 헤더 */}
-              <div className="mb-6 md:mb-8">
-                <div className="flex items-center justify-between mb-4">
+              <div className="mb-8 md:mb-10">
+                <div className="flex items-center justify-between mb-8">
                   {/* 왼쪽: 월 + 매장명 */}
                   <div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
+                    <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2 tracking-tight">
                       {selectedMonth || ''} {selectedStore.store_nm || ''} 정보
                     </h2>
-                    <p className="text-xs text-gray-400">Top Start</p>
+                    <p className="text-sm text-gray-500 font-medium tracking-wide">Top Start</p>
                   </div>
                   
                   {/* 오른쪽: 월별 탭 */}
@@ -487,21 +568,41 @@ export default function SimilarStoresPage() {
                 </div>
                 
                 {/* 유사 매장 인기 상품 순위 제목 */}
-                <h3 className="text-xl md:text-2xl font-bold text-green-500">
-                  유사 매장 인기 상품 순위
-                </h3>
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-2xl md:text-3xl font-bold text-green-600 tracking-tight">
+                    유사 매장 인기 상품 순위
+                  </h3>
+                  <button
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-green-300 transition-colors"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                    내 매장 취급 상품 제외
+                  </button>
+                </div>
               </div>
 
               {/* 대분류 탭 */}
-              <div className="flex flex-wrap gap-2 mb-4 md:mb-6 overflow-x-auto">
+              <div className="flex flex-wrap gap-3 mb-6 md:mb-8 overflow-x-auto">
                 {categories.map((category) => (
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className={`px-4 py-2 rounded-lg text-sm md:text-base font-medium transition-colors whitespace-nowrap ${
+                    className={`px-5 py-2.5 rounded-lg text-base md:text-lg font-semibold transition-all duration-200 whitespace-nowrap shadow-sm ${
                       selectedCategory === category
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-green-500 text-white shadow-md scale-105'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'
                     }`}
                   >
                     {category}

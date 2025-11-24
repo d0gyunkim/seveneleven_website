@@ -1,0 +1,194 @@
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+
+declare global {
+  interface Window {
+    kakao: any
+  }
+}
+
+interface StoreLocation {
+  store_code: string
+  store_nm: string
+  rank: number
+  address?: string
+  latitude?: number
+  longitude?: number
+}
+
+interface KakaoMapProps {
+  stores: StoreLocation[]
+  currentStoreName?: string
+  className?: string
+}
+
+export default function KakaoMap({ stores, currentStoreName, className = '' }: KakaoMapProps) {
+  const mapRef = useRef<HTMLDivElement>(null)
+  const [map, setMap] = useState<any>(null)
+  const [markers, setMarkers] = useState<any[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  // 카카오맵 스크립트 로드
+  useEffect(() => {
+    const script = document.createElement('script')
+    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY}&libraries=services&autoload=false`
+    script.async = true
+    script.onload = () => {
+      if (window.kakao) {
+        window.kakao.maps.load(() => {
+          setIsLoaded(true)
+        })
+      }
+    }
+    document.head.appendChild(script)
+
+    return () => {
+      document.head.removeChild(script)
+    }
+  }, [])
+
+  // 지도 초기화 및 마커 생성
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current || stores.length === 0) return
+
+    // 지도 초기화 (기본 위치: 서울 시청)
+    const defaultPosition = new window.kakao.maps.LatLng(37.5665, 126.9780)
+    const mapOption = {
+      center: defaultPosition,
+      level: 8,
+    }
+
+    const kakaoMap = new window.kakao.maps.Map(mapRef.current, mapOption)
+    setMap(kakaoMap)
+
+    // 기존 마커 제거
+    markers.forEach((marker) => marker.setMap(null))
+
+    const geocoder = new window.kakao.maps.services.Geocoder()
+    const newMarkers: any[] = []
+    const bounds = new window.kakao.maps.LatLngBounds()
+
+    // 현재 매장 정보
+    const currentStoreInfo = currentStoreName ? { store_nm: currentStoreName } : null
+
+    stores.forEach((store, index) => {
+      const createMarker = (lat: number, lng: number, storeInfo: StoreLocation) => {
+        const position = new window.kakao.maps.LatLng(lat, lng)
+        bounds.extend(position)
+
+        // 현재 매장과 유사 매장을 구분하여 마커 색상 설정
+        const isCurrentStore = currentStoreInfo && storeInfo.store_nm === currentStoreInfo.store_nm
+        const markerColor = isCurrentStore ? '#DC2626' : '#10B981' // 빨간색: 현재 매장, 초록색: 유사 매장
+        const markerSize = isCurrentStore ? 64 : 50
+
+        // 커스텀 마커 이미지 생성
+        const rankText = String(storeInfo.rank || index + 1)
+        const svgString = `<svg width="${markerSize}" height="${markerSize}" xmlns="http://www.w3.org/2000/svg"><circle cx="${markerSize / 2}" cy="${markerSize / 2}" r="${markerSize / 2 - 2}" fill="${markerColor}" stroke="white" stroke-width="3"/><text x="${markerSize / 2}" y="${markerSize / 2 + 5}" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${rankText}</text></svg>`
+        const svgBase64 = btoa(unescape(encodeURIComponent(svgString)))
+        
+        const markerImage = new window.kakao.maps.MarkerImage(
+          `data:image/svg+xml;base64,${svgBase64}`,
+          new window.kakao.maps.Size(markerSize, markerSize),
+          { offset: new window.kakao.maps.Point(markerSize / 2, markerSize) }
+        )
+
+        const marker = new window.kakao.maps.Marker({
+          position: position,
+          image: markerImage,
+          map: kakaoMap,
+        })
+
+        // 인포윈도우 생성
+        const infoWindow = new window.kakao.maps.InfoWindow({
+          content: `
+            <div style="padding: 8px; min-width: 150px;">
+              <div style="font-weight: bold; font-size: 14px; margin-bottom: 4px; color: ${markerColor};">
+                ${isCurrentStore ? '현재 매장' : `#${storeInfo.rank} 유사 매장`}
+              </div>
+              <div style="font-size: 13px; color: #333;">
+                세븐일레븐 ${storeInfo.store_nm}
+              </div>
+            </div>
+          `,
+        })
+
+        // 마커 클릭 이벤트
+        window.kakao.maps.event.addListener(marker, 'click', () => {
+          infoWindow.open(kakaoMap, marker)
+        })
+
+        newMarkers.push(marker)
+      }
+
+      // 위도/경도가 있으면 바로 사용
+      if (store.latitude && store.longitude) {
+        createMarker(store.latitude, store.longitude, store)
+      } else if (store.address) {
+        // 주소가 있으면 주소로 좌표 검색
+        geocoder.addressSearch(store.address, (result: any[], status: string) => {
+          if (status === window.kakao.maps.services.Status.OK) {
+            const coords = new window.kakao.maps.LatLng(result[0].y, result[0].x)
+            createMarker(parseFloat(result[0].y), parseFloat(result[0].x), store)
+          } else {
+            console.warn(`주소 검색 실패: ${store.address}`)
+            // 주소 검색 실패 시 매장명으로 재검색
+            geocoder.keywordSearch(`세븐일레븐 ${store.store_nm}`, (result: any[], status: string) => {
+              if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+                createMarker(parseFloat(result[0].y), parseFloat(result[0].x), store)
+              }
+            })
+          }
+        })
+      } else {
+        // 주소와 좌표가 없으면 매장명으로 검색
+        geocoder.keywordSearch(`세븐일레븐 ${store.store_nm}`, (result: any[], status: string) => {
+          if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+            createMarker(parseFloat(result[0].y), parseFloat(result[0].x), store)
+          } else {
+            console.warn(`매장 검색 실패: ${store.store_nm}`)
+          }
+        })
+      }
+    })
+
+    // 모든 마커가 추가되면 지도 범위 조정
+    setTimeout(() => {
+      if (newMarkers.length > 0) {
+        kakaoMap.setBounds(bounds)
+      }
+    }, 1000)
+
+    setMarkers(newMarkers)
+  }, [isLoaded, stores, currentStoreName])
+
+  if (!isLoaded) {
+    return (
+      <div className={`flex items-center justify-center bg-gray-100 rounded-lg ${className}`} style={{ minHeight: '400px' }}>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-green-500 mb-4"></div>
+          <p className="text-gray-600">지도를 불러오는 중...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={`rounded-lg overflow-hidden border border-gray-200 shadow-lg ${className}`}>
+      <div ref={mapRef} style={{ width: '100%', height: '500px' }}></div>
+      <div className="bg-white p-3 border-t border-gray-200">
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-full bg-red-500"></div>
+            <span className="text-gray-700">현재 매장</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-full bg-green-500"></div>
+            <span className="text-gray-700">유사 매장</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
