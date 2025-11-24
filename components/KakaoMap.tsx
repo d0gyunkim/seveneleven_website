@@ -28,6 +28,7 @@ export default function KakaoMap({ stores, currentStoreName, className = '' }: K
   const [map, setMap] = useState<any>(null)
   const [markers, setMarkers] = useState<any[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
 
   // 카카오맵 스크립트 로드
   useEffect(() => {
@@ -68,9 +69,56 @@ export default function KakaoMap({ stores, currentStoreName, className = '' }: K
     const geocoder = new window.kakao.maps.services.Geocoder()
     const newMarkers: any[] = []
     const bounds = new window.kakao.maps.LatLngBounds()
+    let completedSearches = 0
+    const totalStores = stores.length
 
     // 현재 매장 정보
     const currentStoreInfo = currentStoreName ? { store_nm: currentStoreName } : null
+
+    setIsSearching(true)
+
+    const checkCompletion = () => {
+      completedSearches++
+      if (completedSearches >= totalStores) {
+        setIsSearching(false)
+        // 모든 마커가 추가되면 지도 범위 조정
+        if (newMarkers.length > 0) {
+          try {
+            // bounds 객체가 제대로 초기화되었고, isEmpty() 메서드를 사용하여 확인
+            if (typeof bounds.isEmpty === 'function' && !bounds.isEmpty()) {
+              kakaoMap.setBounds(bounds)
+            } else if (newMarkers.length > 0) {
+              // bounds가 비어있으면 첫 번째 마커로 이동
+              const firstMarker = newMarkers[0]
+              if (firstMarker && typeof firstMarker.getPosition === 'function') {
+                const position = firstMarker.getPosition()
+                if (position) {
+                  kakaoMap.setCenter(position)
+                  kakaoMap.setLevel(8)
+                }
+              }
+            }
+          } catch (error) {
+            console.warn('지도 범위 설정 실패:', error)
+            // 범위 설정 실패 시 첫 번째 마커로 이동
+            if (newMarkers.length > 0) {
+              try {
+                const firstMarker = newMarkers[0]
+                if (firstMarker && typeof firstMarker.getPosition === 'function') {
+                  const position = firstMarker.getPosition()
+                  if (position) {
+                    kakaoMap.setCenter(position)
+                    kakaoMap.setLevel(8)
+                  }
+                }
+              } catch (e) {
+                console.error('마커 위치 설정 실패:', e)
+              }
+            }
+          }
+        }
+      }
+    }
 
     stores.forEach((store, index) => {
       const createMarker = (lat: number, lng: number, storeInfo: StoreLocation) => {
@@ -124,12 +172,13 @@ export default function KakaoMap({ stores, currentStoreName, className = '' }: K
       // 위도/경도가 있으면 바로 사용
       if (store.latitude && store.longitude) {
         createMarker(store.latitude, store.longitude, store)
+        checkCompletion()
       } else if (store.address) {
         // 주소가 있으면 주소로 좌표 검색
         geocoder.addressSearch(store.address, (result: any[], status: string) => {
           if (status === window.kakao.maps.services.Status.OK) {
-            const coords = new window.kakao.maps.LatLng(result[0].y, result[0].x)
             createMarker(parseFloat(result[0].y), parseFloat(result[0].x), store)
+            checkCompletion()
           } else {
             console.warn(`주소 검색 실패: ${store.address}`)
             // 주소 검색 실패 시 매장명으로 재검색
@@ -137,6 +186,7 @@ export default function KakaoMap({ stores, currentStoreName, className = '' }: K
               if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
                 createMarker(parseFloat(result[0].y), parseFloat(result[0].x), store)
               }
+              checkCompletion()
             })
           }
         })
@@ -148,16 +198,10 @@ export default function KakaoMap({ stores, currentStoreName, className = '' }: K
           } else {
             console.warn(`매장 검색 실패: ${store.store_nm}`)
           }
+          checkCompletion()
         })
       }
     })
-
-    // 모든 마커가 추가되면 지도 범위 조정
-    setTimeout(() => {
-      if (newMarkers.length > 0) {
-        kakaoMap.setBounds(bounds)
-      }
-    }, 1000)
 
     setMarkers(newMarkers)
   }, [isLoaded, stores, currentStoreName])
@@ -174,8 +218,16 @@ export default function KakaoMap({ stores, currentStoreName, className = '' }: K
   }
 
   return (
-    <div className={`rounded-lg overflow-hidden border border-gray-200 shadow-lg ${className}`}>
+    <div className={`rounded-lg overflow-hidden border border-gray-200 shadow-lg ${className}`} style={{ position: 'relative' }}>
       <div ref={mapRef} style={{ width: '100%', height: '500px' }}></div>
+      {isSearching && (
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255, 255, 255, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, borderRadius: '8px' }}>
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mb-2"></div>
+            <p className="text-sm text-gray-600">매장 위치를 찾는 중...</p>
+          </div>
+        </div>
+      )}
       <div className="bg-white p-3 border-t border-gray-200">
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-2">
@@ -186,6 +238,11 @@ export default function KakaoMap({ stores, currentStoreName, className = '' }: K
             <div className="w-4 h-4 rounded-full bg-green-500"></div>
             <span className="text-gray-700">유사 매장</span>
           </div>
+          {isSearching && (
+            <div className="ml-auto text-xs text-gray-500">
+              위치 검색 중...
+            </div>
+          )}
         </div>
       </div>
     </div>
