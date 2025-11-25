@@ -524,6 +524,11 @@ export default function SimilarStoresPage() {
                 stores={currentStoreInfo ? [currentStoreInfo, ...similarStores] : similarStores}
                 currentStoreName={currentStoreName}
                 className="w-full"
+                selectedStore={selectedStore ? {
+                  store_code: selectedStore.store_code,
+                  store_nm: selectedStore.store_nm,
+                  월기준: selectedMonth
+                } : null}
               />
             </div>
           )}
