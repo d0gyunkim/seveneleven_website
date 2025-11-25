@@ -562,23 +562,23 @@ export default function SimilarStoresPage() {
             </div>
           )}
 
-          {/* 매장 상세 정보 */}
+          {/* 매장 상세 정보 - 목록/지도 아래에 통합 */}
           {selectedStore && availableMonths.length > 0 && (
-            <div className="mt-10 md:mt-14">
+            <div className="mt-6 md:mt-8">
               {/* 상세 정보 헤더 */}
-              <div className="mb-8 md:mb-10">
-                <div className="flex items-center justify-between mb-8">
+              <div className="mb-6 md:mb-8">
+                <div className="flex items-start justify-between mb-6">
                   {/* 왼쪽: 월 + 매장명 */}
-                  <div>
-                    <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2 tracking-tight">
+                  <div className="flex-1">
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 tracking-tight">
                       {selectedMonth || ''} {selectedStore.store_nm || ''} 정보
                     </h2>
-                    <p className="text-sm text-gray-500 font-medium tracking-wide">Top Start</p>
+                    <p className="text-xs md:text-sm text-gray-500 font-medium">Top Start</p>
                   </div>
                   
                   {/* 오른쪽: 월별 탭 */}
                   {availableMonths.length > 0 && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 ml-4">
                       {availableMonths.map((month) => (
                         <button
                           key={month}
@@ -588,10 +588,10 @@ export default function SimilarStoresPage() {
                             setSelectedStore(storeDetailsByMonth[month])
                             setSelectedCategory('과자') // 월 변경 시 카테고리도 초기화
                           }}
-                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                          className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${
                             selectedMonth === month
                               ? 'bg-green-500 text-white'
-                              : 'text-gray-500 hover:text-gray-700'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
                         >
                           {month}
@@ -602,15 +602,15 @@ export default function SimilarStoresPage() {
                 </div>
                 
                 {/* 유사 매장 인기 상품 순위 제목 */}
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-2xl md:text-3xl font-bold text-green-600 tracking-tight">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl md:text-2xl font-bold text-green-600 tracking-tight">
                     유사 매장 인기 상품 순위
                   </h3>
                   <button
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-green-300 transition-colors"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-lg text-xs md:text-sm font-medium text-gray-700 hover:bg-gray-200 hover:border-green-300 transition-colors"
                   >
                     <svg
-                      className="w-4 h-4"
+                      className="w-3 h-3 md:w-4 md:h-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -622,21 +622,22 @@ export default function SimilarStoresPage() {
                         d="M6 18L18 6M6 6l12 12"
                       />
                     </svg>
-                    내 매장 취급 상품 제외
+                    <span className="hidden sm:inline">내 매장 취급 상품 제외</span>
+                    <span className="sm:hidden">제외</span>
                   </button>
                 </div>
               </div>
 
               {/* 대분류 탭 */}
-              <div className="flex flex-wrap gap-3 mb-6 md:mb-8 overflow-x-auto">
+              <div className="flex flex-wrap gap-2 md:gap-3 mb-4 md:mb-6 overflow-x-auto pb-2">
                 {categories.map((category) => (
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className={`px-5 py-2.5 rounded-lg text-base md:text-lg font-semibold transition-all duration-200 whitespace-nowrap shadow-sm ${
+                    className={`px-4 py-2 rounded-lg text-sm md:text-base font-semibold transition-all duration-200 whitespace-nowrap ${
                       selectedCategory === category
-                        ? 'bg-green-500 text-white shadow-md scale-105'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     {category}
@@ -653,14 +654,14 @@ export default function SimilarStoresPage() {
               ) : (
                 <div>
                   {selectedStore[selectedCategory] ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                       {Object.entries(selectedStore[selectedCategory] as Record<string, string[]>).map(
                         ([subCategory, products]) => (
                           <div
                             key={subCategory}
-                            className="bg-white border border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                            className="bg-white border-l-4 border-green-500 rounded-lg p-3 md:p-4 hover:shadow-md transition-shadow"
                           >
-                            <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center justify-between mb-2 md:mb-3">
                               <h3 className="text-sm md:text-base font-semibold text-gray-900">
                                 {subCategory}
                               </h3>
@@ -668,16 +669,16 @@ export default function SimilarStoresPage() {
                                 판매순 상위
                               </span>
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-1.5 md:space-y-2">
                               {products.map((product, index) => (
                                 <div
                                   key={index}
-                                  className="flex items-start gap-2 text-xs md:text-sm text-gray-700 py-1"
+                                  className="flex items-start gap-2 text-xs md:text-sm text-gray-700"
                                 >
-                                  <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full bg-green-50 text-green-600 font-semibold text-xs mt-0.5">
+                                  <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full bg-green-50 text-green-600 font-semibold text-xs">
                                     {index + 1}
                                   </span>
-                                  <span className="flex-1">{product}</span>
+                                  <span className="flex-1 leading-tight">{product}</span>
                                 </div>
                               ))}
                             </div>

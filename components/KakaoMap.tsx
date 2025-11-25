@@ -37,6 +37,7 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
   const [isLoaded, setIsLoaded] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const overlayRef = useRef<any>(null)
+  const markerOverlaysRef = useRef<any[]>([])
 
   // 카카오맵 스크립트 로드
   useEffect(() => {
@@ -71,8 +72,12 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
     const kakaoMap = new window.kakao.maps.Map(mapRef.current, mapOption)
     setMap(kakaoMap)
 
-    // 기존 마커 제거
+    // 기존 마커 및 오버레이 제거
     markers.forEach((marker) => marker.setMap(null))
+    markerOverlaysRef.current.forEach((overlay) => {
+      if (overlay) overlay.setMap(null)
+    })
+    markerOverlaysRef.current = []
 
     const geocoder = new window.kakao.maps.services.Geocoder()
     const newMarkers: any[] = []
@@ -133,29 +138,64 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
         const position = new window.kakao.maps.LatLng(lat, lng)
         bounds.extend(position)
 
-        // 현재 매장과 유사 매장을 구분하여 마커 색상 설정
+        // 현재 매장과 유사 매장을 구분하여 색상 설정
         const isCurrentStore = currentStoreInfo && storeInfo.store_nm === currentStoreInfo.store_nm
         const markerColor = isCurrentStore ? '#DC2626' : '#10B981' // 빨간색: 현재 매장, 초록색: 유사 매장
-        const markerSize = isCurrentStore ? 64 : 50
 
-        // 커스텀 마커 이미지 생성
-        const rankText = String(storeInfo.rank || index + 1)
-        const svgString = `<svg width="${markerSize}" height="${markerSize}" xmlns="http://www.w3.org/2000/svg"><circle cx="${markerSize / 2}" cy="${markerSize / 2}" r="${markerSize / 2 - 2}" fill="${markerColor}" stroke="white" stroke-width="3"/><text x="${markerSize / 2}" y="${markerSize / 2 + 5}" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${rankText}</text></svg>`
-        const svgBase64 = btoa(unescape(encodeURIComponent(svgString)))
-        
-        const markerImage = new window.kakao.maps.MarkerImage(
-          `data:image/svg+xml;base64,${svgBase64}`,
-          new window.kakao.maps.Size(markerSize, markerSize),
-          { offset: new window.kakao.maps.Point(markerSize / 2, markerSize) }
-        )
-
-        const marker = new window.kakao.maps.Marker({
+        // 투명한 마커 생성 (위치 참조용, 화면에는 표시 안 함)
+        const invisibleMarker = new window.kakao.maps.Marker({
           position: position,
-          image: markerImage,
-          map: kakaoMap,
+          map: null, // 지도에 표시하지 않음
         })
 
-        // 인포윈도우 생성
+        // 마커에 store_code 저장 (오버레이 표시용, 문자열로 정규화)
+        invisibleMarker.store_code = String(storeInfo.store_code || '')
+        invisibleMarker.store_nm = storeInfo.store_nm || ''
+
+        // 각 위치에 매장 이름 오버레이 생성
+        const overlayContent = `
+          <div style="
+            background: white;
+            border: 2px solid ${markerColor};
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            min-width: 120px;
+            max-width: 180px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            cursor: pointer;
+          ">
+            <div style="
+              background: linear-gradient(135deg, ${markerColor} 0%, ${isCurrentStore ? '#B91C1C' : '#059669'} 100%);
+              padding: 4px 8px;
+              color: white;
+            ">
+              <div style="
+                font-weight: bold;
+                font-size: 11px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              ">
+                ${storeInfo.store_nm}
+              </div>
+            </div>
+          </div>
+        `
+
+        const markerOverlay = new window.kakao.maps.CustomOverlay({
+          position: position,
+          content: overlayContent,
+          yAnchor: 0.5, // 위치 중앙에 표시
+          xAnchor: 0.5,
+        })
+
+        markerOverlay.setMap(kakaoMap)
+        markerOverlay.marker = invisibleMarker // 마커 참조 저장
+        markerOverlay.storeInfo = storeInfo // 매장 정보 저장
+        markerOverlaysRef.current.push(markerOverlay)
+
+        // 오버레이 클릭 이벤트 (인포윈도우 표시)
         const infoWindow = new window.kakao.maps.InfoWindow({
           content: `
             <div style="padding: 8px; min-width: 150px;">
@@ -169,16 +209,17 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
           `,
         })
 
-        // 마커 클릭 이벤트
-        window.kakao.maps.event.addListener(marker, 'click', () => {
-          infoWindow.open(kakaoMap, marker)
-        })
+        // 오버레이 DOM 요소에 클릭 이벤트 추가
+        setTimeout(() => {
+          const overlayElement = markerOverlay.getContent()
+          if (overlayElement) {
+            overlayElement.addEventListener('click', () => {
+              infoWindow.open(kakaoMap, invisibleMarker)
+            })
+          }
+        }, 100)
 
-        // 마커에 store_code 저장 (오버레이 표시용, 문자열로 정규화)
-        marker.store_code = String(storeInfo.store_code || '')
-        marker.store_nm = storeInfo.store_nm || ''
-
-        newMarkers.push(marker)
+        newMarkers.push(invisibleMarker)
       }
 
       // 위도/경도가 있으면 바로 사용
@@ -218,138 +259,78 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
     setMarkers(newMarkers)
   }, [isLoaded, stores, currentStoreName])
 
-  // 선택된 매장에 대한 오버레이 표시
+    // 선택된 매장의 오버레이 강조 표시
   useEffect(() => {
-    if (!map || !selectedStore || markers.length === 0) {
-      // 기존 오버레이 제거
-      if (overlayRef.current) {
-        overlayRef.current.setMap(null)
-        overlayRef.current = null
-      }
+    if (!map || !selectedStore || markerOverlaysRef.current.length === 0) {
       return
     }
 
-    // 선택된 매장의 마커 찾기 (store_nm을 우선으로 비교, store_code도 확인)
+    // 선택된 매장의 오버레이 찾기
     const targetStoreCode = String(selectedStore.store_code || '').trim()
     const targetStoreNm = String(selectedStore.store_nm || '').trim()
     
-    console.log('마커 찾기 시작:', {
-      targetStoreCode,
-      targetStoreNm,
-      markersCount: markers.length
-    })
-    
-    const selectedMarker = markers.find((marker) => {
-      const markerStoreCode = String(marker.store_code || '').trim()
-      const markerStoreNm = String(marker.store_nm || '').trim()
-      
-      // store_nm으로 먼저 비교 (더 정확함)
-      if (targetStoreNm && markerStoreNm && targetStoreNm === markerStoreNm) {
-        console.log('store_nm으로 매칭:', { targetStoreNm, markerStoreNm })
-        return true
+    // 모든 오버레이를 기본 스타일로 복원
+    markerOverlaysRef.current.forEach((overlay) => {
+      if (overlay && overlay.marker) {
+        const marker = overlay.marker
+        const markerStoreCode = String(marker.store_code || '').trim()
+        const markerStoreNm = String(marker.store_nm || '').trim()
+        
+        // 선택된 매장인지 확인
+        const isSelected = (targetStoreNm && markerStoreNm && targetStoreNm === markerStoreNm) ||
+                          (targetStoreCode && markerStoreCode && targetStoreCode === markerStoreCode)
+        
+        if (isSelected) {
+          // 선택된 매장의 오버레이를 더 크게 강조
+          const isCurrentStore = currentStoreName && markerStoreNm === currentStoreName
+          const markerColor = isCurrentStore ? '#DC2626' : '#10B981'
+          
+          const highlightedContent = `
+            <div style="
+              background: white;
+              border: 3px solid ${markerColor};
+              border-radius: 8px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+              min-width: 180px;
+              max-width: 220px;
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              overflow: hidden;
+            ">
+              <div style="
+                background: linear-gradient(135deg, ${markerColor} 0%, ${isCurrentStore ? '#B91C1C' : '#059669'} 100%);
+                padding: 8px 12px;
+                color: white;
+              ">
+                <div style="
+                  font-weight: bold;
+                  font-size: 13px;
+                  margin-bottom: 3px;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                ">
+                  ${selectedStore.월기준 || ''} ${selectedStore.store_nm}
+                </div>
+                <div style="
+                  font-size: 10px;
+                  opacity: 0.95;
+                ">
+                  ${isCurrentStore ? '현재 매장' : '유사 매장'}
+                </div>
+              </div>
+            </div>
+          `
+          
+          overlay.setContent(highlightedContent)
+          
+          // 선택된 마커가 화면에 보이도록 지도 이동
+          const position = marker.getPosition()
+          map.setCenter(position)
+          map.setLevel(Math.max(map.getLevel(), 5))
+        }
       }
-      // store_code로 비교
-      if (targetStoreCode && markerStoreCode && targetStoreCode === markerStoreCode) {
-        console.log('store_code로 매칭:', { targetStoreCode, markerStoreCode })
-        return true
-      }
-      return false
     })
-
-    if (!selectedMarker) {
-      // 마커를 찾을 수 없으면 오버레이 제거
-      console.log('마커를 찾을 수 없음:', {
-        targetStoreCode,
-        targetStoreNm,
-        availableMarkers: markers.map(m => ({
-          store_code: String(m.store_code || ''),
-          store_nm: String(m.store_nm || '')
-        }))
-      })
-      if (overlayRef.current) {
-        overlayRef.current.setMap(null)
-        overlayRef.current = null
-      }
-      return
-    }
-
-    console.log('선택된 마커 찾음:', {
-      store_code: String(selectedMarker.store_code),
-      store_nm: String(selectedMarker.store_nm),
-      targetStoreCode,
-      targetStoreNm
-    })
-
-    // 기존 오버레이 제거
-    if (overlayRef.current) {
-      overlayRef.current.setMap(null)
-    }
-
-    // 커스텀 오버레이 생성
-    const position = selectedMarker.getPosition()
-    
-    // 현재 매장인지 확인
-    const isCurrentStore = currentStoreName && selectedStore.store_nm === currentStoreName
-    
-    // 오버레이 HTML 생성 (작은 탭 형식)
-    const content = `
-      <div style="
-        background: white;
-        border: 2px solid #10B981;
-        border-radius: 6px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        min-width: 160px;
-        max-width: 200px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        overflow: hidden;
-      ">
-        <div style="
-          background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-          padding: 6px 10px;
-          color: white;
-        ">
-          <div style="
-            font-weight: bold;
-            font-size: 12px;
-            margin-bottom: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          ">
-            ${selectedStore.월기준 || ''} ${selectedStore.store_nm}
-          </div>
-          <div style="
-            font-size: 9px;
-            opacity: 0.9;
-          ">
-            ${isCurrentStore ? '현재 매장' : '유사 매장'}
-          </div>
-        </div>
-      </div>
-    `
-
-    const customOverlay = new window.kakao.maps.CustomOverlay({
-      position: position,
-      content: content,
-      yAnchor: 0, // 마커 바로 아래에 붙이기
-      xAnchor: 0.5,
-    })
-
-    customOverlay.setMap(map)
-    overlayRef.current = customOverlay
-
-    // 마커가 화면에 보이도록 지도 이동
-    map.setCenter(position)
-    map.setLevel(Math.max(map.getLevel(), 5))
-
-    // 정리 함수
-    return () => {
-      if (overlayRef.current) {
-        overlayRef.current.setMap(null)
-        overlayRef.current = null
-      }
-    }
-  }, [map, selectedStore, markers, stores, currentStoreName])
+  }, [map, selectedStore, markerOverlaysRef.current, currentStoreName])
 
   if (!isLoaded) {
     return (
