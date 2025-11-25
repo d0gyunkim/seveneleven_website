@@ -363,8 +363,8 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
   }
 
   return (
-    <div className={`rounded-lg overflow-hidden border border-gray-200 shadow-lg ${className}`} style={{ position: 'relative' }}>
-      <div ref={mapRef} style={{ width: '100%', height: '500px' }}></div>
+    <div className={`rounded-lg overflow-hidden border border-gray-200 shadow-lg ${className}`} style={{ position: 'relative', height: '100%' }}>
+      <div ref={mapRef} style={{ width: '100%', height: '100%' }}></div>
       {isSearching && (
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255, 255, 255, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, borderRadius: '8px' }}>
           <div className="text-center">

@@ -450,86 +450,115 @@ export default function SimilarStoresPage() {
             )}
           </div>
 
-          {/* 유사매장 목록 */}
+          {/* 유사매장 목록과 지도 - 나란히 배치 */}
           {similarStores.length === 0 ? (
             <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
               <p className="text-gray-500 text-base">유사 매장 정보가 없습니다.</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {similarStores.map((store) => (
-                <div
-                  key={store.store_code}
-                  className={`bg-white border-2 rounded-xl p-5 cursor-pointer transition-all duration-200 ${
-                    selectedStore?.store_code === store.store_code
-                      ? 'border-green-500 bg-green-50 shadow-lg'
-                      : 'border-gray-200 hover:border-green-300 hover:shadow-md'
-                  }`}
-                  onClick={() => handleStoreClick(store.store_code)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-green-100 text-green-600 font-bold text-sm">
-                          {store.rank}
-                        </span>
-                        <p className="text-base md:text-lg text-gray-900 font-semibold">
-                          세븐일레븐 {store.store_nm}
-                        </p>
-                      </div>
-                      <p className="text-sm text-gray-500 ml-11">
-                        클릭하여 매장 상세 정보 확인
-                      </p>
-                    </div>
-                    <div className="ml-4">
-                      <svg
-                        className={`w-6 h-6 transition-transform duration-200 ${
-                          selectedStore?.store_code === store.store_code
-                            ? 'text-green-500 rotate-90'
-                            : 'text-gray-400'
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+              {/* 왼쪽: 유사매장 목록 */}
+              <div className="lg:order-1">
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                  {/* 목록 헤더 */}
+                  <div className="bg-gray-50 border-b border-gray-200 px-4 py-3">
+                    <h3 className="text-lg font-semibold text-gray-900">유사 매장 목록</h3>
+                    <p className="text-xs text-gray-500 mt-1">클릭하여 매장 정보 확인</p>
+                  </div>
+                  
+                  {/* 스크롤 가능한 목록 */}
+                  <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 300px)', minHeight: '500px' }}>
+                    <div className="divide-y divide-gray-100">
+                      {similarStores.map((store) => (
+                        <div
+                          key={store.store_code}
+                          className={`px-4 py-4 cursor-pointer transition-all duration-200 ${
+                            selectedStore?.store_code === store.store_code
+                              ? 'bg-green-50 border-l-4 border-green-500'
+                              : 'hover:bg-gray-50'
+                          }`}
+                          onClick={() => handleStoreClick(store.store_code)}
+                        >
+                          <div className="flex items-start gap-3">
+                            <span className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-sm font-bold ${
+                              selectedStore?.store_code === store.store_code
+                                ? 'bg-green-500 text-white'
+                                : 'bg-green-100 text-green-600'
+                            }`}>
+                              {store.rank}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm md:text-base font-semibold mb-1 ${
+                                selectedStore?.store_code === store.store_code
+                                  ? 'text-green-700'
+                                  : 'text-gray-900'
+                              }`}>
+                                세븐일레븐 {store.store_nm}
+                              </p>
+                              {store.address && (
+                                <p className="text-xs text-gray-500 line-clamp-1">
+                                  {store.address}
+                                </p>
+                              )}
+                            </div>
+                            <svg
+                              className={`w-5 h-5 flex-shrink-0 transition-transform duration-200 ${
+                                selectedStore?.store_code === store.store_code
+                                  ? 'text-green-500 rotate-90'
+                                  : 'text-gray-400'
+                              }`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5l7 7-7 7"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {/* 지도 섹션 */}
-          {similarStores.length > 0 && (
-            <div className="mt-10 md:mt-12">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
-                  유사 매장 위치 지도
-                </h3>
-                {currentSelectedMonth && (
-                  <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
-                    <span className="text-sm font-medium text-gray-600">분석 기준:</span>
-                    <span className="text-base font-bold text-green-600">{currentSelectedMonth}</span>
-                  </div>
-                )}
               </div>
-              <KakaoMap 
-                stores={currentStoreInfo ? [currentStoreInfo, ...similarStores] : similarStores}
-                currentStoreName={currentStoreName}
-                className="w-full"
-                selectedStore={selectedStore ? {
-                  store_code: selectedStore.store_code,
-                  store_nm: selectedStore.store_nm,
-                  월기준: selectedMonth
-                } : null}
-              />
+
+              {/* 오른쪽: 지도 */}
+              <div className="lg:order-2">
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                  {/* 지도 헤더 */}
+                  <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">유사 매장 위치 지도</h3>
+                      {currentSelectedMonth && (
+                        <p className="text-xs text-gray-500 mt-1">분석 기준: {currentSelectedMonth}</p>
+                      )}
+                    </div>
+                    {currentSelectedMonth && (
+                      <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-lg">
+                        <span className="text-xs font-medium text-green-600">{currentSelectedMonth}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* 지도 */}
+                  <div className="relative" style={{ height: '500px' }}>
+                    <KakaoMap 
+                      stores={currentStoreInfo ? [currentStoreInfo, ...similarStores] : similarStores}
+                      currentStoreName={currentStoreName}
+                      className="w-full h-full"
+                      selectedStore={selectedStore ? {
+                        store_code: selectedStore.store_code,
+                        store_nm: selectedStore.store_nm,
+                        월기준: selectedMonth
+                      } : null}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
