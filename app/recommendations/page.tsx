@@ -516,12 +516,14 @@ export default function RecommendationsPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="p-4 md:p-8">
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-green-500 mb-4"></div>
-              <p className="text-sm md:text-base text-gray-600">데이터를 불러오는 중...</p>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="relative inline-block mb-6">
+              <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping"></div>
+              <div className="relative inline-block animate-spin rounded-full h-16 w-16 md:h-20 md:w-20 border-4 border-gray-200 border-t-green-500"></div>
             </div>
+            <p className="text-base md:text-lg text-gray-700 font-medium">데이터를 불러오는 중...</p>
+            <p className="text-sm text-gray-500 mt-2">잠시만 기다려주세요</p>
           </div>
         </div>
       </Layout>
@@ -531,16 +533,30 @@ export default function RecommendationsPage() {
   if (error) {
     return (
       <Layout>
-        <div className="p-4 md:p-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="bg-red-50 border border-red-300 rounded-lg p-4 md:p-6 text-center">
-              <p className="text-sm md:text-base text-red-600 mb-4">{error}</p>
-              <button
-                onClick={() => router.push('/')}
-                className="px-4 md:px-6 py-2 bg-green-500 hover:bg-green-600 text-white text-sm md:text-base rounded-lg transition-colors"
-              >
-                돌아가기
-              </button>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center p-4">
+          <div className="max-w-2xl w-full">
+            <div className="bg-white border-2 border-red-200 rounded-2xl p-6 md:p-8 text-center shadow-xl">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">오류가 발생했습니다</h3>
+              <p className="text-sm md:text-base text-red-600 mb-6 leading-relaxed">{error}</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => router.push('/')}
+                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-sm md:text-base font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  홈으로 돌아가기
+                </button>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-3 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-700 text-sm md:text-base font-semibold rounded-xl transition-all duration-200"
+                >
+                  새로고침
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -550,47 +566,68 @@ export default function RecommendationsPage() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-white">
-        <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6">
-          {/* 헤더 */}
-          <div className="mb-4 md:mb-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">
+          {/* 헤더 섹션 */}
+          <div className="mb-6 md:mb-8">
+            {/* 페이지 제목 */}
+            <div className="mb-6 md:mb-8">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+                {storeName && `${storeName} 상품 추천`}
+              </h1>
+              <p className="text-sm md:text-base text-gray-600">
+                데이터 기반 맞춤형 상품 추천 시스템
+              </p>
+            </div>
+
             {/* 탭 */}
-            <div className="flex gap-2 md:gap-4 mb-4 md:mb-6 border-b border-gray-200 overflow-x-auto">
+            <div className="flex gap-1 mb-6 md:mb-8 bg-gray-100 p-1 rounded-xl overflow-x-auto max-w-fit">
               <button
                 onClick={() => setActiveTab('recommended')}
-                className={`pb-3 px-3 md:px-4 font-semibold text-sm md:text-base transition-colors whitespace-nowrap ${
+                className={`relative px-6 md:px-8 py-3 md:py-3.5 font-semibold text-sm md:text-base transition-all duration-200 whitespace-nowrap rounded-lg ${
                   activeTab === 'recommended'
-                    ? 'text-green-500 border-b-2 border-green-500'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'text-white bg-gradient-to-r from-green-500 to-green-600 shadow-md shadow-green-500/30'
+                    : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 추천 상품
+                {activeTab === 'recommended' && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('excluded')}
-                className={`pb-3 px-3 md:px-4 font-semibold text-sm md:text-base transition-colors whitespace-nowrap ${
+                className={`relative px-6 md:px-8 py-3 md:py-3.5 font-semibold text-sm md:text-base transition-all duration-200 whitespace-nowrap rounded-lg ${
                   activeTab === 'excluded'
-                    ? 'text-green-600 border-b-2 border-green-600'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'text-white bg-gradient-to-r from-orange-500 to-orange-600 shadow-md shadow-orange-500/30'
+                    : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 부진재고
+                {activeTab === 'excluded' && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-orange-400 rounded-full animate-pulse"></span>
+                )}
               </button>
             </div>
 
             {/* 대분류 카테고리 */}
             {largeCategories.length > 0 && (
-              <div className="mb-4 md:mb-6">
-                <h3 className="text-base md:text-lg font-bold text-gray-900 mb-2 md:mb-3">카테고리 선택</h3>
-                <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              <div className="mb-6 md:mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base md:text-lg font-semibold text-gray-900">카테고리</h3>
+                  <span className="text-xs md:text-sm text-gray-500 font-medium">{largeCategories.length}개 카테고리</span>
+                </div>
+                <div className="flex gap-2 md:gap-3 overflow-x-auto pb-3 scrollbar-hide scroll-smooth">
                   {largeCategories.map((category) => (
                     <button
                       key={category}
                       onClick={() => setSelectedLargeCategory(category)}
-                      className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-sm md:text-base font-medium whitespace-nowrap transition-colors ${
+                      className={`px-4 md:px-6 py-2.5 md:py-3 rounded-xl text-sm md:text-base font-medium whitespace-nowrap transition-all duration-200 transform ${
                         selectedLargeCategory === category
-                          ? 'bg-green-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? activeTab === 'recommended'
+                            ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/30 scale-105'
+                            : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30 scale-105'
+                          : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-gray-300 hover:scale-105 shadow-sm'
                       }`}
                     >
                       {category}
@@ -600,17 +637,27 @@ export default function RecommendationsPage() {
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3 md:mb-4">
-              <div className="flex items-center gap-3 md:gap-4">
-                <span className="text-sm md:text-base text-gray-600">전체 {totalProducts}</span>
+            {/* 통계 및 필터 바 */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+              <div className="flex items-center gap-4 md:gap-6">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm md:text-base text-gray-900 font-semibold">추천순</span>
+                  <div className={`w-2 h-2 rounded-full ${
+                    activeTab === 'recommended' ? 'bg-green-500' : 'bg-orange-500'
+                  } animate-pulse`}></div>
+                  <span className="text-sm md:text-base text-gray-600 font-medium">
+                    전체 <span className={`font-bold ${
+                      activeTab === 'recommended' ? 'text-green-600' : 'text-orange-600'
+                    }`}>{totalProducts}</span>개
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
                   <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
                   </svg>
+                  <span className="text-sm md:text-base text-gray-900 font-medium">추천순</span>
                 </div>
               </div>
-              <button className="flex items-center gap-2 text-sm md:text-base text-gray-600 hover:text-gray-900 transition-colors">
+              <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm md:text-base text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-medium shadow-sm">
                 <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
@@ -621,35 +668,66 @@ export default function RecommendationsPage() {
 
           {/* 안내 문구 - 탭별로 표시 */}
           {activeTab === 'recommended' && (
-            <div className="bg-green-50 border-l-4 border-green-500 p-3 md:p-4 mb-4 md:mb-6 rounded-r-lg">
-              <p className="text-sm md:text-base text-gray-800 leading-relaxed">
-                <span className="font-semibold text-green-600">{storeName} 점주님께 추천드리는</span> 내 매장과 유사한 상권/매출을 내는 매장에서 인기 있는 상품입니다.
-              </p>
+            <div className="relative bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-4 md:p-5 mb-6 md:mb-8 rounded-r-xl shadow-sm overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-green-100 opacity-20 rounded-full -mr-16 -mt-16"></div>
+              <div className="relative flex items-start gap-3">
+                <div className="flex-shrink-0 mt-1">
+                  <svg className="w-5 h-5 md:w-6 md:h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm md:text-base text-gray-800 leading-relaxed">
+                    <span className="font-bold text-green-700">{storeName} 점주님께 추천드리는</span> 내 매장과 유사한 상권/매출을 내는 매장에서 인기 있는 상품입니다.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
           {activeTab === 'excluded' && (
-            <div className="bg-orange-50 border-l-4 border-orange-500 p-3 md:p-4 mb-4 md:mb-6 rounded-r-lg">
-              <p className="text-sm md:text-base text-gray-800 leading-relaxed">
-                <span className="font-semibold text-orange-600">내 매장의 상품군 별 발주 제외 권장 대상 상품</span>입니다. 
-                매장 운영 효율화 시 참고해 주시기 바랍니다.
-              </p>
+            <div className="relative bg-gradient-to-r from-orange-50 to-amber-50 border-l-4 border-orange-500 p-4 md:p-5 mb-6 md:mb-8 rounded-r-xl shadow-sm overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 opacity-20 rounded-full -mr-16 -mt-16"></div>
+              <div className="relative flex items-start gap-3">
+                <div className="flex-shrink-0 mt-1">
+                  <svg className="w-5 h-5 md:w-6 md:h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm md:text-base text-gray-800 leading-relaxed">
+                    <span className="font-bold text-orange-700">내 매장의 상품군 별 발주 제외 권장 대상 상품</span>입니다. 
+                    매장 운영 효율화 시 참고해 주시기 바랍니다.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
           {/* 중분류별 상품 그룹 */}
           {Object.keys(filteredGroupedProducts).length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-600">
+            <div className="text-center py-16 md:py-20">
+              <div className="inline-block p-4 bg-gray-100 rounded-full mb-4">
+                <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+              </div>
+              <p className="text-base md:text-lg text-gray-500 font-medium">
                 {activeTab === 'recommended' ? '추천 상품이 없습니다.' : '부진재고가 없습니다.'}
               </p>
             </div>
           ) : (
-            <div className="space-y-8 md:space-y-12">
+            <div className="space-y-10 md:space-y-14">
               {Object.entries(filteredGroupedProducts).map(([category, products]) => (
                 <div key={category}>
-                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4">{category}</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
+                  <div className="flex items-center gap-3 mb-5 md:mb-6">
+                    <div className={`h-1 w-1 rounded-full ${
+                      activeTab === 'recommended' ? 'bg-green-500' : 'bg-orange-500'
+                    }`}></div>
+                    <h3 className="text-xl md:text-2xl font-bold text-gray-900">{category}</h3>
+                    <span className="text-sm md:text-base text-gray-500 font-medium">({products.length})</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 lg:gap-5">
                     {products.map((product) => {
                       const itemId = `${product.store_code}-${product.item_cd}`
                       const isVisible = visibleItems.has(itemId)
@@ -660,80 +738,108 @@ export default function RecommendationsPage() {
                           ref={(el) => setItemRef(itemId, el)}
                           data-item-id={itemId}
                           onClick={() => setSelectedProduct(product)}
-                          className={`bg-white rounded-lg overflow-hidden border transition-colors cursor-pointer shadow-sm hover:shadow-md active:scale-95 flex flex-col ${
+                          className={`group bg-white rounded-xl overflow-hidden border-2 transition-all duration-300 cursor-pointer flex flex-col relative ${
                             activeTab === 'recommended'
-                              ? 'border-gray-200 hover:border-green-400'
-                              : 'border-gray-200 hover:border-green-500'
-                          }`}
-                          style={{ minHeight: '320px' }}
+                              ? 'border-gray-100 hover:border-green-400 hover:shadow-xl hover:shadow-green-500/10 hover:-translate-y-1'
+                              : 'border-gray-100 hover:border-orange-400 hover:shadow-xl hover:shadow-orange-500/10 hover:-translate-y-1'
+                          } shadow-md hover:shadow-xl`}
+                          style={{ minHeight: '340px' }}
                         >
                           {isVisible ? (
                             <>
+                              {/* 순위 배지 */}
+                              {product.rank !== null && product.rank <= 3 && (
+                                <div className={`absolute top-2 left-2 z-10 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg ${
+                                  product.rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' :
+                                  product.rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
+                                  'bg-gradient-to-br from-orange-400 to-orange-600'
+                                }`}>
+                                  {product.rank}
+                                </div>
+                              )}
+
                               {/* 상품 이미지 */}
-                              <div className="relative aspect-square bg-white overflow-hidden flex items-center justify-center">
+                              <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden flex items-center justify-center group-hover:bg-gradient-to-br group-hover:from-gray-100 group-hover:to-gray-200 transition-colors duration-300">
                                 {product.item_img ? (
                                   <img
                                     src={product.item_img}
                                     alt={product.item_nm}
-                                    className="w-full h-full object-contain p-2"
+                                    className="w-full h-full object-contain p-3 md:p-4 transition-transform duration-300 group-hover:scale-105"
                                     loading="lazy"
                                     onError={(e) => {
-                                      // 에러 발생 시 placeholder 표시
                                       e.currentTarget.style.display = 'none'
                                       const parent = e.currentTarget.parentElement
                                       if (parent && !parent.querySelector('.image-placeholder')) {
                                         const placeholder = document.createElement('div')
-                                        placeholder.className = 'image-placeholder w-full h-full flex items-center justify-center text-gray-400 text-sm'
-                                        placeholder.textContent = '이미지 없음'
+                                        placeholder.className = 'image-placeholder w-full h-full flex flex-col items-center justify-center text-gray-400'
+                                        placeholder.innerHTML = `
+                                          <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                          </svg>
+                                          <span class="text-xs">이미지 없음</span>
+                                        `
                                         parent.appendChild(placeholder)
                                       }
                                     }}
                                   />
                                 ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-                                    이미지 없음
+                                  <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                                    <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <span className="text-xs">이미지 없음</span>
                                   </div>
                                 )}
                               </div>
 
                               {/* 상품 정보 */}
-                              <div className="p-2 md:p-3 flex flex-col h-full">
-                                <h4 className="text-xs md:text-sm font-semibold text-gray-900 mb-1 md:mb-2 line-clamp-2 min-h-[2rem] md:min-h-[2.5rem]">
+                              <div className="p-3 md:p-4 flex flex-col h-full bg-white">
+                                <h4 className="text-xs md:text-sm font-semibold text-gray-900 mb-2 md:mb-3 line-clamp-2 min-h-[2.5rem] leading-tight group-hover:text-gray-700 transition-colors">
                                   {product.item_nm}
                                 </h4>
                                 
                                 {/* 가격 정보 */}
-                                <div className="mb-1 space-y-1">
+                                <div className="mb-3 space-y-1.5">
                                   {product.sale_price !== null && (
-                                    <div className="text-xs md:text-sm text-gray-600">
-                                      <span className="font-medium">판매가:</span> <span className="text-sm md:text-base font-bold text-green-500">{product.sale_price.toLocaleString()}원</span>
+                                    <div className="flex items-baseline gap-1">
+                                      <span className="text-xs text-gray-500 font-medium">판매가</span>
+                                      <span className={`text-base md:text-lg font-bold ${
+                                        activeTab === 'recommended' ? 'text-green-600' : 'text-orange-600'
+                                      }`}>
+                                        {product.sale_price.toLocaleString()}원
+                                      </span>
                                     </div>
                                   )}
                                   {product.cost !== null && (
                                     <div className="text-xs text-gray-500">
-                                      <span className="font-medium">원가:</span> {product.cost.toLocaleString()}원
+                                      원가 {product.cost.toLocaleString()}원
                                     </div>
                                   )}
                                 </div>
 
                                 {/* 소분류 및 액션 버튼 */}
-                                <div className="flex items-center justify-between mt-auto">
+                                <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
                                   {product.item_smdv_nm ? (
-                                    <span className="text-xs text-gray-600 bg-gray-100 px-1.5 md:px-2 py-0.5 md:py-1 rounded">
+                                    <span className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-lg border border-gray-200 font-medium">
                                       {product.item_smdv_nm}
                                     </span>
                                   ) : (
                                     <span></span>
                                   )}
                                   <button
-                                    className={`p-1.5 md:p-2 rounded-full transition-colors ${
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setSelectedProduct(product)
+                                    }}
+                                    className={`p-2 rounded-xl transition-all duration-200 shadow-sm ${
                                       activeTab === 'recommended'
-                                        ? 'bg-green-500 hover:bg-green-600'
-                                        : 'bg-green-600 hover:bg-green-700'
+                                        ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-md hover:shadow-green-500/30'
+                                        : 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 hover:shadow-md hover:shadow-orange-500/30'
                                     }`}
                                   >
-                                    <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                     </svg>
                                   </button>
                                 </div>
@@ -741,10 +847,10 @@ export default function RecommendationsPage() {
                             </>
                           ) : (
                             // 경량 플레이스홀더 - 스크롤 전까지 표시
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50" style={{ minHeight: '280px' }}>
-                              <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg mb-2 animate-pulse"></div>
-                              <div className="w-3/4 h-3 bg-gray-200 rounded mb-1 animate-pulse"></div>
-                              <div className="w-1/2 h-3 bg-gray-200 rounded animate-pulse"></div>
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100" style={{ minHeight: '340px' }}>
+                              <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-200 rounded-xl mb-3 animate-pulse"></div>
+                              <div className="w-3/4 h-3 bg-gray-200 rounded-lg mb-2 animate-pulse"></div>
+                              <div className="w-1/2 h-3 bg-gray-200 rounded-lg animate-pulse"></div>
                             </div>
                           )}
                         </div>
@@ -759,36 +865,43 @@ export default function RecommendationsPage() {
           {/* 스크롤 투 탑 버튼 */}
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-4 right-4 md:bottom-6 md:right-6 w-10 h-10 md:w-12 md:h-12 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg transition-colors z-10"
+            className="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-full flex items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 z-40 hover:scale-110 active:scale-95"
             aria-label="맨 위로"
           >
-            <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            <svg className="w-6 h-6 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" />
             </svg>
           </button>
 
           {/* 추천 근거 모달 */}
           {selectedProduct && (
             <div
-              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 md:p-4"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-in fade-in duration-200"
               onClick={() => setSelectedProduct(null)}
             >
               <div
-                className="bg-white rounded-lg border border-gray-200 max-w-2xl w-full max-h-[90vh] md:max-h-[80vh] overflow-y-auto shadow-xl"
+                className="bg-white rounded-2xl border border-gray-200 max-w-3xl w-full max-h-[90vh] md:max-h-[85vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="p-4 md:p-6">
-                  <div className="flex items-start justify-between mb-3 md:mb-4">
-                    <div className="flex-1 pr-2">
-                      <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">{selectedProduct.item_nm}</h3>
+                <div className="p-5 md:p-8">
+                  {/* 모달 헤더 */}
+                  <div className="flex items-start justify-between mb-5 md:mb-6 pb-4 border-b border-gray-200">
+                    <div className="flex-1 pr-4">
+                      <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 leading-tight">
+                        {selectedProduct.item_nm}
+                      </h3>
                       <div className="flex flex-wrap gap-2">
                         {selectedProduct.item_mddv_nm && (
-                          <span className="text-xs md:text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                          <span className="text-xs md:text-sm text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg font-medium border border-gray-200">
                             {selectedProduct.item_mddv_nm}
                           </span>
                         )}
                         {selectedProduct.item_smdv_nm && (
-                          <span className="text-xs md:text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-200">
+                          <span className={`text-xs md:text-sm px-3 py-1.5 rounded-lg font-medium border ${
+                            activeTab === 'recommended' 
+                              ? 'text-green-700 bg-green-50 border-green-200' 
+                              : 'text-orange-700 bg-orange-50 border-orange-200'
+                          }`}>
                             {selectedProduct.item_smdv_nm}
                           </span>
                         )}
@@ -796,28 +909,33 @@ export default function RecommendationsPage() {
                     </div>
                     <button
                       onClick={() => setSelectedProduct(null)}
-                      className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                      className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200 flex-shrink-0 p-2 rounded-lg"
                       aria-label="닫기"
                     >
-                      <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
 
                   {selectedProduct.item_img && (
-                    <div className="mb-3 md:mb-4 relative w-full h-48 md:h-64 rounded-lg overflow-hidden bg-white flex items-center justify-center">
+                    <div className="mb-6 md:mb-8 relative w-full h-56 md:h-72 rounded-xl overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center border border-gray-200 shadow-sm">
                       <img
                         src={selectedProduct.item_img}
                         alt={selectedProduct.item_nm}
-                        className="w-full h-full object-contain p-3 md:p-4 rounded-lg"
+                        className="w-full h-full object-contain p-4 md:p-6"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none'
                           const parent = e.currentTarget.parentElement
                           if (parent && !parent.querySelector('.image-placeholder')) {
                             const placeholder = document.createElement('div')
-                            placeholder.className = 'image-placeholder w-full h-full flex items-center justify-center text-gray-400 text-sm'
-                            placeholder.textContent = '이미지 없음'
+                            placeholder.className = 'image-placeholder w-full h-full flex flex-col items-center justify-center text-gray-400'
+                            placeholder.innerHTML = `
+                              <svg class="w-16 h-16 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <span class="text-sm font-medium">이미지 없음</span>
+                            `
                             parent.appendChild(placeholder)
                           }
                         }}
@@ -825,22 +943,29 @@ export default function RecommendationsPage() {
                     </div>
                   )}
 
-                  <div className="space-y-3 md:space-y-4">
+                  <div className="space-y-5 md:space-y-6">
                     <div>
-                      <h4 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">가격 정보</h4>
-                      <div className="bg-gray-50 rounded-lg p-3 md:p-4 space-y-2">
+                      <h4 className="text-sm md:text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        가격 정보
+                      </h4>
+                      <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 md:p-5 space-y-3 border border-gray-200">
                         {selectedProduct.sale_price !== null && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm md:text-base text-gray-700 font-medium">판매가:</span>
-                            <span className="text-base md:text-lg font-bold text-green-500">
+                          <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                            <span className="text-sm md:text-base text-gray-700 font-semibold">판매가</span>
+                            <span className={`text-lg md:text-xl font-bold ${
+                              activeTab === 'recommended' ? 'text-green-600' : 'text-orange-600'
+                            }`}>
                               {selectedProduct.sale_price.toLocaleString()}원
                             </span>
                           </div>
                         )}
                         {selectedProduct.cost !== null && (
-                          <div className="flex items-center justify-between border-t border-gray-200 pt-2">
-                            <span className="text-sm text-gray-600 font-medium">원가:</span>
-                            <span className="text-sm md:text-base text-gray-600">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm md:text-base text-gray-600 font-medium">원가</span>
+                            <span className="text-base md:text-lg text-gray-700 font-semibold">
                               {selectedProduct.cost.toLocaleString()}원
                             </span>
                           </div>
@@ -849,10 +974,24 @@ export default function RecommendationsPage() {
                     </div>
 
                     <div>
-                      <h4 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">
-                        {activeTab === 'recommended' ? '추천 근거' : '부진 근거'}
+                      <h4 className="text-sm md:text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        {activeTab === 'recommended' ? (
+                          <>
+                            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            추천 근거
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            부진 근거
+                          </>
+                        )}
                       </h4>
-                      <div className={`${activeTab === 'recommended' ? 'bg-green-50 border-l-4 border-green-500' : 'bg-orange-50 border-l-4 border-orange-500'} rounded-lg p-5 md:p-6`}>
+                      <div className={`relative ${activeTab === 'recommended' ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-green-500' : 'bg-gradient-to-br from-orange-50 to-amber-50 border-l-4 border-orange-500'} rounded-xl p-5 md:p-6 shadow-sm`}>
                         {selectedProduct.rec_reason ? (
                           <div className="text-base md:text-lg text-gray-800 leading-loose space-y-4">
                             {activeTab === 'recommended' ? (() => {
