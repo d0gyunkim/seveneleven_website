@@ -985,53 +985,170 @@ export default function SimilarStoresPage() {
                         </div>
                       </div>
                       <div className="pt-4 border-t border-gray-100">
-                        <p className="text-sm font-semibold text-gray-700 mb-3">시간대별 매출 비중</p>
-                        <div className="space-y-3">
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm text-gray-600">오전 (6-12시)</span>
-                              <span className="text-sm font-semibold text-gray-900">내 매장 28.2% | 유사매장 27.5%</span>
+                        <p className="text-sm font-semibold text-gray-700 mb-4">시간대별 매출 비중</p>
+                        <div className="grid grid-cols-2 gap-8 mb-4">
+                          {/* 내 매장 파이차트 */}
+                          <div className="flex flex-col items-center">
+                            <h5 className="text-sm font-semibold text-gray-700 mb-4">내 매장</h5>
+                            <div className="relative">
+                              <svg width="180" height="180" viewBox="0 0 180 180" className="mb-4">
+                                <defs>
+                                  <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                                    <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.2"/>
+                                  </filter>
+                                </defs>
+                                {/* 오전 (28.2%) - 파란색 */}
+                                <path
+                                  d={`M 90 90 L ${90 + 70 * Math.cos((-90) * Math.PI / 180)} ${90 + 70 * Math.sin((-90) * Math.PI / 180)} A 70 70 0 ${28.2 * 3.6 > 180 ? '1' : '0'} 1 ${90 + 70 * Math.cos((-90 + 28.2 * 3.6) * Math.PI / 180)} ${90 + 70 * Math.sin((-90 + 28.2 * 3.6) * Math.PI / 180)} Z`}
+                                  fill="#3b82f6"
+                                  filter="url(#shadow)"
+                                />
+                                {/* 오후 (35.4%) - 청록색 */}
+                                <path
+                                  d={`M 90 90 L ${90 + 70 * Math.cos((-90 + 28.2 * 3.6) * Math.PI / 180)} ${90 + 70 * Math.sin((-90 + 28.2 * 3.6) * Math.PI / 180)} A 70 70 0 ${35.4 * 3.6 > 180 ? '1' : '0'} 1 ${90 + 70 * Math.cos((-90 + (28.2 + 35.4) * 3.6) * Math.PI / 180)} ${90 + 70 * Math.sin((-90 + (28.2 + 35.4) * 3.6) * Math.PI / 180)} Z`}
+                                  fill="#06b6d4"
+                                  filter="url(#shadow)"
+                                />
+                                {/* 저녁 (36.4%) - 남색 */}
+                                <path
+                                  d={`M 90 90 L ${90 + 70 * Math.cos((-90 + (28.2 + 35.4) * 3.6) * Math.PI / 180)} ${90 + 70 * Math.sin((-90 + (28.2 + 35.4) * 3.6) * Math.PI / 180)} A 70 70 0 ${36.4 * 3.6 > 180 ? '1' : '0'} 1 ${90 + 70 * Math.cos((-90 + (28.2 + 35.4 + 36.4) * 3.6) * Math.PI / 180)} ${90 + 70 * Math.sin((-90 + (28.2 + 35.4 + 36.4) * 3.6) * Math.PI / 180)} Z`}
+                                  fill="#1e40af"
+                                  filter="url(#shadow)"
+                                />
+                                {/* 텍스트 레이블 */}
+                                <text
+                                  x={90 + 35 * Math.cos((-90 + 28.2 * 3.6 / 2) * Math.PI / 180)}
+                                  y={90 + 35 * Math.sin((-90 + 28.2 * 3.6 / 2) * Math.PI / 180)}
+                                  textAnchor="middle"
+                                  dominantBaseline="middle"
+                                  fill="white"
+                                  fontSize="14"
+                                  fontWeight="bold"
+                                  className="drop-shadow-lg"
+                                >
+                                  28.2%
+                                </text>
+                                <text
+                                  x={90 + 35 * Math.cos((-90 + 28.2 * 3.6 + 35.4 * 3.6 / 2) * Math.PI / 180)}
+                                  y={90 + 35 * Math.sin((-90 + 28.2 * 3.6 + 35.4 * 3.6 / 2) * Math.PI / 180)}
+                                  textAnchor="middle"
+                                  dominantBaseline="middle"
+                                  fill="white"
+                                  fontSize="14"
+                                  fontWeight="bold"
+                                  className="drop-shadow-lg"
+                                >
+                                  35.4%
+                                </text>
+                                <text
+                                  x={90 + 35 * Math.cos((-90 + (28.2 + 35.4) * 3.6 + 36.4 * 3.6 / 2) * Math.PI / 180)}
+                                  y={90 + 35 * Math.sin((-90 + (28.2 + 35.4) * 3.6 + 36.4 * 3.6 / 2) * Math.PI / 180)}
+                                  textAnchor="middle"
+                                  dominantBaseline="middle"
+                                  fill="white"
+                                  fontSize="14"
+                                  fontWeight="bold"
+                                  className="drop-shadow-lg"
+                                >
+                                  36.4%
+                                </text>
+                              </svg>
                             </div>
-                            <div className="flex gap-2">
-                              <div className="flex-1 bg-blue-50 rounded h-2.5 relative">
-                                <div className="bg-blue-500 h-2.5 rounded" style={{ width: '28.2%' }}></div>
-                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-blue-700">28.2%</div>
+                            <div className="space-y-2 text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                <span className="text-sm text-gray-600">오전 28.2%</span>
                               </div>
-                              <div className="flex-1 bg-cyan-50 rounded h-2.5 relative">
-                                <div className="bg-cyan-500 h-2.5 rounded" style={{ width: '27.5%' }}></div>
-                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-cyan-700">27.5%</div>
+                              <div className="flex items-center justify-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-cyan-500"></div>
+                                <span className="text-sm text-gray-600">오후 35.4%</span>
+                              </div>
+                              <div className="flex items-center justify-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-blue-800"></div>
+                                <span className="text-sm text-gray-600">저녁 36.4%</span>
                               </div>
                             </div>
                           </div>
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm text-gray-600">오후 (12-18시)</span>
-                              <span className="text-sm font-semibold text-gray-900">내 매장 35.4% | 유사매장 36.1%</span>
+
+                          {/* 유사매장 파이차트 */}
+                          <div className="flex flex-col items-center">
+                            <h5 className="text-sm font-semibold text-gray-700 mb-4">유사매장</h5>
+                            <div className="relative">
+                              <svg width="180" height="180" viewBox="0 0 180 180" className="mb-4">
+                                <defs>
+                                  <filter id="shadow2" x="-50%" y="-50%" width="200%" height="200%">
+                                    <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.2"/>
+                                  </filter>
+                                </defs>
+                                {/* 오전 (27.5%) */}
+                                <path
+                                  d={`M 90 90 L ${90 + 70 * Math.cos((-90) * Math.PI / 180)} ${90 + 70 * Math.sin((-90) * Math.PI / 180)} A 70 70 0 ${27.5 * 3.6 > 180 ? '1' : '0'} 1 ${90 + 70 * Math.cos((-90 + 27.5 * 3.6) * Math.PI / 180)} ${90 + 70 * Math.sin((-90 + 27.5 * 3.6) * Math.PI / 180)} Z`}
+                                  fill="#3b82f6"
+                                  filter="url(#shadow2)"
+                                />
+                                {/* 오후 (36.1%) */}
+                                <path
+                                  d={`M 90 90 L ${90 + 70 * Math.cos((-90 + 27.5 * 3.6) * Math.PI / 180)} ${90 + 70 * Math.sin((-90 + 27.5 * 3.6) * Math.PI / 180)} A 70 70 0 ${36.1 * 3.6 > 180 ? '1' : '0'} 1 ${90 + 70 * Math.cos((-90 + (27.5 + 36.1) * 3.6) * Math.PI / 180)} ${90 + 70 * Math.sin((-90 + (27.5 + 36.1) * 3.6) * Math.PI / 180)} Z`}
+                                  fill="#06b6d4"
+                                  filter="url(#shadow2)"
+                                />
+                                {/* 저녁 (36.4%) */}
+                                <path
+                                  d={`M 90 90 L ${90 + 70 * Math.cos((-90 + (27.5 + 36.1) * 3.6) * Math.PI / 180)} ${90 + 70 * Math.sin((-90 + (27.5 + 36.1) * 3.6) * Math.PI / 180)} A 70 70 0 ${36.4 * 3.6 > 180 ? '1' : '0'} 1 ${90 + 70 * Math.cos((-90 + (27.5 + 36.1 + 36.4) * 3.6) * Math.PI / 180)} ${90 + 70 * Math.sin((-90 + (27.5 + 36.1 + 36.4) * 3.6) * Math.PI / 180)} Z`}
+                                  fill="#1e40af"
+                                  filter="url(#shadow2)"
+                                />
+                                {/* 텍스트 레이블 */}
+                                <text
+                                  x={90 + 35 * Math.cos((-90 + 27.5 * 3.6 / 2) * Math.PI / 180)}
+                                  y={90 + 35 * Math.sin((-90 + 27.5 * 3.6 / 2) * Math.PI / 180)}
+                                  textAnchor="middle"
+                                  dominantBaseline="middle"
+                                  fill="white"
+                                  fontSize="14"
+                                  fontWeight="bold"
+                                  className="drop-shadow-lg"
+                                >
+                                  27.5%
+                                </text>
+                                <text
+                                  x={90 + 35 * Math.cos((-90 + 27.5 * 3.6 + 36.1 * 3.6 / 2) * Math.PI / 180)}
+                                  y={90 + 35 * Math.sin((-90 + 27.5 * 3.6 + 36.1 * 3.6 / 2) * Math.PI / 180)}
+                                  textAnchor="middle"
+                                  dominantBaseline="middle"
+                                  fill="white"
+                                  fontSize="14"
+                                  fontWeight="bold"
+                                  className="drop-shadow-lg"
+                                >
+                                  36.1%
+                                </text>
+                                <text
+                                  x={90 + 35 * Math.cos((-90 + (27.5 + 36.1) * 3.6 + 36.4 * 3.6 / 2) * Math.PI / 180)}
+                                  y={90 + 35 * Math.sin((-90 + (27.5 + 36.1) * 3.6 + 36.4 * 3.6 / 2) * Math.PI / 180)}
+                                  textAnchor="middle"
+                                  dominantBaseline="middle"
+                                  fill="white"
+                                  fontSize="14"
+                                  fontWeight="bold"
+                                  className="drop-shadow-lg"
+                                >
+                                  36.4%
+                                </text>
+                              </svg>
                             </div>
-                            <div className="flex gap-2">
-                              <div className="flex-1 bg-blue-50 rounded h-2.5 relative">
-                                <div className="bg-blue-500 h-2.5 rounded" style={{ width: '35.4%' }}></div>
-                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-blue-700">35.4%</div>
+                            <div className="space-y-2 text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                <span className="text-sm text-gray-600">오전 27.5%</span>
                               </div>
-                              <div className="flex-1 bg-cyan-50 rounded h-2.5 relative">
-                                <div className="bg-cyan-500 h-2.5 rounded" style={{ width: '36.1%' }}></div>
-                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-cyan-700">36.1%</div>
+                              <div className="flex items-center justify-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-cyan-500"></div>
+                                <span className="text-sm text-gray-600">오후 36.1%</span>
                               </div>
-                            </div>
-                          </div>
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm text-gray-600">저녁 (18-24시)</span>
-                              <span className="text-sm font-semibold text-gray-900">내 매장 36.4% | 유사매장 36.4%</span>
-                            </div>
-                            <div className="flex gap-2">
-                              <div className="flex-1 bg-blue-50 rounded h-2.5 relative">
-                                <div className="bg-blue-500 h-2.5 rounded" style={{ width: '36.4%' }}></div>
-                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-blue-700">36.4%</div>
-                              </div>
-                              <div className="flex-1 bg-cyan-50 rounded h-2.5 relative">
-                                <div className="bg-cyan-500 h-2.5 rounded" style={{ width: '36.4%' }}></div>
-                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-cyan-700">36.4%</div>
+                              <div className="flex items-center justify-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-blue-800"></div>
+                                <span className="text-sm text-gray-600">저녁 36.4%</span>
                               </div>
                             </div>
                           </div>
