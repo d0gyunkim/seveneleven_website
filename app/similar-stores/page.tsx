@@ -397,7 +397,7 @@ export default function SimilarStoresPage() {
   return (
     <Layout>
       <div className="min-h-screen bg-white">
-        <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6">
+        <div className="max-w-[98%] mx-auto px-4 md:px-6 py-4 md:py-6">
           {/* 헤더 */}
           <div className="mb-8 md:mb-10">
             <div className="flex items-start justify-between mb-6">
@@ -781,7 +781,7 @@ export default function SimilarStoresPage() {
           onClick={() => setShowStoreDetailModal(false)}
         >
           <div
-            className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-lg max-w-7xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 모달 헤더 */}
@@ -828,7 +828,382 @@ export default function SimilarStoresPage() {
             </div>
 
             {/* 모달 내용 */}
-            <div className="px-6 py-6">
+            <div className="px-8 py-8">
+              {/* 유사도 분석 섹션 */}
+              <div className="mb-10 pb-10 border-b border-gray-200">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900">유사도 분석 리포트</h3>
+                      <p className="text-base text-gray-500 mt-1">이 매장이 왜 유사한지 상세 분석</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-4xl font-bold text-green-600">88.3%</div>
+                    <div className="text-sm text-gray-500 font-medium mt-1">종합 유사도</div>
+                    <div className="mt-2 px-3 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-full inline-block">
+                      높은 신뢰도
+                    </div>
+                  </div>
+                </div>
+
+                {/* 주요 유사도 지표 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  {/* 판매 패턴 유사도 */}
+                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h4 className="text-base font-bold text-gray-900">판매 패턴</h4>
+                          <p className="text-sm text-gray-500">카테고리별 비중</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-2xl font-bold text-green-600">92.1%</span>
+                        <div className="text-sm text-gray-500">매우 유사</div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-gray-600">카테고리 비중 일치도</span>
+                          <span className="text-sm font-semibold text-gray-700">92.1%</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-3">
+                          <div className="bg-gradient-to-r from-green-500 to-emerald-500 h-3 rounded-full flex items-center justify-end pr-1" style={{ width: '92.1%' }}>
+                            <div className="w-2.5 h-2.5 bg-white rounded-full shadow-sm"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t border-gray-100">
+                        <p className="text-sm font-semibold text-gray-700 mb-3">주요 카테고리 비교</p>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-gray-600">과자</span>
+                              <span className="text-sm font-semibold text-gray-900">내 매장 24.3% | 유사매장 25.1%</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <div className="flex-1 bg-green-100 rounded h-2">
+                                <div className="bg-green-500 h-2 rounded" style={{ width: '24.3%' }}></div>
+                              </div>
+                              <div className="flex-1 bg-emerald-100 rounded h-2">
+                                <div className="bg-emerald-500 h-2 rounded" style={{ width: '25.1%' }}></div>
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-gray-600">냉장</span>
+                              <span className="text-sm font-semibold text-gray-900">내 매장 18.7% | 유사매장 19.2%</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <div className="flex-1 bg-green-100 rounded h-2">
+                                <div className="bg-green-500 h-2 rounded" style={{ width: '18.7%' }}></div>
+                              </div>
+                              <div className="flex-1 bg-emerald-100 rounded h-2">
+                                <div className="bg-emerald-500 h-2 rounded" style={{ width: '19.2%' }}></div>
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-gray-600">음료</span>
+                              <span className="text-sm font-semibold text-gray-900">내 매장 22.1% | 유사매장 21.8%</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <div className="flex-1 bg-green-100 rounded h-2">
+                                <div className="bg-green-500 h-2 rounded" style={{ width: '22.1%' }}></div>
+                              </div>
+                              <div className="flex-1 bg-emerald-100 rounded h-2">
+                                <div className="bg-emerald-500 h-2 rounded" style={{ width: '21.8%' }}></div>
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-gray-600">면</span>
+                              <span className="text-sm font-semibold text-gray-900">내 매장 12.4% | 유사매장 12.8%</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <div className="flex-1 bg-green-100 rounded h-2">
+                                <div className="bg-green-500 h-2 rounded" style={{ width: '12.4%' }}></div>
+                              </div>
+                              <div className="flex-1 bg-emerald-100 rounded h-2">
+                                <div className="bg-emerald-500 h-2 rounded" style={{ width: '12.8%' }}></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-4 leading-relaxed">
+                          💡 <span className="font-semibold">점주님께 드리는 팁:</span> 이 매장의 발주 패턴을 참고하시면 
+                          카테고리별 적정 발주량을 예측하는 데 도움이 됩니다.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 시간대 패턴 유사도 */}
+                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h4 className="text-base font-bold text-gray-900">시간대 패턴</h4>
+                          <p className="text-sm text-gray-500">고객 유입 시간</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-2xl font-bold text-blue-600">88.5%</span>
+                        <div className="text-sm text-gray-500">매우 유사</div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-gray-600">시간대별 분포 일치도</span>
+                          <span className="text-sm font-semibold text-gray-700">88.5%</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-3">
+                          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 h-3 rounded-full flex items-center justify-end pr-1" style={{ width: '88.5%' }}>
+                            <div className="w-2.5 h-2.5 bg-white rounded-full shadow-sm"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t border-gray-100">
+                        <p className="text-sm font-semibold text-gray-700 mb-3">시간대별 매출 비중</p>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-gray-600">오전 (6-12시)</span>
+                              <span className="text-sm font-semibold text-gray-900">내 매장 28.2% | 유사매장 27.5%</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <div className="flex-1 bg-blue-50 rounded h-2.5 relative">
+                                <div className="bg-blue-500 h-2.5 rounded" style={{ width: '28.2%' }}></div>
+                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-blue-700">28.2%</div>
+                              </div>
+                              <div className="flex-1 bg-cyan-50 rounded h-2.5 relative">
+                                <div className="bg-cyan-500 h-2.5 rounded" style={{ width: '27.5%' }}></div>
+                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-cyan-700">27.5%</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-gray-600">오후 (12-18시)</span>
+                              <span className="text-sm font-semibold text-gray-900">내 매장 35.4% | 유사매장 36.1%</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <div className="flex-1 bg-blue-50 rounded h-2.5 relative">
+                                <div className="bg-blue-500 h-2.5 rounded" style={{ width: '35.4%' }}></div>
+                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-blue-700">35.4%</div>
+                              </div>
+                              <div className="flex-1 bg-cyan-50 rounded h-2.5 relative">
+                                <div className="bg-cyan-500 h-2.5 rounded" style={{ width: '36.1%' }}></div>
+                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-cyan-700">36.1%</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-gray-600">저녁 (18-24시)</span>
+                              <span className="text-sm font-semibold text-gray-900">내 매장 36.4% | 유사매장 36.4%</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <div className="flex-1 bg-blue-50 rounded h-2.5 relative">
+                                <div className="bg-blue-500 h-2.5 rounded" style={{ width: '36.4%' }}></div>
+                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-blue-700">36.4%</div>
+                              </div>
+                              <div className="flex-1 bg-cyan-50 rounded h-2.5 relative">
+                                <div className="bg-cyan-500 h-2.5 rounded" style={{ width: '36.4%' }}></div>
+                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-cyan-700">36.4%</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-4 leading-relaxed">
+                          💡 <span className="font-semibold">점주님께 드리는 팁:</span> 저녁 시간대가 가장 활발하니 
+                          이 시간대에 맞춰 발주량을 조절하시면 재고 회전율을 높일 수 있습니다.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 주중/주말 패턴 유사도 */}
+                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h4 className="text-base font-bold text-gray-900">주중/주말 패턴</h4>
+                          <p className="text-sm text-gray-500">요일별 판매 패턴</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-2xl font-bold text-purple-600">85.2%</span>
+                        <div className="text-sm text-gray-500">유사</div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-gray-600">주중/주말 비율 일치도</span>
+                          <span className="text-sm font-semibold text-gray-700">85.2%</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-3">
+                          <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full flex items-center justify-end pr-1" style={{ width: '85.2%' }}>
+                            <div className="w-2.5 h-2.5 bg-white rounded-full shadow-sm"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t border-gray-100">
+                        <p className="text-sm font-semibold text-gray-700 mb-3">요일별 판매 패턴 비교</p>
+                        <div className="space-y-3">
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-gray-600">주중 평균 매출</span>
+                              <span className="text-sm font-semibold text-gray-900">내 매장 1.32배 | 유사매장 1.28배</span>
+                            </div>
+                            <div className="text-sm text-gray-600 mt-1 leading-relaxed">
+                              주중 매출이 주말 대비 약 30% 높은 패턴으로 일치합니다
+                            </div>
+                          </div>
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-gray-600">주말 매출 비중</span>
+                              <span className="text-sm font-semibold text-gray-900">내 매장 43.1% | 유사매장 43.8%</span>
+                            </div>
+                            <div className="text-sm text-gray-600 mt-1 leading-relaxed">
+                              주말 매출 비중이 유사하여 주말 발주 패턴 참고 가능
+                            </div>
+                          </div>
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-gray-600">요일별 편차</span>
+                              <span className="text-sm font-semibold text-gray-900">낮음</span>
+                            </div>
+                            <div className="text-sm text-gray-600 mt-1 leading-relaxed">
+                              요일별 매출 편차가 작아 안정적인 발주 패턴 유지 가능
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-4 leading-relaxed">
+                          💡 <span className="font-semibold">점주님께 드리는 팁:</span> 주중과 주말의 발주 비율을 
+                          이 매장과 유사하게 조절하시면 재고 회전율을 최적화할 수 있습니다.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 상세 분석 요약 및 발주 추천 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  {/* 분석 요약 */}
+                  <div className="bg-gradient-to-br from-gray-50 to-green-50 rounded-xl p-6 border border-gray-200">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-base font-bold text-gray-900 mb-4">종합 분석 요약</h4>
+                        <div className="space-y-3 text-base text-gray-700">
+                          <p className="leading-relaxed">
+                            <span className="font-bold text-gray-900">종합 유사도 88.3%</span>로 평가된 이 매장은 
+                            현재 매장과 <span className="font-semibold text-green-600">매우 높은 유사성</span>을 보입니다.
+                          </p>
+                          <div className="space-y-3 mt-4">
+                            <div className="flex items-start gap-3">
+                              <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              <span className="text-sm text-gray-600 leading-relaxed">주요 카테고리(과자, 냉장, 음료) 판매 비중이 92.1% 일치</span>
+                            </div>
+                            <div className="flex items-start gap-3">
+                              <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              <span className="text-sm text-gray-600 leading-relaxed">시간대별 고객 유입 패턴이 88.5% 유사</span>
+                            </div>
+                            <div className="flex items-start gap-3">
+                              <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              <span className="text-sm text-gray-600 leading-relaxed">주중/주말 판매 패턴이 85.2% 일치</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 발주 추천 가이드 */}
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-base font-bold text-gray-900 mb-4">발주 추천 가이드</h4>
+                        <div className="space-y-3">
+                          <div className="bg-white rounded-lg p-4 border border-blue-100">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <span className="text-sm font-semibold text-gray-900">추천 신뢰도</span>
+                            </div>
+                            <div className="text-sm text-gray-600 leading-relaxed">
+                              <span className="font-bold text-blue-600">높음 (High Confidence)</span> - 
+                              이 매장의 발주 패턴을 참고하시면 재고 최적화에 도움이 됩니다.
+                            </div>
+                          </div>
+                          <div className="bg-white rounded-lg p-4 border border-blue-100">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <span className="text-sm font-semibold text-gray-900">활용 방법</span>
+                            </div>
+                            <div className="text-sm text-gray-600 leading-relaxed">
+                              아래 인기 상품 순위를 참고하여 발주량을 조절하시고, 
+                              특히 <span className="font-semibold">과자, 냉장, 음료</span> 카테고리에 집중하세요.
+                            </div>
+                          </div>
+                          <div className="bg-white rounded-lg p-4 border border-blue-100">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <span className="text-sm font-semibold text-gray-900">주의사항</span>
+                            </div>
+                            <div className="text-sm text-gray-600 leading-relaxed">
+                              계절, 이벤트 등 시기별 변동을 고려하여 발주량을 조절하시기 바랍니다.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* 유사 매장 인기 상품 순위 제목 */}
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-2xl font-bold text-green-600 tracking-tight">
