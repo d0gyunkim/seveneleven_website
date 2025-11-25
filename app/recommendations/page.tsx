@@ -703,7 +703,7 @@ export default function RecommendationsPage() {
                                 </h4>
                                 
                                 {/* 가격 정보 */}
-                                <div className="mb-2 md:mb-3 space-y-1">
+                                <div className="mb-1 space-y-1">
                                   {product.sale_price !== null && (
                                     <div className="text-xs md:text-sm text-gray-600">
                                       <span className="font-medium">판매가:</span> <span className="text-sm md:text-base font-bold text-green-500">{product.sale_price.toLocaleString()}원</span>
