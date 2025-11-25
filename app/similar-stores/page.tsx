@@ -44,6 +44,7 @@ export default function SimilarStoresPage() {
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>('과자')
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [showInfoModal, setShowInfoModal] = useState(false)
+  const [showStoreDetailModal, setShowStoreDetailModal] = useState(false)
   const [storeDetailsByMonth, setStoreDetailsByMonth] = useState<Record<string, StoreDetail>>({})
   const [selectedMonth, setSelectedMonth] = useState<string>('')
   const [availableMonths, setAvailableMonths] = useState<string[]>([])
@@ -349,6 +350,7 @@ export default function SimilarStoresPage() {
 
   const handleStoreClick = (storeCode: string) => {
     fetchStoreDetail(storeCode)
+    setShowStoreDetailModal(true)
   }
 
   const categories: CategoryType[] = ['과자', '냉장', '맥주', '면', '미반', '빵', '음료']
@@ -456,23 +458,24 @@ export default function SimilarStoresPage() {
               <p className="text-gray-500 text-base">유사 매장 정보가 없습니다.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-              {/* 왼쪽: 유사매장 목록 */}
-              <div className="lg:order-1">
+            <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4 md:gap-6">
+              {/* 왼쪽: 유사매장 목록 + 매장 정보 */}
+              <div className="lg:order-1 space-y-4 md:space-y-6">
+                {/* 유사매장 목록 */}
                 <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                   {/* 목록 헤더 */}
                   <div className="bg-gray-50 border-b border-gray-200 px-4 py-3">
-                    <h3 className="text-lg font-semibold text-gray-900">유사 매장 목록</h3>
+                    <h3 className="text-base font-semibold text-gray-900">유사 매장 목록</h3>
                     <p className="text-xs text-gray-500 mt-1">클릭하여 매장 정보 확인</p>
                   </div>
                   
                   {/* 스크롤 가능한 목록 */}
-                  <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 300px)', minHeight: '500px' }}>
+                  <div className="overflow-y-auto" style={{ maxHeight: selectedStore ? 'calc(100vh - 800px)' : 'calc(100vh - 300px)', minHeight: '300px' }}>
                     <div className="divide-y divide-gray-100">
                       {similarStores.map((store) => (
                         <div
                           key={store.store_code}
-                          className={`px-4 py-4 cursor-pointer transition-all duration-200 ${
+                          className={`px-4 py-3 cursor-pointer transition-all duration-200 ${
                             selectedStore?.store_code === store.store_code
                               ? 'bg-green-50 border-l-4 border-green-500'
                               : 'hover:bg-gray-50'
@@ -480,7 +483,7 @@ export default function SimilarStoresPage() {
                           onClick={() => handleStoreClick(store.store_code)}
                         >
                           <div className="flex items-start gap-3">
-                            <span className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-sm font-bold ${
+                            <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${
                               selectedStore?.store_code === store.store_code
                                 ? 'bg-green-500 text-white'
                                 : 'bg-green-100 text-green-600'
@@ -488,7 +491,7 @@ export default function SimilarStoresPage() {
                               {store.rank}
                             </span>
                             <div className="flex-1 min-w-0">
-                              <p className={`text-sm md:text-base font-semibold mb-1 ${
+                              <p className={`text-sm font-semibold mb-1 ${
                                 selectedStore?.store_code === store.store_code
                                   ? 'text-green-700'
                                   : 'text-gray-900'
@@ -502,7 +505,7 @@ export default function SimilarStoresPage() {
                               )}
                             </div>
                             <svg
-                              className={`w-5 h-5 flex-shrink-0 transition-transform duration-200 ${
+                              className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${
                                 selectedStore?.store_code === store.store_code
                                   ? 'text-green-500 rotate-90'
                                   : 'text-gray-400'
@@ -526,9 +529,9 @@ export default function SimilarStoresPage() {
                 </div>
               </div>
 
-              {/* 오른쪽: 지도 */}
+              {/* 오른쪽: 지도 (더 크게) */}
               <div className="lg:order-2">
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden h-full">
                   {/* 지도 헤더 */}
                   <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 flex items-center justify-between">
                     <div>
@@ -544,8 +547,8 @@ export default function SimilarStoresPage() {
                     )}
                   </div>
                   
-                  {/* 지도 */}
-                  <div className="relative" style={{ height: '500px' }}>
+                  {/* 지도 - 더 크게 */}
+                  <div className="relative" style={{ height: 'calc(100vh - 200px)', minHeight: '600px' }}>
                     <KakaoMap 
                       stores={currentStoreInfo ? [currentStoreInfo, ...similarStores] : similarStores}
                       currentStoreName={currentStoreName}
@@ -559,140 +562,6 @@ export default function SimilarStoresPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* 매장 상세 정보 - 목록/지도 아래에 통합 */}
-          {selectedStore && availableMonths.length > 0 && (
-            <div className="mt-6 md:mt-8">
-              {/* 상세 정보 헤더 */}
-              <div className="mb-6 md:mb-8">
-                <div className="flex items-start justify-between mb-6">
-                  {/* 왼쪽: 월 + 매장명 */}
-                  <div className="flex-1">
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 tracking-tight">
-                      {selectedMonth || ''} {selectedStore.store_nm || ''} 정보
-                    </h2>
-                    <p className="text-xs md:text-sm text-gray-500 font-medium">Top Start</p>
-                  </div>
-                  
-                  {/* 오른쪽: 월별 탭 */}
-                  {availableMonths.length > 0 && (
-                    <div className="flex items-center gap-2 ml-4">
-                      {availableMonths.map((month) => (
-                        <button
-                          key={month}
-                          onClick={() => {
-                            console.log('월 변경:', month, '데이터:', storeDetailsByMonth[month])
-                            setSelectedMonth(month)
-                            setSelectedStore(storeDetailsByMonth[month])
-                            setSelectedCategory('과자') // 월 변경 시 카테고리도 초기화
-                          }}
-                          className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${
-                            selectedMonth === month
-                              ? 'bg-green-500 text-white'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          {month}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                
-                {/* 유사 매장 인기 상품 순위 제목 */}
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl md:text-2xl font-bold text-green-600 tracking-tight">
-                    유사 매장 인기 상품 순위
-                  </h3>
-                  <button
-                    className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-lg text-xs md:text-sm font-medium text-gray-700 hover:bg-gray-200 hover:border-green-300 transition-colors"
-                  >
-                    <svg
-                      className="w-3 h-3 md:w-4 md:h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                    <span className="hidden sm:inline">내 매장 취급 상품 제외</span>
-                    <span className="sm:hidden">제외</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* 대분류 탭 */}
-              <div className="flex flex-wrap gap-2 md:gap-3 mb-4 md:mb-6 overflow-x-auto pb-2">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`px-4 py-2 rounded-lg text-sm md:text-base font-semibold transition-all duration-200 whitespace-nowrap ${
-                      selectedCategory === category
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-
-              {/* 선택된 대분류의 상품 목록 */}
-              {loadingDetail ? (
-                <div className="text-center py-12">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mb-4"></div>
-                  <p className="text-sm text-gray-600">데이터를 불러오는 중...</p>
-                </div>
-              ) : (
-                <div>
-                  {selectedStore[selectedCategory] ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                      {Object.entries(selectedStore[selectedCategory] as Record<string, string[]>).map(
-                        ([subCategory, products]) => (
-                          <div
-                            key={subCategory}
-                            className="bg-white border-l-4 border-green-500 rounded-lg p-3 md:p-4 hover:shadow-md transition-shadow"
-                          >
-                            <div className="flex items-center justify-between mb-2 md:mb-3">
-                              <h3 className="text-sm md:text-base font-semibold text-gray-900">
-                                {subCategory}
-                              </h3>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                판매순 상위
-                              </span>
-                            </div>
-                            <div className="space-y-1.5 md:space-y-2">
-                              {products.map((product, index) => (
-                                <div
-                                  key={index}
-                                  className="flex items-start gap-2 text-xs md:text-sm text-gray-700"
-                                >
-                                  <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full bg-green-50 text-green-600 font-semibold text-xs">
-                                    {index + 1}
-                                  </span>
-                                  <span className="flex-1 leading-tight">{product}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12 bg-gray-50 rounded-lg">
-                      <p className="text-gray-600">해당 대분류의 상품 정보가 없습니다.</p>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -896,6 +765,166 @@ export default function SimilarStoresPage() {
             <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
               <button
                 onClick={() => setShowInfoModal(false)}
+                className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-medium"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 매장 상세 정보 모달 */}
+      {showStoreDetailModal && selectedStore && availableMonths.length > 0 && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowStoreDetailModal(false)}
+        >
+          <div
+            className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 모달 헤더 */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-gray-900">
+                  {selectedMonth || ''} {selectedStore.store_nm || ''} 정보
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">Top Start</p>
+              </div>
+              <div className="flex items-center gap-3">
+                {/* 월별 탭 */}
+                {availableMonths.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    {availableMonths.map((month) => (
+                      <button
+                        key={month}
+                        onClick={() => {
+                          console.log('월 변경:', month, '데이터:', storeDetailsByMonth[month])
+                          setSelectedMonth(month)
+                          setSelectedStore(storeDetailsByMonth[month])
+                          setSelectedCategory('과자')
+                        }}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                          selectedMonth === month
+                            ? 'bg-green-500 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {month}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <button
+                  onClick={() => setShowStoreDetailModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* 모달 내용 */}
+            <div className="px-6 py-6">
+              {/* 유사 매장 인기 상품 순위 제목 */}
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-2xl font-bold text-green-600 tracking-tight">
+                  유사 매장 인기 상품 순위
+                </h3>
+                <button
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-green-300 transition-colors"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                  내 매장 취급 상품 제외
+                </button>
+              </div>
+
+              {/* 대분류 탭 */}
+              <div className="flex flex-wrap gap-3 mb-6 overflow-x-auto pb-2">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`px-5 py-2.5 rounded-lg text-base font-semibold transition-all duration-200 whitespace-nowrap ${
+                      selectedCategory === category
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+
+              {/* 선택된 대분류의 상품 목록 */}
+              {loadingDetail ? (
+                <div className="text-center py-12">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mb-4"></div>
+                  <p className="text-sm text-gray-600">데이터를 불러오는 중...</p>
+                </div>
+              ) : (
+                <div>
+                  {selectedStore[selectedCategory] ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {Object.entries(selectedStore[selectedCategory] as Record<string, string[]>).map(
+                        ([subCategory, products]) => (
+                          <div
+                            key={subCategory}
+                            className="bg-white border-l-4 border-green-500 rounded-lg p-4 hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <h3 className="text-sm md:text-base font-semibold text-gray-900">
+                                {subCategory}
+                              </h3>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                판매순 상위
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              {products.map((product, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-start gap-2 text-xs md:text-sm text-gray-700"
+                                >
+                                  <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full bg-green-50 text-green-600 font-semibold text-xs">
+                                    {index + 1}
+                                  </span>
+                                  <span className="flex-1 leading-tight">{product}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">해당 대분류의 상품 정보가 없습니다.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 모달 푸터 */}
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
+              <button
+                onClick={() => setShowStoreDetailModal(false)}
                 className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-medium"
               >
                 확인
