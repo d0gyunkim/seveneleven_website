@@ -1560,15 +1560,15 @@ export default function SimilarStoresPage() {
                         <p className="text-[10px] text-gray-500 mb-3">9개 주요 카테고리 비교 분석</p>
                         <ResponsiveContainer width="100%" height={240}>
                           <RadarChart data={[
-                            { category: '미반', 내매장: 8.5, 유사매장평균: 8.2 },
-                            { category: '조리빵', 내매장: 12.3, 유사매장평균: 12.1 },
-                            { category: '즉석음료', 내매장: 15.2, 유사매장평균: 15.0 },
-                            { category: '유음료', 내매장: 18.7, 유사매장평균: 18.5 },
-                            { category: '냉장', 내매장: 19.2, 유사매장평균: 19.0 },
-                            { category: '빵', 내매장: 10.1, 유사매장평균: 10.3 },
-                            { category: '과자', 내매장: 24.3, 유사매장평균: 25.1 },
-                            { category: '면', 내매장: 12.4, 유사매장평균: 12.8 },
-                            { category: '음료', 내매장: 22.1, 유사매장평균: 21.8 },
+                            { category: '미반', 내매장: 8.5, 유사매장평균: 7.0 },
+                            { category: '조리빵', 내매장: 12.3, 유사매장평균: 14.5 },
+                            { category: '즉석음료', 내매장: 15.2, 유사매장평균: 13.8 },
+                            { category: '유음료', 내매장: 18.7, 유사매장평균: 17.2 },
+                            { category: '냉장', 내매장: 19.2, 유사매장평균: 20.5 },
+                            { category: '빵', 내매장: 10.1, 유사매장평균: 11.8 },
+                            { category: '과자', 내매장: 24.3, 유사매장평균: 26.5 },
+                            { category: '면', 내매장: 12.4, 유사매장평균: 14.2 },
+                            { category: '음료', 내매장: 22.1, 유사매장평균: 20.3 },
                           ]}>
                             <PolarGrid stroke="#e5e7eb" />
                             <PolarAngleAxis dataKey="category" tick={{ fontSize: 10, fill: '#374151' }} />
@@ -1636,15 +1636,15 @@ export default function SimilarStoresPage() {
                         </p>
                         <ResponsiveContainer width="100%" height={220}>
                           <LineChart data={averageModalTimeTab === '주중' ? [
-                            { time: '심야\n(0-6시)', 내매장: 5.2, 유사매장평균: 7.0 },
-                            { time: '오전\n(6-12시)', 내매장: 18.5, 유사매장평균: 22.0 },
-                            { time: '오후\n(12-18시)', 내매장: 42.3, 유사매장평균: 40.0 },
-                            { time: '저녁\n(18-24시)', 내매장: 34.0, 유사매장평균: 32.0 },
+                            { time: '심야\n(0-6시)', 내매장: 5.2, 유사매장평균: 7.5 },
+                            { time: '오전\n(6-12시)', 내매장: 18.5, 유사매장평균: 22.5 },
+                            { time: '오후\n(12-18시)', 내매장: 42.3, 유사매장평균: 38.5 },
+                            { time: '저녁\n(18-24시)', 내매장: 34.0, 유사매장평균: 31.5 },
                           ] : [
-                            { time: '심야\n(0-6시)', 내매장: 4.8, 유사매장평균: 4.5 },
-                            { time: '오전\n(6-12시)', 내매장: 15.2, 유사매장평균: 15.0 },
-                            { time: '오후\n(12-18시)', 내매장: 28.5, 유사매장평균: 28.2 },
-                            { time: '저녁\n(18-24시)', 내매장: 51.5, 유사매장평균: 52.3 },
+                            { time: '심야\n(0-6시)', 내매장: 4.8, 유사매장평균: 5.2 },
+                            { time: '오전\n(6-12시)', 내매장: 15.2, 유사매장평균: 17.8 },
+                            { time: '오후\n(12-18시)', 내매장: 28.5, 유사매장평균: 26.5 },
+                            { time: '저녁\n(18-24시)', 내매장: 51.5, 유사매장평균: 50.5 },
                           ]}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                             <XAxis 
@@ -1713,8 +1713,8 @@ export default function SimilarStoresPage() {
                         <p className="text-[10px] text-gray-500 mb-2">주말 매출 비중 / 주중 매출 비중으로 계산</p>
                         <ResponsiveContainer width="100%" height={180}>
                           <BarChart data={[
-                            { name: '내 매장', value: 1.15 },
-                            { name: '유사 매장 평균', value: 1.12 },
+                            { name: '내 매장', value: 1.18 },
+                            { name: '유사 매장 평균', value: 1.10 },
                           ]}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                             <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#374151' }} />
