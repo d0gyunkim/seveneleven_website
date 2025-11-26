@@ -651,9 +651,14 @@ export default function RecommendationsPage() {
                 <div className="w-1 h-8 bg-green-600"></div>
                 <div className="flex-1">
                   <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">추천 상품 안내</h4>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    <span className="font-semibold text-green-700">{storeName} 점주님께 추천드리는</span> 내 매장과 유사한 상권/매출을 내는 매장에서 인기 있는 상품입니다.
-                  </p>
+                  <div className="text-sm text-gray-700 leading-relaxed space-y-2">
+                    <p>
+                      <span className="font-semibold text-green-700">{storeName} 점주님께 추천드리는</span> 상품은, 우리 매장과 유사한 매장들의 판매 데이터를 수집·분석하여 선별한 상품입니다.
+                    </p>
+                    <p>
+                      우리 매장에서는 현재 취급하지 않지만, 유사 매장들에서 <span className="font-semibold">최근 판매 실적, 판매 빈도, 매출액을 종합적으로 분석</span>한 결과 판매 성과가 우수한 상품들을 선별하여 추천하고 있습니다.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
