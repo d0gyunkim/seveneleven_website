@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Layout from '@/components/Layout'
 import KakaoMap from '@/components/KakaoMap'
 import { supabase } from '@/lib/supabase'
+import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, ResponsiveContainer, Cell } from 'recharts'
 
 interface SimilarStore {
   store_code: string
@@ -45,6 +46,7 @@ export default function SimilarStoresPage() {
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [showStoreDetailModal, setShowStoreDetailModal] = useState(false)
+  const [showAverageInfoModal, setShowAverageInfoModal] = useState(false)
   const [storeDetailsByMonth, setStoreDetailsByMonth] = useState<Record<string, StoreDetail>>({})
   const [selectedMonth, setSelectedMonth] = useState<string>('')
   const [availableMonths, setAvailableMonths] = useState<string[]>([])
@@ -416,26 +418,48 @@ export default function SimilarStoresPage() {
                   판매 패턴 분석을 통한 유사 매장 발굴 및 발주 최적화 인사이트 제공
                 </p>
               </div>
-              <button
-                onClick={() => setShowInfoModal(true)}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 border border-green-600 hover:bg-green-50 rounded transition-colors"
-                title="유사 매장 분석 방법 알아보기"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowAverageInfoModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors"
+                  title="유사매장들의 평균 정보 보기"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <span className="hidden md:inline">분석 방법</span>
-              </button>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                  <span className="hidden md:inline">유사매장 평균 정보</span>
+                </button>
+                <button
+                  onClick={() => setShowInfoModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 border border-green-600 hover:bg-green-50 rounded transition-colors"
+                  title="유사 매장 분석 방법 알아보기"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="hidden md:inline">분석 방법</span>
+                </button>
+              </div>
             </div>
             
             {/* 월별 탭 */}
@@ -1466,6 +1490,230 @@ export default function SimilarStoresPage() {
             <div className="sticky bottom-0 bg-gray-50 border-t-2 border-gray-300 px-8 py-4 flex justify-end">
               <button
                 onClick={() => setShowStoreDetailModal(false)}
+                className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 유사매장 평균 정보 모달 */}
+      {showAverageInfoModal && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowAverageInfoModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-7xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 모달 헤더 */}
+            <div className="sticky top-0 bg-white border-b-2 border-gray-300 px-8 py-6 z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-baseline gap-4">
+                  <div className="w-1 h-10 bg-green-600"></div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">유사 매장 선정 이유</h3>
+                    <p className="text-xs text-gray-500 mt-1 font-medium uppercase tracking-wide">SIMILAR STORE SELECTION REASONS</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAverageInfoModal(false)}
+                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* 모달 내용 */}
+            <div className="px-8 py-8 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* 왼쪽: 텍스트 정보 */}
+                <div className="space-y-6">
+                  <div className="bg-white border-2 border-gray-300 p-8">
+                    <div className="mb-6 border-b-2 border-gray-300 pb-4">
+                      <div className="flex items-baseline gap-4 mb-3">
+                        <div className="w-1 h-8 bg-green-600"></div>
+                        <h4 className="text-lg font-bold text-gray-900 uppercase tracking-wide">유사 매장 선정 근거</h4>
+                      </div>
+                    </div>
+                    <div className="space-y-5 text-sm text-gray-700 leading-relaxed">
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p>
+                          본 매장과 유사 매장들은 <span className="font-bold text-green-600">고객 방문 패턴의 유사도가 90% 이상</span>으로 
+                          매우 높은 수준의 일치를 보이며, 이는 상권 특성과 고객층 구성이 유사함을 의미합니다.
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p>
+                          주요 카테고리별 판매 비중 분석 결과, <span className="font-semibold">조리빵</span>, <span className="font-semibold">유음료</span>, 
+                          <span className="font-semibold">과자</span> 등 핵심 상품군의 매출 구성이 거의 동일하여 
+                          <span className="font-semibold">고객 니즈와 구매 패턴이 유사</span>함을 확인했습니다.
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p>
+                          주말/주중 매출 집중도 분석 결과, 유사 매장들은 평균적으로 
+                          <span className="font-semibold">주말 매출이 주중 대비 12-15% 높게 집중</span>되어 있어 
+                          주말 중심형 상권 특성을 공유합니다.
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p>
+                          시간대별 고객 유입 패턴 분석 결과, <span className="font-semibold">주중 오후 12-18시</span>와 
+                          <span className="font-semibold">주말 저녁 18-24시</span>에 매출이 집중되는 패턴이 
+                          유사 매장들과 <span className="font-semibold">높은 일치도</span>를 보입니다.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 border-l-4 border-green-600 p-5">
+                    <div className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-900 mb-1">핵심 인사이트</p>
+                        <p className="text-xs text-gray-700 leading-relaxed">
+                          유사 매장들의 발주 패턴과 재고 관리 전략을 참고하여 본 매장의 발주 최적화를 진행하면 
+                          재고 회전율 향상과 매출 증대 효과를 기대할 수 있습니다.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 오른쪽: 차트들 */}
+                <div className="space-y-6">
+                  {/* 1. 카테고리별 판매 비율 - 레이더 차트 */}
+                  <div className="bg-white border-2 border-gray-300 p-6">
+                    <div className="mb-5 border-b border-gray-200 pb-3">
+                      <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">카테고리별 판매 비율</h5>
+                      <p className="text-xs text-gray-500 mt-1">9개 주요 카테고리 비교 분석</p>
+                    </div>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <RadarChart data={[
+                        { category: '미반', 내매장: 8.5, 유사매장평균: 8.2 },
+                        { category: '조리빵', 내매장: 12.3, 유사매장평균: 12.1 },
+                        { category: '즉석음료', 내매장: 15.2, 유사매장평균: 15.0 },
+                        { category: '유음료', 내매장: 18.7, 유사매장평균: 18.5 },
+                        { category: '냉장', 내매장: 19.2, 유사매장평균: 19.0 },
+                        { category: '빵', 내매장: 10.1, 유사매장평균: 10.3 },
+                        { category: '과자', 내매장: 24.3, 유사매장평균: 25.1 },
+                        { category: '면', 내매장: 12.4, 유사매장평균: 12.8 },
+                        { category: '음료', 내매장: 22.1, 유사매장평균: 21.8 },
+                      ]}>
+                        <PolarGrid stroke="#e5e7eb" />
+                        <PolarAngleAxis dataKey="category" tick={{ fontSize: 11, fill: '#374151' }} />
+                        <PolarRadiusAxis angle={90} domain={[0, 30]} tick={{ fontSize: 10, fill: '#6b7280' }} />
+                        <Radar name="내 매장" dataKey="내매장" stroke="#16a34a" fill="#16a34a" fillOpacity={0.6} strokeWidth={2} />
+                        <Radar name="유사 매장 평균" dataKey="유사매장평균" stroke="#fb923c" fill="#fb923c" fillOpacity={0.4} strokeWidth={2} />
+                        <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* 2. 주말/주중 매출 집중도 - 바 차트 */}
+                  <div className="bg-white border-2 border-gray-300 p-6">
+                    <div className="mb-5 border-b border-gray-200 pb-3">
+                      <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">주말/주중 매출 집중도</h5>
+                      <p className="text-xs text-gray-500 mt-1">주말 매출 비중 / 주중 매출 비중으로 계산</p>
+                    </div>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={[
+                        { type: '내 매장', value: 1.15 },
+                        { type: '유사 매장 평균', value: 1.12 },
+                      ]}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="type" tick={{ fontSize: 11, fill: '#374151' }} />
+                        <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} domain={[0.9, 1.3]} />
+                        <Tooltip 
+                          formatter={(value: number) => value.toFixed(2)}
+                          contentStyle={{ fontSize: '12px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+                        />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                          <Cell fill="#16a34a" />
+                          <Cell fill="#fb923c" />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <div className="mt-3 p-2 bg-gray-50 rounded border-l-2 border-green-600">
+                      <p className="text-xs text-gray-600">
+                        <span className="font-semibold">*1.0 초과시:</span> 주말 매출 비중이 주중보다 높음
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 3. 주중 - 시간대별 판매 비율 - 라인 차트 */}
+                  <div className="bg-white border-2 border-gray-300 p-6">
+                    <div className="mb-5 border-b border-gray-200 pb-3">
+                      <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">주중 - 시간대별 판매 비율</h5>
+                      <p className="text-xs text-gray-500 mt-1">요일별 고객 유입 패턴 분석</p>
+                    </div>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <LineChart data={[
+                        { time: '심야\n(0-6시)', 내매장: 5.2, 유사매장평균: 5.0 },
+                        { time: '오전\n(6-12시)', 내매장: 18.5, 유사매장평균: 18.2 },
+                        { time: '오후\n(12-18시)', 내매장: 42.3, 유사매장평균: 41.8 },
+                        { time: '저녁\n(18-24시)', 내매장: 34.0, 유사매장평균: 35.0 },
+                      ]}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#374151' }} />
+                        <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} />
+                        <Tooltip 
+                          formatter={(value: number) => `${value}%`}
+                          contentStyle={{ fontSize: '12px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: '12px' }} />
+                        <Line type="monotone" dataKey="내매장" stroke="#16a34a" strokeWidth={2.5} name="내 매장" dot={{ fill: '#16a34a', r: 4 }} />
+                        <Line type="monotone" dataKey="유사매장평균" stroke="#fb923c" strokeWidth={2.5} name="유사 매장 평균" dot={{ fill: '#fb923c', r: 4 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* 4. 주말 - 시간대별 판매 비율 - 라인 차트 */}
+                  <div className="bg-white border-2 border-gray-300 p-6">
+                    <div className="mb-5 border-b border-gray-200 pb-3">
+                      <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">주말 - 시간대별 판매 비율</h5>
+                      <p className="text-xs text-gray-500 mt-1">주말 고객 유입 패턴 분석</p>
+                    </div>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <LineChart data={[
+                        { time: '심야\n(0-6시)', 내매장: 4.8, 유사매장평균: 4.5 },
+                        { time: '오전\n(6-12시)', 내매장: 15.2, 유사매장평균: 15.0 },
+                        { time: '오후\n(12-18시)', 내매장: 28.5, 유사매장평균: 28.2 },
+                        { time: '저녁\n(18-24시)', 내매장: 51.5, 유사매장평균: 52.3 },
+                      ]}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#374151' }} />
+                        <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} />
+                        <Tooltip 
+                          formatter={(value: number) => `${value}%`}
+                          contentStyle={{ fontSize: '12px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: '12px' }} />
+                        <Line type="monotone" dataKey="내매장" stroke="#16a34a" strokeWidth={2.5} name="내 매장" dot={{ fill: '#16a34a', r: 4 }} />
+                        <Line type="monotone" dataKey="유사매장평균" stroke="#fb923c" strokeWidth={2.5} name="유사 매장 평균" dot={{ fill: '#fb923c', r: 4 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 모달 푸터 */}
+            <div className="sticky bottom-0 bg-gray-50 border-t-2 border-gray-300 px-8 py-4 flex justify-end">
+              <button
+                onClick={() => setShowAverageInfoModal(false)}
                 className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
               >
                 확인
