@@ -174,7 +174,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* 메인 컨텐츠 */}
-      <main className="flex-1 overflow-auto bg-white w-full">
+      <main className="flex-1 overflow-hidden bg-white w-full flex flex-col" style={{ height: '100vh' }}>
         {children}
       </main>
     </div>
