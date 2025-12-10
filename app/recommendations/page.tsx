@@ -615,12 +615,10 @@ export default function RecommendationsPage() {
             {activeTab === 'recommended' && (
               <div className="bg-white p-8 md:p-12 mb-6 md:mb-8 text-center">
                 <p className="text-2xl md:text-3xl lg:text-4xl text-slate-900 leading-relaxed">
-                  <span className="font-bold">{storeName} 점주님!</span>
+                  <span className="text-emerald-600">유사 매장의</span> 판매 데이터를 수집·분석하여 선별한 추천 상품입니다.
                   <br />
                   <br />
-                  유사 매장의 판매 패턴을 딥러닝으로 분석해
-                  <br />
-                  지금 {storeName}에서 판매 성과가 기대되는 상품을 추천드립니다.
+                  내 매장 미취급 상품 중 유사 매장들에서 판매 성과가 우수한 상품들을 선별하여 추천하고 있습니다.
                 </p>
               </div>
             )}
