@@ -126,7 +126,8 @@ export default function OverviewPage() {
                 <h2 className="text-xl md:text-2xl font-bold text-slate-900">데이터 기반 의사결정</h2>
               </div>
               <p className="text-slate-700 leading-relaxed mb-4">
-                실제 판매 데이터를 기반으로 한 객관적인 분석 결과를 제공합니다. 
+                실제 판매 데이터를 기반으로 
+                 한 객관적인 분석 결과를 제공합니다. 
                 직관적인 대시보드와 상세한 분석 정보를 통해 효율적인 발주 결정을 지원합니다.
               </p>
               <ul className="space-y-2 text-sm text-slate-600">
@@ -157,7 +158,7 @@ export default function OverviewPage() {
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2">빠른 분석</h3>
-                <p className="text-sm text-slate-600">실시간 데이터 기반으로 빠르고 정확한 분석 결과를 제공합니다.</p>
+                <p className="text-sm text-slate-600">실시간 데이터 기반으로<br />빠르고 정확한 분석 결과를 제공합니다.</p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -166,7 +167,7 @@ export default function OverviewPage() {
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2">신뢰할 수 있는 데이터</h3>
-                <p className="text-sm text-slate-600">검증된 매장 데이터를 기반으로 신뢰할 수 있는 분석을 제공합니다.</p>
+                <p className="text-sm text-slate-600">검증된 매장 데이터를 기반으로<br />신뢰할 수 있는 분석을 제공합니다.</p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -175,7 +176,7 @@ export default function OverviewPage() {
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2">맞춤형 추천</h3>
-                <p className="text-sm text-slate-600">각 매장의 특성에 맞는 개인화된 상품 추천을 제공합니다.</p>
+                <p className="text-sm text-slate-600">각 매장의 특성에 맞는<br />개인화된 상품 추천을 제공합니다.</p>
               </div>
             </div>
           </div>

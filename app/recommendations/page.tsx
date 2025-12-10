@@ -992,16 +992,12 @@ export default function RecommendationsPage() {
                       <p className="text-xs text-slate-500 mb-3">상품 상세 정보</p>
                       <div className="flex flex-wrap gap-2">
                         {selectedProduct.item_mddv_nm && (
-                          <span className="text-xs text-slate-600 bg-slate-50 px-2.5 py-1 font-medium rounded-md">
+                          <span className="text-xs text-slate-800 bg-slate-200 px-2.5 py-1 font-medium rounded-md">
                             {selectedProduct.item_mddv_nm}
                           </span>
                         )}
                         {selectedProduct.item_smdv_nm && (
-                          <span className={`text-xs px-2.5 py-1 font-medium rounded-md ${
-                            activeTab === 'recommended' 
-                              ? 'text-emerald-700 bg-emerald-50' 
-                              : 'text-amber-700 bg-amber-50'
-                          }`}>
+                          <span className="text-xs text-slate-800 bg-slate-200 px-2.5 py-1 font-medium rounded-md">
                             {selectedProduct.item_smdv_nm}
                           </span>
                         )}
@@ -1025,28 +1021,6 @@ export default function RecommendationsPage() {
                     {/* 이미지 영역 - 왼쪽 */}
                     {selectedProduct.item_img && (
                       <div className="flex-shrink-0 w-full md:w-1/2">
-                        {modalDisplayRank !== null && modalDisplayRank <= 3 && (
-                          <div className="mb-2">
-                            <div className={`inline-block relative ${
-                              modalDisplayRank === 1 ? 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600' :
-                              modalDisplayRank === 2 ? 'bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500' :
-                              'bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600'
-                            } rounded-lg shadow-xl transform rotate-[-8deg] transition-all duration-300 hover:rotate-0 hover:scale-110`}
-                            style={{
-                              padding: '8px 14px',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3)',
-                            }}>
-                              <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent rounded-lg"></div>
-                              <div className="absolute -inset-0.5 bg-black/10 rounded-lg blur-sm"></div>
-                              <span className="relative text-white font-black text-base drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] tracking-tight">
-                                {modalDisplayRank}
-                              </span>
-                              {modalDisplayRank === 1 && (
-                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-300 rounded-full animate-pulse shadow-md"></div>
-                              )}
-                            </div>
-                          </div>
-                        )}
                         <div className="relative w-full h-48 md:h-56 overflow-hidden bg-white rounded-lg flex items-center justify-center">
                           <img
                             src={selectedProduct.item_img}
