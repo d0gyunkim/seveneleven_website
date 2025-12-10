@@ -85,7 +85,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-white flex flex-col lg:flex-row">
       {/* 모바일 헤더 */}
       <header className="lg:hidden bg-gray-50 border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-green-500">세븐일레븐</h1>
+        <div className="ml-8 flex items-center">
+          <img 
+            src="https://blog.kakaocdn.net/dna/Rgfiv/btqwQkfumoF/AAAAAAAAAAAAAAAAAAAAAGAZR8R47RTmlda6WEeNVxz2_krzlzUMSYBVH6e7ZgSg/img.jpg?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1767193199&allow_ip=&allow_referer=&signature=xLd%2FpHndt%2BLco2Mpc2IeZmW7nZc%3D"
+            alt="7-ELEVEN"
+            className="h-8 object-contain select-none"
+            draggable="false"
+          />
+        </div>
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="p-2 text-gray-700 hover:bg-gray-100 rounded-lg"
@@ -117,7 +124,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         <div className="p-4 md:p-6 h-full overflow-y-auto">
           <div className="hidden lg:block mb-8">
-            <h1 className="text-xl md:text-2xl font-bold text-green-500">세븐일레븐</h1>
+            <div className="ml-8 flex items-center">
+              <img 
+                src="https://blog.kakaocdn.net/dna/Rgfiv/btqwQkfumoF/AAAAAAAAAAAAAAAAAAAAAGAZR8R47RTmlda6WEeNVxz2_krzlzUMSYBVH6e7ZgSg/img.jpg?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1767193199&allow_ip=&allow_referer=&signature=xLd%2FpHndt%2BLco2Mpc2IeZmW7nZc%3D"
+                alt="7-ELEVEN"
+                className="h-10 md:h-12 object-contain select-none"
+                draggable="false"
+              />
+            </div>
           </div>
           {/* 매장 정보 */}
           {storeCode && (
