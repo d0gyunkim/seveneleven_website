@@ -42,7 +42,6 @@ export default function RecommendationsPage() {
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set())
   const [selectedLargeCategory, setSelectedLargeCategory] = useState<string | null>(null)
   const [selectedMiddleCategory, setSelectedMiddleCategory] = useState<string | null>(null)
-  const [carouselIndex, setCarouselIndex] = useState(0)
 
   useEffect(() => {
     // URL에서 storeCode 가져오기, 없으면 sessionStorage에서 가져오기
@@ -447,64 +446,6 @@ export default function RecommendationsPage() {
     return sortedFiltered
   }, [selectedLargeCategory, selectedMiddleCategory, activeTab, recommendedProducts, excludedProducts, recommendedCategoryOrder])
 
-  // 대분류별 중분류별 1등 상품 추출 (캐러셀용)
-  const topProductsByCategory = useMemo(() => {
-    if (activeTab !== 'recommended') return []
-    
-    const products: Product[] = []
-    const currentProducts = recommendedProducts
-    
-    largeCategories.forEach((largeCategory) => {
-      // 해당 대분류의 상품들 필터링
-      const largeCategoryProducts = currentProducts.filter(p => p.item_lrdv_nm === largeCategory)
-      
-      // 중분류별로 그룹화
-      const middleCategoryMap = new Map<string, Product[]>()
-      largeCategoryProducts.forEach((product) => {
-        if (product.item_mddv_nm) {
-          if (!middleCategoryMap.has(product.item_mddv_nm)) {
-            middleCategoryMap.set(product.item_mddv_nm, [])
-          }
-          middleCategoryMap.get(product.item_mddv_nm)!.push(product)
-        }
-      })
-      
-      // 각 중분류별로 1등 상품 추출
-      middleCategoryMap.forEach((middleCategoryProducts) => {
-        const sorted = middleCategoryProducts.sort((a, b) => {
-          const rankA = a.rank ?? Infinity
-          const rankB = b.rank ?? Infinity
-          return rankA - rankB
-        })
-        
-        if (sorted.length > 0) {
-          products.push(sorted[0])
-        }
-      })
-    })
-    
-    return products
-  }, [largeCategories, recommendedProducts, activeTab])
-
-  // 자동 캐러셀
-  useEffect(() => {
-    if (activeTab !== 'recommended' || topProductsByCategory.length <= 3) return
-    
-    const maxIndex = Math.max(0, Math.ceil(topProductsByCategory.length / 3) - 1)
-    if (maxIndex === 0) return
-    
-    const interval = setInterval(() => {
-      setCarouselIndex((prev) => {
-        if (prev < maxIndex) {
-          return prev + 1
-        } else {
-          return 0
-        }
-      })
-    }, 3000)
-    
-    return () => clearInterval(interval)
-  }, [topProductsByCategory.length, activeTab])
 
   // 선택된 대분류에 따른 중분류 목록 추출
   const middleCategories = useMemo(() => {
@@ -667,100 +608,30 @@ export default function RecommendationsPage() {
 
   return (
     <Layout>
-      <div className="bg-white">
-        <div className="w-full">
+      <div className="bg-white flex justify-center">
+        <div className="w-full max-w-[1600px]">
           {/* 고정 헤더 섹션 */}
           <div className="sticky top-0 z-20 pt-6 md:pt-8 pb-4 md:pb-6 bg-white px-4 md:px-6 lg:px-8">
-            {/* 안내 문구 - 탭별로 표시 (탭 박스 위에 배치) */}
-            {activeTab === 'recommended' && (
-              <div className="bg-white p-8 md:p-12 mb-6 md:mb-8">
-                <div className="flex flex-col md:flex-row gap-8 items-center">
-                  {/* 왼쪽: 텍스트 */}
-                  <div className="flex-1">
-                    <p className="text-xl md:text-2xl lg:text-3xl text-slate-900 leading-relaxed">
-                      AI 기술을 통해 분석한 우리 매장과 유사한 매장의 판매 데이터를 통해 도출된 잘팔린 것 같은 상품을 만나보세요.
-                    </p>
-                  </div>
-                  
-                  {/* 오른쪽: 상품 캐러셀 */}
-                  {topProductsByCategory.length > 0 && (
-                    <div className="flex-shrink-0 w-full md:w-[480px] relative">
-                      <div className="relative overflow-hidden rounded-xl">
-                        <div 
-                          className="flex gap-2 transition-transform duration-300 ease-in-out"
-                          style={{ transform: `translateX(-${carouselIndex * (100 / 3)}%)` }}
-                        >
-                          {topProductsByCategory.map((product, index) => (
-                            <div
-                              key={`${product.store_code}-${product.item_cd}`}
-                              className="min-w-[calc(33.333%-0.33rem)] flex-shrink-0"
-                            >
-                              <div
-                                onClick={() => setSelectedProduct(product)}
-                                className="bg-white border border-slate-200 rounded-lg p-2 cursor-pointer hover:border-emerald-300 transition-colors h-full flex flex-col"
-                              >
-                                {product.item_img ? (
-                                  <div className="relative w-full h-32 bg-white rounded-lg overflow-hidden mb-2 flex-shrink-0 flex items-center justify-center">
-                                    <img
-                                      src={product.item_img}
-                                      alt={product.item_nm}
-                                      className="h-full w-auto object-contain p-1.5"
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className="relative w-full h-32 bg-slate-50 rounded-lg flex items-center justify-center mb-2 flex-shrink-0">
-                                    <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                  </div>
-                                )}
-                                <div className="flex-1 flex flex-col justify-between">
-                                  <h4 className="text-xs font-semibold text-slate-900 line-clamp-2 mb-1">
-                                    {product.item_nm}
-                                  </h4>
-                                  {product.sale_price !== null && (
-                                    <p className="text-sm font-bold text-slate-900">
-                                      {product.sale_price.toLocaleString()}원
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      {/* 캐러셀 네비게이션 */}
-                      {topProductsByCategory.length > 3 && (
-                        <>
-                          <button
-                            onClick={() => {
-                              const maxIndex = Math.max(0, Math.ceil(topProductsByCategory.length / 3) - 1)
-                              setCarouselIndex((prev) => (prev > 0 ? prev - 1 : maxIndex))
-                            }}
-                            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-8 h-8 bg-white border border-slate-300 rounded-full flex items-center justify-center hover:bg-slate-50 transition-colors shadow-md z-10"
-                            aria-label="이전 상품"
-                          >
-                            <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => {
-                              const maxIndex = Math.max(0, Math.ceil(topProductsByCategory.length / 3) - 1)
-                              setCarouselIndex((prev) => (prev < maxIndex ? prev + 1 : 0))
-                            }}
-                            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-8 h-8 bg-white border border-slate-300 rounded-full flex items-center justify-center hover:bg-slate-50 transition-colors shadow-md z-10"
-                            aria-label="다음 상품"
-                          >
-                            <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
+            {/* 대분류 탭 - 상단 가로 배치 */}
+            {largeCategories.length > 0 && (
+              <div className="mb-4">
+                <h2 className="text-center text-xl font-bold text-gray-900 mb-4">대분류 카테고리</h2>
+                <div className="flex items-center justify-center gap-4 flex-wrap">
+                  {largeCategories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedLargeCategory(category)}
+                      className={`px-6 py-3 text-lg font-semibold transition-colors whitespace-nowrap ${
+                        selectedLargeCategory === category
+                          ? activeTab === 'recommended' 
+                            ? 'text-emerald-600 border-b-2 border-emerald-600'
+                            : 'text-amber-600 border-b-2 border-amber-600'
+                          : 'text-gray-700 hover:text-gray-900'
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -772,94 +643,99 @@ export default function RecommendationsPage() {
                 </p>
               </div>
             )}
-
           </div>
 
-          {/* 메인 콘텐츠 영역 - CU 스타일 레이아웃 */}
+          {/* 메인 콘텐츠 영역 - 필터 + 상품 그리드 */}
           <div className="flex gap-6 pb-6 px-4 md:px-6 lg:px-8">
-            {/* 왼쪽 사이드바 - 대분류 카테고리 */}
-            {largeCategories.length > 0 && (
+            {/* 왼쪽 사이드바 - 중분류 필터 */}
+            {selectedLargeCategory && middleCategories.length > 0 && (
               <aside className="hidden md:block w-56 flex-shrink-0">
-                <div className="bg-white rounded-lg p-4 sticky top-24">
-                  <h3 className="text-base font-bold text-slate-900 mb-4 uppercase tracking-wide">대분류 카테고리</h3>
-                  <nav className="space-y-1">
-                    {largeCategories.map((category) => (
-                      <button
-                        key={category}
-                        onClick={() => setSelectedLargeCategory(category)}
-                        className={`w-full text-left px-4 py-3 text-base font-medium rounded-md transition-colors flex items-center justify-between ${
-                          selectedLargeCategory === category
-                            ? 'bg-emerald-100 text-slate-900'
-                            : 'text-slate-700 hover:bg-slate-50'
-                        }`}
-                      >
-                        <span>{category}</span>
-                        {selectedLargeCategory === category && (
-                          <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <div className="bg-white rounded-lg border border-gray-200 p-4 sticky top-24">
+                  {/* 필터 헤더 */}
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-base font-bold text-gray-900">필터</h3>
+                    <button
+                      onClick={() => setSelectedMiddleCategory(null)}
+                      className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      초기화
+                    </button>
+                  </div>
+
+                  {/* 중분류 필터 리스트 */}
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setSelectedMiddleCategory(null)}
+                      className={`w-full flex items-center gap-3 px-2 py-2 text-left transition-colors ${
+                        selectedMiddleCategory === null
+                          ? activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
+                          : 'text-gray-700 hover:text-gray-900'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        selectedMiddleCategory === null
+                          ? activeTab === 'recommended' ? 'border-emerald-600 bg-emerald-600' : 'border-amber-600 bg-amber-600'
+                          : 'border-gray-300'
+                      }`}>
+                        {selectedMiddleCategory === null && (
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                           </svg>
                         )}
-                      </button>
-                    ))}
-                  </nav>
+                      </div>
+                      <span className={`text-sm font-medium ${
+                        selectedMiddleCategory === null 
+                          ? activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
+                          : 'text-gray-700'
+                      }`}>
+                        전체
+                      </span>
+                    </button>
+                    {middleCategories.map((category) => {
+                      // 해당 중분류의 상품 개수 계산
+                      const categoryCount = filteredGroupedProducts[category]?.length || 0
+                      return (
+                        <button
+                          key={category}
+                          onClick={() => setSelectedMiddleCategory(category)}
+                          className={`w-full flex items-center gap-3 px-2 py-2 text-left transition-colors ${
+                            selectedMiddleCategory === category
+                              ? activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
+                              : 'text-gray-700 hover:text-gray-900'
+                          }`}
+                        >
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                            selectedMiddleCategory === category
+                              ? activeTab === 'recommended' ? 'border-emerald-600 bg-emerald-600' : 'border-amber-600 bg-amber-600'
+                              : 'border-gray-300'
+                          }`}>
+                            {selectedMiddleCategory === category && (
+                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className={`text-sm font-medium flex-1 ${
+                            selectedMiddleCategory === category 
+                              ? activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
+                              : 'text-gray-700'
+                          }`}>
+                            {category}
+                          </span>
+                          <span className="text-xs text-gray-500">{categoryCount}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </aside>
             )}
 
             {/* 메인 콘텐츠 영역 */}
             <div className="flex-1 min-w-0">
-              {/* 모바일 대분류 선택 */}
-              {largeCategories.length > 0 && (
-                <div className="md:hidden mb-4">
-                  <select
-                    value={selectedLargeCategory || ''}
-                    onChange={(e) => setSelectedLargeCategory(e.target.value || null)}
-                    className="w-full px-4 py-2 text-sm font-medium border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="">대분류 선택</option>
-                    {largeCategories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* 중분류 필터 - 가로 배치 */}
-              {selectedLargeCategory && middleCategories.length > 0 && (
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      onClick={() => setSelectedMiddleCategory(null)}
-                      className={`px-5 py-2.5 text-base font-medium rounded-md transition-colors whitespace-nowrap ${
-                        selectedMiddleCategory === null
-                          ? activeTab === 'recommended'
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-amber-600 text-white'
-                          : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
-                      }`}
-                    >
-                      전체
-                    </button>
-                    {middleCategories.map((category) => (
-                      <button
-                        key={category}
-                        onClick={() => setSelectedMiddleCategory(category)}
-                        className={`px-5 py-2.5 text-base font-medium rounded-md transition-colors whitespace-nowrap ${
-                          selectedMiddleCategory === category
-                            ? activeTab === 'recommended'
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-amber-600 text-white'
-                            : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
-                        }`}
-                      >
-                        {category}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* 중분류별 상품 그룹 */}
           {Object.keys(filteredGroupedProducts).length === 0 ? (

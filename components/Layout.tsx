@@ -77,8 +77,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: '/overview', label: '서비스 개요' },
-    { href: '/recommendations', label: '발주 추천' },
-    { href: '/similar-stores', label: '유사매장' },
+    { href: '/recommendations', label: '추천 상품', tab: 'recommended' },
+    { href: '/recommendations', label: '부진 상품', tab: 'excluded' },
+    { href: '/similar-stores', label: '유사 매장 리포팅' },
   ]
 
   // recommendations 페이지일 때 서브 탭
@@ -141,7 +142,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <header className="bg-white border-b border-gray-200 px-4 md:px-6 lg:px-8 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <div className="ml-8 flex items-center">
+            <div className="ml-16 flex items-center">
               <img 
                 src="https://blog.kakaocdn.net/dna/Rgfiv/btqwQkfumoF/AAAAAAAAAAAAAAAAAAAAAGAZR8R47RTmlda6WEeNVxz2_krzlzUMSYBVH6e7ZgSg/img.jpg?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1767193199&allow_ip=&allow_referer=&signature=xLd%2FpHndt%2BLco2Mpc2IeZmW7nZc%3D"
                 alt="7-ELEVEN"
@@ -151,45 +152,50 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
             
             {/* 네비게이션 메뉴 */}
-            <nav className="hidden md:flex items-center gap-4">
-              {navItems.map((item) => {
-                const isActive = pathname === item.href && !isRecommendationsPage
-                const href = getNavHref(item.href)
-                const isRecommendations = item.href === '/recommendations'
-                return (
-                  <div key={item.href} className="relative group">
-                    <Link
-                      href={href}
-                      className={`px-8 py-4 text-2xl font-semibold rounded-md transition-colors ${
-                        isActive
-                          ? 'bg-green-500 text-white'
-                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                    {/* 발주 추천 hover 메뉴 - CU 스타일 */}
-                    {isRecommendations && (
-                      <div className="absolute left-0 top-full mt-2 w-64 bg-green-500 rounded-xl p-6 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-lg">
-                        <div className="space-y-3">
-                          <Link
-                            href={getTabHref('recommended')}
-                            className="block text-white text-lg font-semibold hover:text-green-100 transition-colors"
-                          >
-                            추천상품
-                          </Link>
-                          <Link
-                            href={getTabHref('excluded')}
-                            className="block text-white text-lg font-semibold hover:text-green-100 transition-colors"
-                          >
-                            부진상품
-                          </Link>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+            <nav className="hidden md:flex items-center gap-2 text-lg">
+              <Link
+                href={getNavHref('/overview')}
+                className={`px-3 py-2 transition-colors ${
+                  pathname === '/overview'
+                    ? 'bg-green-500 text-white rounded-md'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                서비스 개요
+              </Link>
+              <span className="text-gray-400">|</span>
+              <Link
+                href={getTabHref('recommended')}
+                className={`px-3 py-2 transition-colors ${
+                  isRecommendationsPage && currentTab === 'recommended'
+                    ? 'bg-green-500 text-white rounded-md'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                추천 상품
+              </Link>
+              <span className="text-gray-400">|</span>
+              <Link
+                href={getTabHref('excluded')}
+                className={`px-3 py-2 transition-colors ${
+                  isRecommendationsPage && currentTab === 'excluded'
+                    ? 'bg-green-500 text-white rounded-md'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                부진 상품
+              </Link>
+              <span className="text-gray-400">|</span>
+              <Link
+                href={getNavHref('/similar-stores')}
+                className={`px-3 py-2 transition-colors ${
+                  pathname === '/similar-stores'
+                    ? 'bg-green-500 text-white rounded-md'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                유사 매장 리포팅
+              </Link>
             </nav>
           </div>
 
@@ -209,46 +215,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        {/* recommendations 페이지일 때 서브 탭 */}
-        {isRecommendationsPage && (
-          <div className="hidden md:flex items-center gap-3 mt-4 pb-2">
-            <Link
-              href={getTabHref('recommended')}
-              className={`px-6 py-3 text-lg font-semibold rounded-md transition-colors ${
-                currentTab === 'recommended'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
-              }`}
-            >
-              추천 상품
-            </Link>
-            <Link
-              href={getTabHref('excluded')}
-              className={`px-6 py-3 text-lg font-semibold rounded-md transition-colors ${
-                currentTab === 'excluded'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
-              }`}
-            >
-              부진재고
-            </Link>
-          </div>
-        )}
-
-        {/* 모바일 메뉴 버튼 */}
-        <button
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="md:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-          aria-label="메뉴 열기"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {isMenuOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            )}
-          </svg>
-        </button>
       </header>
 
       {/* 모바일 메뉴 오버레이 */}
@@ -267,12 +233,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         <div className="p-4 md:p-6 h-full overflow-y-auto">
           <nav className="space-y-2">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href
-              const href = getNavHref(item.href)
+            {navItems.map((item, index) => {
+              const isActive = pathname === item.href && (!item.tab || (isRecommendationsPage && currentTab === item.tab))
+              let href = getNavHref(item.href)
+              if (item.tab) {
+                href = getTabHref(item.tab)
+              }
               return (
                 <Link
-                  key={item.href}
+                  key={`${item.href}-${item.tab || index}`}
                   href={href}
                   onClick={() => setIsMenuOpen(false)}
                   className={`block px-4 py-3 rounded-lg transition-colors text-base ${
