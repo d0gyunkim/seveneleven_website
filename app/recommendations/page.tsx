@@ -567,7 +567,7 @@ export default function RecommendationsPage() {
   return (
     <Layout>
       <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-50 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 w-full flex flex-col flex-1 min-h-0">
+        <div className="w-full flex flex-col flex-1 min-h-0 px-4 md:px-6 lg:px-8">
           {/* 고정 헤더 섹션 */}
           <div className="flex-shrink-0 pt-3 md:pt-4 pb-3 md:pb-4 bg-gradient-to-br from-gray-50 via-white to-gray-50">
             {/* 페이지 제목 */}
