@@ -81,6 +81,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: '/similar-stores', label: '유사매장' },
   ]
 
+  // recommendations 페이지일 때 서브 탭
+  const isRecommendationsPage = pathname === '/recommendations'
+  const currentTab = searchParams.get('tab') || 'recommended'
+
+  const getTabHref = (tab: string) => {
+    const baseHref = '/recommendations'
+    if (storeCode) {
+      return `${baseHref}?storeCode=${encodeURIComponent(storeCode)}&tab=${tab}`
+    }
+    return `${baseHref}?tab=${tab}`
+  }
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* 최상단 유틸리티 바 - 로그아웃 | 우리 매장 */}
@@ -126,38 +138,102 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* 메인 헤더 - 로고 및 네비게이션 */}
-      <header className="bg-white border-b border-gray-200 px-4 md:px-6 lg:px-8 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <div className="ml-8 flex items-center">
-            <img 
-              src="https://blog.kakaocdn.net/dna/Rgfiv/btqwQkfumoF/AAAAAAAAAAAAAAAAAAAAAGAZR8R47RTmlda6WEeNVxz2_krzlzUMSYBVH6e7ZgSg/img.jpg?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1767193199&allow_ip=&allow_referer=&signature=xLd%2FpHndt%2BLco2Mpc2IeZmW7nZc%3D"
-              alt="7-ELEVEN"
-              className="h-8 md:h-10 object-contain select-none"
-              draggable="false"
-            />
+      <header className="bg-white border-b border-gray-200 px-4 md:px-6 lg:px-8 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <div className="ml-8 flex items-center">
+              <img 
+                src="https://blog.kakaocdn.net/dna/Rgfiv/btqwQkfumoF/AAAAAAAAAAAAAAAAAAAAAGAZR8R47RTmlda6WEeNVxz2_krzlzUMSYBVH6e7ZgSg/img.jpg?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1767193199&allow_ip=&allow_referer=&signature=xLd%2FpHndt%2BLco2Mpc2IeZmW7nZc%3D"
+                alt="7-ELEVEN"
+                className="h-8 md:h-10 object-contain select-none"
+                draggable="false"
+              />
+            </div>
+            
+            {/* 네비게이션 메뉴 */}
+            <nav className="hidden md:flex items-center gap-4">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href && !isRecommendationsPage
+                const href = getNavHref(item.href)
+                const isRecommendations = item.href === '/recommendations'
+                return (
+                  <div key={item.href} className="relative group">
+                    <Link
+                      href={href}
+                      className={`px-8 py-4 text-2xl font-semibold rounded-md transition-colors ${
+                        isActive
+                          ? 'bg-green-500 text-white'
+                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                    {/* 발주 추천 hover 메뉴 - CU 스타일 */}
+                    {isRecommendations && (
+                      <div className="absolute left-0 top-full mt-2 w-64 bg-green-500 rounded-xl p-6 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-lg">
+                        <div className="space-y-3">
+                          <Link
+                            href={getTabHref('recommended')}
+                            className="block text-white text-lg font-semibold hover:text-green-100 transition-colors"
+                          >
+                            추천상품
+                          </Link>
+                          <Link
+                            href={getTabHref('excluded')}
+                            className="block text-white text-lg font-semibold hover:text-green-100 transition-colors"
+                          >
+                            부진상품
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </nav>
           </div>
-          
-          {/* 네비게이션 메뉴 */}
-          <nav className="hidden md:flex items-center gap-2">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href
-              const href = getNavHref(item.href)
-              return (
-                <Link
-                  key={item.href}
-                  href={href}
-                  className={`px-5 py-2.5 text-base font-semibold rounded-md transition-colors ${
-                    isActive
-                      ? 'bg-green-500 text-white'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              )
-            })}
-          </nav>
+
+          {/* 모바일 메뉴 버튼 */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+            aria-label="메뉴 열기"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {isMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
         </div>
+
+        {/* recommendations 페이지일 때 서브 탭 */}
+        {isRecommendationsPage && (
+          <div className="hidden md:flex items-center gap-3 mt-4 pb-2">
+            <Link
+              href={getTabHref('recommended')}
+              className={`px-6 py-3 text-lg font-semibold rounded-md transition-colors ${
+                currentTab === 'recommended'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
+              }`}
+            >
+              추천 상품
+            </Link>
+            <Link
+              href={getTabHref('excluded')}
+              className={`px-6 py-3 text-lg font-semibold rounded-md transition-colors ${
+                currentTab === 'excluded'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
+              }`}
+            >
+              부진재고
+            </Link>
+          </div>
+        )}
 
         {/* 모바일 메뉴 버튼 */}
         <button

@@ -30,6 +30,7 @@ export default function RecommendationsPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const urlStoreCode = searchParams.get('storeCode') || ''
+  const urlTab = searchParams.get('tab') || 'recommended'
   
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([])
   const [excludedProducts, setExcludedProducts] = useState<Product[]>([])
@@ -37,7 +38,7 @@ export default function RecommendationsPage() {
   const [error, setError] = useState<string | null>(null)
   const [storeName, setStoreName] = useState<string>('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [activeTab, setActiveTab] = useState<'recommended' | 'excluded'>('recommended')
+  const activeTab = (urlTab === 'excluded' ? 'excluded' : 'recommended') as 'recommended' | 'excluded'
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set())
   const [selectedLargeCategory, setSelectedLargeCategory] = useState<string | null>(null)
   const [selectedMiddleCategory, setSelectedMiddleCategory] = useState<string | null>(null)
@@ -609,83 +610,26 @@ export default function RecommendationsPage() {
       <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50">
         <div className="w-full">
           {/* 고정 헤더 섹션 */}
-          <div className="sticky top-0 z-20 pt-3 md:pt-4 pb-3 md:pb-4 bg-gradient-to-br from-gray-50 via-white to-gray-50 shadow-sm px-4 md:px-6 lg:px-8">
-            {/* 페이지 제목 */}
-            <div className="mb-4 md:mb-5">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1">
-                  <div className="flex items-baseline gap-3 mb-2">
-                    <div className="w-1 h-8 bg-emerald-500 rounded-full"></div>
-                    <div>
-                      <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
-                        {storeName && `${storeName} 추천 상품`}
-                      </h1>
-                      <p className="text-xs md:text-sm text-slate-600 mt-1.5 font-semibold">
-                        유사 매장 기반 상품 추천시스템
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 탭 */}
-            <div className="flex items-center gap-3 flex-wrap mb-3 md:mb-4">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">분석 유형</span>
-              <button
-                onClick={() => setActiveTab('recommended')}
-                className={`px-4 py-2 text-sm font-semibold transition-colors whitespace-nowrap border rounded-md ${
-                  activeTab === 'recommended'
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                    : 'bg-white text-slate-700 border-slate-300 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50'
-                }`}
-              >
-                추천 상품
-              </button>
-              <button
-                onClick={() => setActiveTab('excluded')}
-                className={`px-4 py-2 text-sm font-semibold transition-colors whitespace-nowrap border rounded-md ${
-                  activeTab === 'excluded'
-                    ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
-                    : 'bg-white text-slate-700 border-slate-300 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50'
-                }`}
-              >
-                부진재고
-              </button>
-            </div>
-
-            {/* 안내 문구 - 탭별로 표시 */}
+          <div className="sticky top-0 z-20 pt-6 md:pt-8 pb-4 md:pb-6 bg-gradient-to-br from-gray-50 via-white to-gray-50 shadow-sm px-4 md:px-6 lg:px-8">
+            {/* 안내 문구 - 탭별로 표시 (탭 박스 위에 배치) */}
             {activeTab === 'recommended' && (
-              <div className="bg-white border border-slate-200 rounded-lg p-4 mb-3 md:mb-4 shadow-sm">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-1 h-6 bg-emerald-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide mb-2">추천 상품 안내</h4>
-                    <div className="text-xs md:text-sm text-slate-700 leading-relaxed space-y-1.5">
-                      <p>
-                        <span className="font-bold text-emerald-700">{storeName} 점주님께 추천드리는</span> 상품은, 우리 매장과 유사한 매장들의 판매 데이터를 수집·분석하여 선별한 상품입니다.
-                      </p>
-                      <p>
-                        우리 매장에서는 현재 취급하지 않지만, 유사 매장들에서 <span className="font-semibold text-slate-900">최근 판매 실적, 판매 빈도, 매출액을 종합적으로 분석</span>한 결과 판매 성과가 우수한 상품들을 선별하여 추천하고 있습니다.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+              <div className="bg-white p-8 md:p-12 mb-6 md:mb-8 text-center">
+                <p className="text-2xl md:text-3xl lg:text-4xl text-slate-900 leading-relaxed">
+                  <span className="font-bold">{storeName} 점주님!</span>
+                  <br />
+                  <br />
+                  유사 매장의 판매 패턴을 딥러닝으로 분석해
+                  <br />
+                  지금 {storeName}에서 판매 성과가 기대되는 상품을 추천드립니다.
+                </p>
               </div>
             )}
 
             {activeTab === 'excluded' && (
-              <div className="bg-white border border-slate-200 rounded-lg p-4 mb-3 md:mb-4 shadow-sm">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-1 h-6 bg-amber-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide mb-2">부진재고 안내</h4>
-                    <p className="text-xs md:text-sm text-slate-700 leading-relaxed">
-                      <span className="font-bold text-amber-700">내 매장의 상품군 별 발주 제외 권장 대상 상품</span>입니다. 
-                      매장 운영 효율화 시 참고해 주시기 바랍니다.
-                    </p>
-                  </div>
-                </div>
+              <div className="bg-white p-8 md:p-12 mb-6 md:mb-8 text-center">
+                <p className="text-2xl md:text-3xl lg:text-4xl text-slate-900 leading-relaxed">
+                  <span className="font-bold">발주 제외 권장 상품</span>을 확인하여 매장 운영을 더욱 효율적으로 관리하세요.
+                </p>
               </div>
             )}
 
@@ -696,7 +640,7 @@ export default function RecommendationsPage() {
             {/* 왼쪽 사이드바 - 대분류 카테고리 */}
             {largeCategories.length > 0 && (
               <aside className="hidden md:block w-56 flex-shrink-0">
-                <div className="bg-white rounded-lg p-4 sticky top-24 border border-slate-200">
+                <div className="bg-white rounded-lg p-4 sticky top-24">
                   <h3 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wide">대분류 카테고리</h3>
                   <nav className="space-y-1">
                     {largeCategories.map((category) => (
@@ -705,15 +649,13 @@ export default function RecommendationsPage() {
                         onClick={() => setSelectedLargeCategory(category)}
                         className={`w-full text-left px-4 py-3 text-sm font-medium rounded-md transition-colors flex items-center justify-between ${
                           selectedLargeCategory === category
-                            ? activeTab === 'recommended'
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-amber-600 text-white'
-                            : 'text-slate-700 hover:bg-slate-100'
+                            ? 'bg-emerald-100 text-slate-900'
+                            : 'text-slate-700 hover:bg-slate-50'
                         }`}
                       >
                         <span>{category}</span>
                         {selectedLargeCategory === category && (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
                         )}
