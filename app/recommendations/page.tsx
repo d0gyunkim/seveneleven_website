@@ -641,13 +641,13 @@ export default function RecommendationsPage() {
             {largeCategories.length > 0 && (
               <aside className="hidden md:block w-56 flex-shrink-0">
                 <div className="bg-white rounded-lg p-4 sticky top-24">
-                  <h3 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wide">대분류 카테고리</h3>
+                  <h3 className="text-base font-bold text-slate-900 mb-4 uppercase tracking-wide">대분류 카테고리</h3>
                   <nav className="space-y-1">
                     {largeCategories.map((category) => (
                       <button
                         key={category}
                         onClick={() => setSelectedLargeCategory(category)}
-                        className={`w-full text-left px-4 py-3 text-sm font-medium rounded-md transition-colors flex items-center justify-between ${
+                        className={`w-full text-left px-4 py-3 text-base font-medium rounded-md transition-colors flex items-center justify-between ${
                           selectedLargeCategory === category
                             ? 'bg-emerald-100 text-slate-900'
                             : 'text-slate-700 hover:bg-slate-50'
@@ -655,7 +655,7 @@ export default function RecommendationsPage() {
                       >
                         <span>{category}</span>
                         {selectedLargeCategory === category && (
-                          <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
                         )}
@@ -692,7 +692,7 @@ export default function RecommendationsPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <button
                       onClick={() => setSelectedMiddleCategory(null)}
-                      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
+                      className={`px-5 py-2.5 text-base font-medium rounded-md transition-colors whitespace-nowrap ${
                         selectedMiddleCategory === null
                           ? activeTab === 'recommended'
                             ? 'bg-emerald-600 text-white'
@@ -706,7 +706,7 @@ export default function RecommendationsPage() {
                       <button
                         key={category}
                         onClick={() => setSelectedMiddleCategory(category)}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
+                        className={`px-5 py-2.5 text-base font-medium rounded-md transition-colors whitespace-nowrap ${
                           selectedMiddleCategory === category
                             ? activeTab === 'recommended'
                               ? 'bg-emerald-600 text-white'
