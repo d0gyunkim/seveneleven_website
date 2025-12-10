@@ -40,6 +40,7 @@ export default function RecommendationsPage() {
   const [activeTab, setActiveTab] = useState<'recommended' | 'excluded'>('recommended')
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set())
   const [selectedLargeCategory, setSelectedLargeCategory] = useState<string | null>(null)
+  const [selectedMiddleCategory, setSelectedMiddleCategory] = useState<string | null>(null)
 
   useEffect(() => {
     // URL에서 storeCode 가져오기, 없으면 sessionStorage에서 가져오기
@@ -328,7 +329,7 @@ export default function RecommendationsPage() {
     return orderMap
   }, [recommendedProducts])
 
-  // 선택된 대분류에 따라 필터링된 중분류 그룹
+  // 선택된 대분류와 중분류에 따라 필터링된 중분류 그룹
   const filteredGroupedProducts = useMemo(() => {
     // 대분류가 선택되지 않았으면 빈 객체 반환
     if (!selectedLargeCategory) {
@@ -350,6 +351,10 @@ export default function RecommendationsPage() {
     currentProducts.forEach((product) => {
       if (product.item_lrdv_nm === selectedLargeCategory) {
         const category = product.item_mddv_nm || '기타'
+        // 중분류가 선택되었으면 해당 중분류만 필터링
+        if (selectedMiddleCategory && category !== selectedMiddleCategory) {
+          return
+        }
         if (!filtered[category]) {
           filtered[category] = []
         }
@@ -438,6 +443,34 @@ export default function RecommendationsPage() {
     })
 
     return sortedFiltered
+  }, [selectedLargeCategory, selectedMiddleCategory, activeTab, recommendedProducts, excludedProducts, recommendedCategoryOrder])
+
+  // 선택된 대분류에 따른 중분류 목록 추출
+  const middleCategories = useMemo(() => {
+    if (!selectedLargeCategory) return []
+    
+    const currentProducts = activeTab === 'recommended' ? recommendedProducts : excludedProducts
+    const categories = new Set<string>()
+    
+    currentProducts.forEach((product) => {
+      if (product.item_lrdv_nm === selectedLargeCategory && product.item_mddv_nm) {
+        categories.add(product.item_mddv_nm)
+      }
+    })
+    
+    // 추천 상품의 중분류 순서 기준으로 정렬
+    const recommendedOrder = recommendedCategoryOrder.get(selectedLargeCategory) || []
+    const sortedCategories = Array.from(categories).sort((a, b) => {
+      const indexA = recommendedOrder.indexOf(a)
+      const indexB = recommendedOrder.indexOf(b)
+      
+      if (indexA === -1 && indexB === -1) return a.localeCompare(b)
+      if (indexA === -1) return 1
+      if (indexB === -1) return -1
+      return indexA - indexB
+    })
+    
+    return sortedCategories
   }, [selectedLargeCategory, activeTab, recommendedProducts, excludedProducts, recommendedCategoryOrder])
 
   // 탭 변경 시 대분류 선택 초기화 (첫 번째 대분류로 설정)
@@ -454,10 +487,17 @@ export default function RecommendationsPage() {
     const sortedCategories = Array.from(categories).sort()
     if (sortedCategories.length > 0) {
       setSelectedLargeCategory(sortedCategories[0])
+      setSelectedMiddleCategory(null) // 중분류도 초기화
     } else {
       setSelectedLargeCategory(null)
+      setSelectedMiddleCategory(null)
     }
   }, [activeTab, recommendedProducts, excludedProducts])
+
+  // 대분류 변경 시 중분류 초기화
+  useEffect(() => {
+    setSelectedMiddleCategory(null)
+  }, [selectedLargeCategory])
 
   // Intersection Observer로 뷰포트에 들어온 아이템 추적
   const observerRef = useRef<IntersectionObserver | null>(null)
@@ -649,37 +689,97 @@ export default function RecommendationsPage() {
               </div>
             )}
 
-            {/* 대분류 카테고리 */}
-            {largeCategories.length > 0 && (
-              <div className="mb-3 md:mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">상품 카테고리</h3>
-                  <span className="text-xs text-slate-500 font-semibold">{largeCategories.length}개 카테고리</span>
-                </div>
-                <div className="flex gap-2 md:gap-3 overflow-x-auto pb-3 scrollbar-hide scroll-smooth">
-                  {largeCategories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedLargeCategory(category)}
-                      className={`px-4 py-2 text-sm font-semibold transition-colors whitespace-nowrap border rounded-md ${
-                        selectedLargeCategory === category
-                          ? activeTab === 'recommended'
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                            : 'bg-amber-600 text-white border-amber-600 shadow-sm'
-                          : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400 hover:text-slate-900 hover:bg-slate-50'
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* 상품 목록 영역 */}
-          <div className="pb-6 px-4 md:px-6 lg:px-8">
-            {/* 중분류별 상품 그룹 */}
+          {/* 메인 콘텐츠 영역 - CU 스타일 레이아웃 */}
+          <div className="flex gap-6 pb-6 px-4 md:px-6 lg:px-8">
+            {/* 왼쪽 사이드바 - 대분류 카테고리 */}
+            {largeCategories.length > 0 && (
+              <aside className="hidden md:block w-56 flex-shrink-0">
+                <div className="bg-white rounded-lg p-4 sticky top-24 border border-slate-200">
+                  <h3 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wide">대분류 카테고리</h3>
+                  <nav className="space-y-1">
+                    {largeCategories.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => setSelectedLargeCategory(category)}
+                        className={`w-full text-left px-4 py-3 text-sm font-medium rounded-md transition-colors flex items-center justify-between ${
+                          selectedLargeCategory === category
+                            ? activeTab === 'recommended'
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-amber-600 text-white'
+                            : 'text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        <span>{category}</span>
+                        {selectedLargeCategory === category && (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </nav>
+                </div>
+              </aside>
+            )}
+
+            {/* 메인 콘텐츠 영역 */}
+            <div className="flex-1 min-w-0">
+              {/* 모바일 대분류 선택 */}
+              {largeCategories.length > 0 && (
+                <div className="md:hidden mb-4">
+                  <select
+                    value={selectedLargeCategory || ''}
+                    onChange={(e) => setSelectedLargeCategory(e.target.value || null)}
+                    className="w-full px-4 py-2 text-sm font-medium border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="">대분류 선택</option>
+                    {largeCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* 중분류 필터 - 가로 배치 */}
+              {selectedLargeCategory && middleCategories.length > 0 && (
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => setSelectedMiddleCategory(null)}
+                      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
+                        selectedMiddleCategory === null
+                          ? activeTab === 'recommended'
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-amber-600 text-white'
+                          : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      전체
+                    </button>
+                    {middleCategories.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => setSelectedMiddleCategory(category)}
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
+                          selectedMiddleCategory === category
+                            ? activeTab === 'recommended'
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-amber-600 text-white'
+                            : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 중분류별 상품 그룹 */}
           {Object.keys(filteredGroupedProducts).length === 0 ? (
             <div className="text-center py-16 bg-white border border-slate-200 rounded-lg">
               <div className="w-14 h-14 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -696,13 +796,15 @@ export default function RecommendationsPage() {
             <div className="space-y-8 md:space-y-10">
               {Object.entries(filteredGroupedProducts).map(([category, products]) => (
                 <div key={category} className="space-y-4">
-                  {/* 카테고리 제목 */}
-                  <div className="flex items-center gap-2">
-                    <div className={`w-1 h-6 rounded-full ${
-                      activeTab === 'recommended' ? 'bg-emerald-500' : 'bg-amber-500'
-                    }`}></div>
-                    <h3 className="text-base md:text-lg font-bold text-slate-900">{category}</h3>
-                  </div>
+                  {/* 카테고리 제목 - 중분류가 선택되지 않았을 때만 표시 */}
+                  {!selectedMiddleCategory && (
+                    <div className="flex items-center gap-2">
+                      <div className={`w-1 h-6 rounded-full ${
+                        activeTab === 'recommended' ? 'bg-emerald-500' : 'bg-amber-500'
+                      }`}></div>
+                      <h3 className="text-base md:text-lg font-bold text-slate-900">{category}</h3>
+                    </div>
+                  )}
                   
                   {/* 상품 그리드 */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5">
@@ -716,13 +818,13 @@ export default function RecommendationsPage() {
                           ref={(el) => setItemRef(itemId, el)}
                           data-item-id={itemId}
                           onClick={() => setSelectedProduct(product)}
-                          className="group cursor-pointer flex flex-col relative"
+                          className="group bg-white rounded-xl overflow-hidden cursor-pointer flex flex-col relative transition-all duration-300 hover:shadow-md"
                         >
                           {isVisible ? (
                             <>
                               {/* 순위 배지 */}
                               {product.rank !== null && product.rank <= 3 && (
-                                <div className={`absolute top-2 left-2 z-10 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg ${
+                                <div className={`absolute top-3 left-3 z-10 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md ${
                                   product.rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' :
                                   product.rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
                                   'bg-gradient-to-br from-orange-400 to-orange-600'
@@ -732,68 +834,50 @@ export default function RecommendationsPage() {
                               )}
 
                               {/* 상품 이미지 */}
-                              <div className="relative aspect-square bg-white overflow-hidden flex items-center justify-center mb-3 rounded-lg">
+                              <div className="relative aspect-square bg-white overflow-hidden flex items-center justify-center">
                                 {product.item_img ? (
                                   <img
                                     src={product.item_img}
                                     alt={product.item_nm}
-                                    className="w-full h-full object-contain p-3 md:p-4 transition-transform duration-300 group-hover:scale-105"
+                                    className="w-full h-full object-contain p-4 md:p-6 transition-transform duration-300 group-hover:scale-105"
                                     loading="lazy"
                                     onError={(e) => {
                                       e.currentTarget.style.display = 'none'
                                       const parent = e.currentTarget.parentElement
                                       if (parent && !parent.querySelector('.image-placeholder')) {
                                         const placeholder = document.createElement('div')
-                                        placeholder.className = 'image-placeholder w-full h-full flex flex-col items-center justify-center text-gray-400'
+                                        placeholder.className = 'image-placeholder w-full h-full flex flex-col items-center justify-center text-gray-300'
                                         placeholder.innerHTML = `
                                           <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                           </svg>
-                                          <span class="text-xs">이미지 없음</span>
+                                          <span class="text-xs text-gray-400">이미지 없음</span>
                                         `
                                         parent.appendChild(placeholder)
                                       }
                                     }}
                                   />
                                 ) : (
-                                  <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                                  <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
                                     <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
-                                    <span className="text-xs">이미지 없음</span>
+                                    <span className="text-xs text-gray-400">이미지 없음</span>
                                   </div>
                                 )}
                               </div>
 
                               {/* 상품 정보 */}
-                              <div className="flex flex-col space-y-2">
-                                <h4 className="text-sm font-semibold text-slate-900 line-clamp-2 leading-snug group-hover:text-slate-700 transition-colors">
+                              <div className="px-4 pb-4 pt-2 flex flex-col space-y-2">
+                                <h4 className="text-sm font-medium text-slate-900 line-clamp-2 leading-snug">
                                   {product.item_nm}
                                 </h4>
                                 
                                 {/* 가격 정보 */}
-                                <div className="space-y-1">
-                                  {product.sale_price !== null && (
-                                    <div>
-                                      <span className={`text-base font-bold ${
-                                        activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
-                                      }`}>
-                                        {product.sale_price.toLocaleString()}원
-                                      </span>
-                                    </div>
-                                  )}
-                                  {product.cost !== null && (
-                                    <div className="text-xs text-slate-500">
-                                      원가 {product.cost.toLocaleString()}원
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* 소분류 태그 */}
-                                {product.item_smdv_nm && (
+                                {product.sale_price !== null && (
                                   <div className="pt-1">
-                                    <span className="text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded font-medium">
-                                      {product.item_smdv_nm}
+                                    <span className="text-lg font-bold text-slate-900">
+                                      {product.sale_price.toLocaleString()} 원
                                     </span>
                                   </div>
                                 )}
@@ -801,7 +885,7 @@ export default function RecommendationsPage() {
                             </>
                           ) : (
                             // 경량 플레이스홀더 - 스크롤 전까지 표시
-                            <div className="w-full aspect-square flex flex-col items-center justify-center bg-white rounded-lg mb-3">
+                            <div className="w-full aspect-square flex flex-col items-center justify-center bg-white">
                               <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg mb-2 animate-pulse"></div>
                               <div className="w-3/4 h-2.5 bg-gray-200 rounded-lg mb-1.5 animate-pulse"></div>
                               <div className="w-1/2 h-2.5 bg-gray-200 rounded-lg animate-pulse"></div>
@@ -815,6 +899,7 @@ export default function RecommendationsPage() {
               ))}
             </div>
           )}
+            </div>
           </div>
         </div>
       </div>

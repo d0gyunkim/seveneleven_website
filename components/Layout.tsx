@@ -76,26 +76,51 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }
 
   const navItems = [
-    { href: '/', label: '로그아웃' },
+    { href: '/overview', label: '서비스 개요' },
     { href: '/recommendations', label: '발주 추천' },
     { href: '/similar-stores', label: '유사매장' },
   ]
 
   return (
-    <div className="min-h-screen bg-white flex flex-col lg:flex-row">
-      {/* 모바일 헤더 */}
-      <header className="lg:hidden bg-gray-50 border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-        <div className="ml-8 flex items-center">
-          <img 
-            src="https://blog.kakaocdn.net/dna/Rgfiv/btqwQkfumoF/AAAAAAAAAAAAAAAAAAAAAGAZR8R47RTmlda6WEeNVxz2_krzlzUMSYBVH6e7ZgSg/img.jpg?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1767193199&allow_ip=&allow_referer=&signature=xLd%2FpHndt%2BLco2Mpc2IeZmW7nZc%3D"
-            alt="7-ELEVEN"
-            className="h-8 object-contain select-none"
-            draggable="false"
-          />
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* 상단 헤더 */}
+      <header className="bg-gray-50 border-b border-gray-200 px-4 md:px-6 lg:px-8 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <div className="ml-8 flex items-center">
+            <img 
+              src="https://blog.kakaocdn.net/dna/Rgfiv/btqwQkfumoF/AAAAAAAAAAAAAAAAAAAAAGAZR8R47RTmlda6WEeNVxz2_krzlzUMSYBVH6e7ZgSg/img.jpg?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1767193199&allow_ip=&allow_referer=&signature=xLd%2FpHndt%2BLco2Mpc2IeZmW7nZc%3D"
+              alt="7-ELEVEN"
+              className="h-8 md:h-10 object-contain select-none"
+              draggable="false"
+            />
+          </div>
+          
+          {/* 네비게이션 메뉴 */}
+          <nav className="hidden md:flex items-center gap-2">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href
+              const href = getNavHref(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={href}
+                  className={`px-5 py-2.5 text-base font-semibold rounded-md transition-colors ${
+                    isActive
+                      ? 'bg-green-500 text-white'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              )
+            })}
+          </nav>
         </div>
+
+        {/* 모바일 메뉴 버튼 */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="p-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+          className="md:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-lg"
           aria-label="메뉴 열기"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,45 +136,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* 모바일 메뉴 오버레이 */}
       {isMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={() => setIsMenuOpen(false)}
         />
       )}
 
-      {/* 왼쪽 네비게이션 */}
+      {/* 모바일 사이드 메뉴 */}
       <aside
         className={`${
           isMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 bg-gray-50 border-r border-gray-200 flex-shrink-0 transition-transform duration-300 ease-in-out`}
+        } md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-gray-50 border-r border-gray-200 flex-shrink-0 transition-transform duration-300 ease-in-out`}
       >
         <div className="p-4 md:p-6 h-full overflow-y-auto">
-          <div className="hidden lg:block mb-8">
-            <div className="ml-8 flex items-center">
-              <img 
-                src="https://blog.kakaocdn.net/dna/Rgfiv/btqwQkfumoF/AAAAAAAAAAAAAAAAAAAAAGAZR8R47RTmlda6WEeNVxz2_krzlzUMSYBVH6e7ZgSg/img.jpg?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1767193199&allow_ip=&allow_referer=&signature=xLd%2FpHndt%2BLco2Mpc2IeZmW7nZc%3D"
-                alt="7-ELEVEN"
-                className="h-10 md:h-12 object-contain select-none"
-                draggable="false"
-              />
-            </div>
-          </div>
-          {/* 매장 정보 */}
-          {storeCode && (
-            <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
-              {storeName && (
-                <p className="text-sm text-gray-700 font-semibold mb-2">
-                  매장: <span className="text-green-500">{storeName}</span>
-                </p>
-              )}
-              <p className="text-sm text-gray-700 font-semibold mb-2">
-                매장 코드: <span className="text-green-500">{storeCode}</span>
-              </p>
-              <p className="text-sm text-gray-700 font-semibold">
-                기준일자: <span className="text-green-500">2025년 9월 1일</span>
-              </p>
-            </div>
-          )}
-          
           <nav className="space-y-2">
             {navItems.map((item) => {
               const isActive = pathname === item.href
@@ -177,6 +175,52 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 overflow-auto bg-white w-full">
         {children}
       </main>
+
+      {/* 오른쪽 사이드바 - 로그인 정보 */}
+      {storeCode && (
+        <aside className="hidden lg:block w-48 flex-shrink-0 bg-gray-50 border-l border-gray-200">
+          <div className="p-4 h-full flex flex-col">
+            {/* 상단 구분선 */}
+            <div className="border-b border-orange-200 mb-4"></div>
+            
+            {/* 로그아웃 | 우리 매장 */}
+            <div className="flex items-center gap-2 text-sm">
+              <Link
+                href="/"
+                className="text-gray-700 hover:text-gray-900 transition-colors"
+              >
+                로그아웃
+              </Link>
+              <span className="text-gray-400">|</span>
+              <div className="relative group">
+                <button className="text-gray-700 hover:text-gray-900 transition-colors">
+                  우리 매장
+                </button>
+                
+                {/* 툴팁 콘텐츠 */}
+                <div className="absolute right-0 top-full mt-2 w-64 p-4 bg-white rounded-lg border border-gray-200 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div className="space-y-2">
+                    {storeName && (
+                      <p className="text-sm text-gray-700 font-semibold">
+                        매장: <span className="text-green-500">{storeName}</span>
+                      </p>
+                    )}
+                    <p className="text-sm text-gray-700 font-semibold">
+                      매장 코드: <span className="text-green-500">{storeCode}</span>
+                    </p>
+                    <p className="text-sm text-gray-700 font-semibold">
+                      기준일자: <span className="text-green-500">2025년 9월 1일</span>
+                    </p>
+                  </div>
+                  {/* 화살표 */}
+                  <div className="absolute right-4 -top-2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-8 border-b-gray-200"></div>
+                  <div className="absolute right-[18px] -top-[7px] w-0 h-0 border-l-7 border-l-transparent border-r-7 border-r-transparent border-b-7 border-b-white"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      )}
     </div>
   )
 }
