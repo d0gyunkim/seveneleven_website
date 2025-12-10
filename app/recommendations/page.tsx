@@ -41,7 +41,7 @@ export default function RecommendationsPage() {
   const activeTab = (urlTab === 'excluded' ? 'excluded' : 'recommended') as 'recommended' | 'excluded'
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set())
   const [selectedLargeCategory, setSelectedLargeCategory] = useState<string | null>(null)
-  const [selectedMiddleCategory, setSelectedMiddleCategory] = useState<string | null>(null)
+  const [selectedMiddleCategories, setSelectedMiddleCategories] = useState<string[]>([])
 
   useEffect(() => {
     // URL에서 storeCode 가져오기, 없으면 sessionStorage에서 가져오기
@@ -352,8 +352,8 @@ export default function RecommendationsPage() {
     currentProducts.forEach((product) => {
       if (product.item_lrdv_nm === selectedLargeCategory) {
         const category = product.item_mddv_nm || '기타'
-        // 중분류가 선택되었으면 해당 중분류만 필터링
-        if (selectedMiddleCategory && category !== selectedMiddleCategory) {
+        // 중분류가 선택되었으면 선택된 중분류만 필터링
+        if (selectedMiddleCategories.length > 0 && !selectedMiddleCategories.includes(category)) {
           return
         }
         if (!filtered[category]) {
@@ -444,7 +444,7 @@ export default function RecommendationsPage() {
     })
 
     return sortedFiltered
-  }, [selectedLargeCategory, selectedMiddleCategory, activeTab, recommendedProducts, excludedProducts, recommendedCategoryOrder])
+  }, [selectedLargeCategory, selectedMiddleCategories, activeTab, recommendedProducts, excludedProducts, recommendedCategoryOrder])
 
 
   // 선택된 대분류에 따른 중분류 목록 추출
@@ -489,16 +489,16 @@ export default function RecommendationsPage() {
     const sortedCategories = Array.from(categories).sort()
     if (sortedCategories.length > 0) {
       setSelectedLargeCategory(sortedCategories[0])
-      setSelectedMiddleCategory(null) // 중분류도 초기화
+      setSelectedMiddleCategories([]) // 중분류도 초기화
     } else {
       setSelectedLargeCategory(null)
-      setSelectedMiddleCategory(null)
+      setSelectedMiddleCategories([])
     }
   }, [activeTab, recommendedProducts, excludedProducts])
 
   // 대분류 변경 시 중분류 초기화
   useEffect(() => {
-    setSelectedMiddleCategory(null)
+    setSelectedMiddleCategories([])
   }, [selectedLargeCategory])
 
   // Intersection Observer로 뷰포트에 들어온 아이템 추적
@@ -648,7 +648,7 @@ export default function RecommendationsPage() {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-base font-bold text-gray-900">필터</h3>
                     <button
-                      onClick={() => setSelectedMiddleCategory(null)}
+                      onClick={() => setSelectedMiddleCategories([])}
                       className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -687,28 +687,36 @@ export default function RecommendationsPage() {
                       })
                       const totalCount = productMap.size
                       
+                      const isAllSelected = selectedMiddleCategories.length === 0 || selectedMiddleCategories.length === middleCategories.length
+                      
                       return (
                         <button
-                          onClick={() => setSelectedMiddleCategory(null)}
+                          onClick={() => {
+                            if (isAllSelected) {
+                              setSelectedMiddleCategories([])
+                            } else {
+                              setSelectedMiddleCategories([...middleCategories])
+                            }
+                          }}
                           className={`w-full flex items-center gap-3 px-2 py-2 text-left transition-colors ${
-                            selectedMiddleCategory === null
+                            isAllSelected
                               ? activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
                               : 'text-gray-700 hover:text-gray-900'
                           }`}
                         >
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                            selectedMiddleCategory === null
+                            isAllSelected
                               ? activeTab === 'recommended' ? 'border-emerald-600 bg-emerald-600' : 'border-amber-600 bg-amber-600'
                               : 'border-gray-300'
                           }`}>
-                            {selectedMiddleCategory === null && (
+                            {isAllSelected && (
                               <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                               </svg>
                             )}
                           </div>
                           <span className={`text-sm font-medium ${
-                            selectedMiddleCategory === null 
+                            isAllSelected
                               ? activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
                               : 'text-gray-700'
                           }`}>
@@ -745,29 +753,37 @@ export default function RecommendationsPage() {
                       })
                       const categoryCount = productMap.size
                       
+                      const isSelected = selectedMiddleCategories.includes(category)
+                      
                       return (
                         <button
                           key={category}
-                          onClick={() => setSelectedMiddleCategory(category)}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedMiddleCategories(selectedMiddleCategories.filter(c => c !== category))
+                            } else {
+                              setSelectedMiddleCategories([...selectedMiddleCategories, category])
+                            }
+                          }}
                           className={`w-full flex items-center gap-3 px-2 py-2 text-left transition-colors ${
-                            selectedMiddleCategory === category
+                            isSelected
                               ? activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
                               : 'text-gray-700 hover:text-gray-900'
                           }`}
                         >
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                            selectedMiddleCategory === category
+                            isSelected
                               ? activeTab === 'recommended' ? 'border-emerald-600 bg-emerald-600' : 'border-amber-600 bg-amber-600'
                               : 'border-gray-300'
                           }`}>
-                            {selectedMiddleCategory === category && (
+                            {isSelected && (
                               <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                               </svg>
                             )}
                           </div>
                           <span className={`text-sm font-medium flex-1 ${
-                            selectedMiddleCategory === category 
+                            isSelected
                               ? activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
                               : 'text-gray-700'
                           }`}>
@@ -803,7 +819,7 @@ export default function RecommendationsPage() {
               {Object.entries(filteredGroupedProducts).map(([category, products]) => (
                 <div key={category} className="space-y-4">
                   {/* 카테고리 제목 - 중분류가 선택되지 않았을 때만 표시 */}
-                  {!selectedMiddleCategory && (
+                  {selectedMiddleCategories.length === 0 && (
                     <div className="flex items-center gap-2">
                       <div className={`w-1 h-6 rounded-full ${
                         activeTab === 'recommended' ? 'bg-emerald-500' : 'bg-amber-500'
