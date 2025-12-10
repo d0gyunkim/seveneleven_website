@@ -938,7 +938,26 @@ export default function RecommendationsPage() {
       </button>
 
       {/* 추천 근거 모달 */}
-          {selectedProduct && (
+          {selectedProduct && (() => {
+            // 모달에서도 동일한 순위 계산 로직 적용
+            let modalDisplayRank: number | null = null
+            for (const [category, products] of Object.entries(filteredGroupedProducts)) {
+              const productIndex = products.findIndex(
+                p => p.store_code === selectedProduct.store_code && p.item_cd === selectedProduct.item_cd
+              )
+              if (productIndex !== -1) {
+                // 부진재고는 항상 인덱스 기반, 추천 상품은 rank 값 사용 (null이면 인덱스 기반)
+                if (activeTab === 'excluded') {
+                  modalDisplayRank = productIndex + 1
+                } else {
+                  const productRank = products[productIndex].rank
+                  modalDisplayRank = productRank !== null ? productRank : productIndex + 1
+                }
+                break
+              }
+            }
+            
+            return (
             <div
               className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-in fade-in duration-200"
               onClick={() => setSelectedProduct(null)}
@@ -990,11 +1009,11 @@ export default function RecommendationsPage() {
                     {/* 이미지 영역 - 왼쪽 */}
                     {selectedProduct.item_img && (
                       <div className="flex-shrink-0 w-full md:w-1/2">
-                        {selectedProduct.rank !== null && selectedProduct.rank <= 3 && (
+                        {modalDisplayRank !== null && modalDisplayRank <= 3 && (
                           <div className="mb-2">
-                            <div className={`inline-block ${
-                              selectedProduct.rank === 1 ? 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600' :
-                              selectedProduct.rank === 2 ? 'bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500' :
+                            <div className={`inline-block relative ${
+                              modalDisplayRank === 1 ? 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600' :
+                              modalDisplayRank === 2 ? 'bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500' :
                               'bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600'
                             } rounded-lg shadow-xl transform rotate-[-8deg] transition-all duration-300 hover:rotate-0 hover:scale-110`}
                             style={{
@@ -1004,9 +1023,9 @@ export default function RecommendationsPage() {
                               <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent rounded-lg"></div>
                               <div className="absolute -inset-0.5 bg-black/10 rounded-lg blur-sm"></div>
                               <span className="relative text-white font-black text-base drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] tracking-tight">
-                                {selectedProduct.rank}
+                                {modalDisplayRank}
                               </span>
-                              {selectedProduct.rank === 1 && (
+                              {modalDisplayRank === 1 && (
                                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-300 rounded-full animate-pulse shadow-md"></div>
                               )}
                             </div>
@@ -1237,7 +1256,8 @@ export default function RecommendationsPage() {
                 </div>
               </div>
             </div>
-          )}
+            )
+          })()}
     </Layout>
   )
 }
