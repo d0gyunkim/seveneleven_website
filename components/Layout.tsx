@@ -83,8 +83,50 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* 상단 헤더 */}
-      <header className="bg-gray-50 border-b border-gray-200 px-4 md:px-6 lg:px-8 py-3 flex items-center justify-between">
+      {/* 최상단 유틸리티 바 - 로그아웃 | 우리 매장 */}
+      {storeCode && (
+        <div className="bg-white px-4 md:px-6 lg:px-8 py-2">
+          <div className="flex justify-end">
+            <div className="flex items-center gap-2 text-sm">
+              <Link
+                href="/"
+                className="text-gray-700 hover:text-gray-900 transition-colors"
+              >
+                로그아웃
+              </Link>
+              <span className="text-gray-400">|</span>
+              <div className="relative group">
+                <button className="text-gray-700 hover:text-gray-900 transition-colors">
+                  우리 매장
+                </button>
+                
+                {/* 툴팁 콘텐츠 */}
+                <div className="absolute right-0 top-full mt-2 w-64 p-4 bg-white rounded-lg border border-gray-200 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div className="space-y-2">
+                    {storeName && (
+                      <p className="text-sm text-gray-700 font-semibold">
+                        매장: <span className="text-green-500">{storeName}</span>
+                      </p>
+                    )}
+                    <p className="text-sm text-gray-700 font-semibold">
+                      매장 코드: <span className="text-green-500">{storeCode}</span>
+                    </p>
+                    <p className="text-sm text-gray-700 font-semibold">
+                      기준일자: <span className="text-green-500">2025년 9월 1일</span>
+                    </p>
+                  </div>
+                  {/* 화살표 */}
+                  <div className="absolute right-4 -top-2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-8 border-b-gray-200"></div>
+                  <div className="absolute right-[18px] -top-[7px] w-0 h-0 border-l-7 border-l-transparent border-r-7 border-r-transparent border-b-7 border-b-white"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 메인 헤더 - 로고 및 네비게이션 */}
+      <header className="bg-white border-b border-gray-200 px-4 md:px-6 lg:px-8 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div className="ml-8 flex items-center">
             <img 
@@ -175,52 +217,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 overflow-auto bg-white w-full">
         {children}
       </main>
-
-      {/* 오른쪽 사이드바 - 로그인 정보 */}
-      {storeCode && (
-        <aside className="hidden lg:block w-48 flex-shrink-0 bg-gray-50 border-l border-gray-200">
-          <div className="p-4 h-full flex flex-col">
-            {/* 상단 구분선 */}
-            <div className="border-b border-orange-200 mb-4"></div>
-            
-            {/* 로그아웃 | 우리 매장 */}
-            <div className="flex items-center gap-2 text-sm">
-              <Link
-                href="/"
-                className="text-gray-700 hover:text-gray-900 transition-colors"
-              >
-                로그아웃
-              </Link>
-              <span className="text-gray-400">|</span>
-              <div className="relative group">
-                <button className="text-gray-700 hover:text-gray-900 transition-colors">
-                  우리 매장
-                </button>
-                
-                {/* 툴팁 콘텐츠 */}
-                <div className="absolute right-0 top-full mt-2 w-64 p-4 bg-white rounded-lg border border-gray-200 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                  <div className="space-y-2">
-                    {storeName && (
-                      <p className="text-sm text-gray-700 font-semibold">
-                        매장: <span className="text-green-500">{storeName}</span>
-                      </p>
-                    )}
-                    <p className="text-sm text-gray-700 font-semibold">
-                      매장 코드: <span className="text-green-500">{storeCode}</span>
-                    </p>
-                    <p className="text-sm text-gray-700 font-semibold">
-                      기준일자: <span className="text-green-500">2025년 9월 1일</span>
-                    </p>
-                  </div>
-                  {/* 화살표 */}
-                  <div className="absolute right-4 -top-2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-8 border-b-gray-200"></div>
-                  <div className="absolute right-[18px] -top-[7px] w-0 h-0 border-l-7 border-l-transparent border-r-7 border-r-transparent border-b-7 border-b-white"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </aside>
-      )}
     </div>
   )
 }
