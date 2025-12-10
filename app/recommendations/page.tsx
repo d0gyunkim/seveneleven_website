@@ -42,6 +42,7 @@ export default function RecommendationsPage() {
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set())
   const [selectedLargeCategory, setSelectedLargeCategory] = useState<string | null>(null)
   const [selectedMiddleCategory, setSelectedMiddleCategory] = useState<string | null>(null)
+  const [carouselIndex, setCarouselIndex] = useState(0)
 
   useEffect(() => {
     // URL에서 storeCode 가져오기, 없으면 sessionStorage에서 가져오기
@@ -446,6 +447,65 @@ export default function RecommendationsPage() {
     return sortedFiltered
   }, [selectedLargeCategory, selectedMiddleCategory, activeTab, recommendedProducts, excludedProducts, recommendedCategoryOrder])
 
+  // 대분류별 중분류별 1등 상품 추출 (캐러셀용)
+  const topProductsByCategory = useMemo(() => {
+    if (activeTab !== 'recommended') return []
+    
+    const products: Product[] = []
+    const currentProducts = recommendedProducts
+    
+    largeCategories.forEach((largeCategory) => {
+      // 해당 대분류의 상품들 필터링
+      const largeCategoryProducts = currentProducts.filter(p => p.item_lrdv_nm === largeCategory)
+      
+      // 중분류별로 그룹화
+      const middleCategoryMap = new Map<string, Product[]>()
+      largeCategoryProducts.forEach((product) => {
+        if (product.item_mddv_nm) {
+          if (!middleCategoryMap.has(product.item_mddv_nm)) {
+            middleCategoryMap.set(product.item_mddv_nm, [])
+          }
+          middleCategoryMap.get(product.item_mddv_nm)!.push(product)
+        }
+      })
+      
+      // 각 중분류별로 1등 상품 추출
+      middleCategoryMap.forEach((middleCategoryProducts) => {
+        const sorted = middleCategoryProducts.sort((a, b) => {
+          const rankA = a.rank ?? Infinity
+          const rankB = b.rank ?? Infinity
+          return rankA - rankB
+        })
+        
+        if (sorted.length > 0) {
+          products.push(sorted[0])
+        }
+      })
+    })
+    
+    return products
+  }, [largeCategories, recommendedProducts, activeTab])
+
+  // 자동 캐러셀
+  useEffect(() => {
+    if (activeTab !== 'recommended' || topProductsByCategory.length <= 3) return
+    
+    const maxIndex = Math.max(0, Math.ceil(topProductsByCategory.length / 3) - 1)
+    if (maxIndex === 0) return
+    
+    const interval = setInterval(() => {
+      setCarouselIndex((prev) => {
+        if (prev < maxIndex) {
+          return prev + 1
+        } else {
+          return 0
+        }
+      })
+    }, 3000)
+    
+    return () => clearInterval(interval)
+  }, [topProductsByCategory.length, activeTab])
+
   // 선택된 대분류에 따른 중분류 목록 추출
   const middleCategories = useMemo(() => {
     if (!selectedLargeCategory) return []
@@ -607,19 +667,101 @@ export default function RecommendationsPage() {
 
   return (
     <Layout>
-      <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      <div className="bg-white">
         <div className="w-full">
           {/* 고정 헤더 섹션 */}
-          <div className="sticky top-0 z-20 pt-6 md:pt-8 pb-4 md:pb-6 bg-gradient-to-br from-gray-50 via-white to-gray-50 shadow-sm px-4 md:px-6 lg:px-8">
+          <div className="sticky top-0 z-20 pt-6 md:pt-8 pb-4 md:pb-6 bg-white px-4 md:px-6 lg:px-8">
             {/* 안내 문구 - 탭별로 표시 (탭 박스 위에 배치) */}
             {activeTab === 'recommended' && (
-              <div className="bg-white p-8 md:p-12 mb-6 md:mb-8 text-center">
-                <p className="text-2xl md:text-3xl lg:text-4xl text-slate-900 leading-relaxed">
-                  <span className="text-emerald-600">유사 매장의</span> 판매 데이터를 수집·분석하여 선별한 추천 상품입니다.
-                  <br />
-                  <br />
-                  내 매장 미취급 상품 중 유사 매장들에서 판매 성과가 우수한 상품들을 선별하여 추천하고 있습니다.
-                </p>
+              <div className="bg-white p-8 md:p-12 mb-6 md:mb-8">
+                <div className="flex flex-col md:flex-row gap-8 items-center">
+                  {/* 왼쪽: 텍스트 */}
+                  <div className="flex-1">
+                    <p className="text-xl md:text-2xl lg:text-3xl text-slate-900 leading-relaxed">
+                      AI 기술을 통해 분석한 우리 매장과 유사한 매장의 판매 데이터를 통해 도출된 잘팔린 것 같은 상품을 만나보세요.
+                    </p>
+                  </div>
+                  
+                  {/* 오른쪽: 상품 캐러셀 */}
+                  {topProductsByCategory.length > 0 && (
+                    <div className="flex-shrink-0 w-full md:w-[480px] relative">
+                      <div className="relative overflow-hidden rounded-xl">
+                        <div 
+                          className="flex gap-2 transition-transform duration-300 ease-in-out"
+                          style={{ transform: `translateX(-${carouselIndex * (100 / 3)}%)` }}
+                        >
+                          {topProductsByCategory.map((product, index) => (
+                            <div
+                              key={`${product.store_code}-${product.item_cd}`}
+                              className="min-w-[calc(33.333%-0.33rem)] flex-shrink-0"
+                            >
+                              <div
+                                onClick={() => setSelectedProduct(product)}
+                                className="bg-white border border-slate-200 rounded-lg p-2 cursor-pointer hover:border-emerald-300 transition-colors h-full flex flex-col"
+                              >
+                                {product.item_img ? (
+                                  <div className="relative w-full h-32 bg-white rounded-lg overflow-hidden mb-2 flex-shrink-0 flex items-center justify-center">
+                                    <img
+                                      src={product.item_img}
+                                      alt={product.item_nm}
+                                      className="h-full w-auto object-contain p-1.5"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="relative w-full h-32 bg-slate-50 rounded-lg flex items-center justify-center mb-2 flex-shrink-0">
+                                    <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                  </div>
+                                )}
+                                <div className="flex-1 flex flex-col justify-between">
+                                  <h4 className="text-xs font-semibold text-slate-900 line-clamp-2 mb-1">
+                                    {product.item_nm}
+                                  </h4>
+                                  {product.sale_price !== null && (
+                                    <p className="text-sm font-bold text-slate-900">
+                                      {product.sale_price.toLocaleString()}원
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* 캐러셀 네비게이션 */}
+                      {topProductsByCategory.length > 3 && (
+                        <>
+                          <button
+                            onClick={() => {
+                              const maxIndex = Math.max(0, Math.ceil(topProductsByCategory.length / 3) - 1)
+                              setCarouselIndex((prev) => (prev > 0 ? prev - 1 : maxIndex))
+                            }}
+                            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-8 h-8 bg-white border border-slate-300 rounded-full flex items-center justify-center hover:bg-slate-50 transition-colors shadow-md z-10"
+                            aria-label="이전 상품"
+                          >
+                            <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => {
+                              const maxIndex = Math.max(0, Math.ceil(topProductsByCategory.length / 3) - 1)
+                              setCarouselIndex((prev) => (prev < maxIndex ? prev + 1 : 0))
+                            }}
+                            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-8 h-8 bg-white border border-slate-300 rounded-full flex items-center justify-center hover:bg-slate-50 transition-colors shadow-md z-10"
+                            aria-label="다음 상품"
+                          >
+                            <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -721,7 +863,7 @@ export default function RecommendationsPage() {
 
               {/* 중분류별 상품 그룹 */}
           {Object.keys(filteredGroupedProducts).length === 0 ? (
-            <div className="text-center py-16 bg-white border border-slate-200 rounded-lg">
+            <div className="text-center py-16 bg-white rounded-lg">
               <div className="w-14 h-14 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-3">
                 <svg className="w-7 h-7 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -758,13 +900,13 @@ export default function RecommendationsPage() {
                           ref={(el) => setItemRef(itemId, el)}
                           data-item-id={itemId}
                           onClick={() => setSelectedProduct(product)}
-                          className="group bg-white rounded-xl overflow-hidden cursor-pointer flex flex-col relative transition-all duration-300 hover:shadow-md"
+                          className="group bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer flex flex-col relative transition-all duration-300"
                         >
                           {isVisible ? (
                             <>
                               {/* 순위 배지 */}
                               {product.rank !== null && product.rank <= 3 && (
-                                <div className={`absolute top-3 left-3 z-10 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md ${
+                                <div className={`absolute top-3 left-3 z-10 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white ${
                                   product.rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' :
                                   product.rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
                                   'bg-gradient-to-br from-orange-400 to-orange-600'
@@ -779,7 +921,7 @@ export default function RecommendationsPage() {
                                   <img
                                     src={product.item_img}
                                     alt={product.item_nm}
-                                    className="w-full h-full object-contain p-4 md:p-6 transition-transform duration-300 group-hover:scale-105"
+                                    className="h-full w-auto object-contain p-4 md:p-6 transition-transform duration-300 group-hover:scale-105"
                                     loading="lazy"
                                     onError={(e) => {
                                       e.currentTarget.style.display = 'none'
@@ -862,7 +1004,7 @@ export default function RecommendationsPage() {
               onClick={() => setSelectedProduct(null)}
             >
               <div
-                className="bg-white max-w-3xl w-full max-h-[85vh] md:max-h-[80vh] overflow-hidden shadow-xl flex flex-col rounded-lg"
+                className="bg-white max-w-3xl w-full max-h-[85vh] md:max-h-[80vh] overflow-hidden flex flex-col rounded-lg"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* 모달 헤더 */}
@@ -913,7 +1055,7 @@ export default function RecommendationsPage() {
                             추천 순위: {selectedProduct.rank}위
                           </h4>
                         )}
-                        <div className="relative w-full h-64 md:h-80 overflow-hidden bg-slate-50 rounded-lg flex items-center justify-center">
+                        <div className="relative w-full h-64 md:h-80 overflow-hidden bg-white rounded-lg flex items-center justify-center">
                           <img
                             src={selectedProduct.item_img}
                             alt={selectedProduct.item_nm}
@@ -1006,21 +1148,21 @@ export default function RecommendationsPage() {
                                   {(rValue || fValue || mValue) && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                       {rValue && (
-                                        <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-100">
+                                        <div className="bg-white rounded-lg p-3 text-center">
                                           <div className="text-xs text-slate-500 font-medium mb-2">최근 판매 기간</div>
                                           <div className="text-xl font-bold text-emerald-600 mb-1">{rValue}</div>
                                           <div className="text-xs text-slate-500">일 내 판매 발생</div>
                                         </div>
                                       )}
                                       {fValue && (
-                                        <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-100">
+                                        <div className="bg-white rounded-lg p-3 text-center">
                                           <div className="text-xs text-slate-500 font-medium mb-2">한 달 판매 횟수</div>
                                           <div className="text-xl font-bold text-emerald-600 mb-1">{parseFloat(fValue).toLocaleString()}</div>
                                           <div className="text-xs text-slate-500">회 이상 판매</div>
                                         </div>
                                       )}
                                       {mValue && (
-                                        <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-100">
+                                        <div className="bg-white rounded-lg p-3 text-center">
                                           <div className="text-xs text-slate-500 font-medium mb-2">총 매출액</div>
                                           <div className="text-xl font-bold text-emerald-600 mb-1">{parseInt(mValue).toLocaleString()}원</div>
                                           <div className="text-xs text-slate-500">한 달 기준</div>
@@ -1069,7 +1211,7 @@ export default function RecommendationsPage() {
                                   
                                   {/* 판매 없음 또는 낮은 판매 지표 */}
                                   {isNoSale ? (
-                                    <div className="bg-slate-50 border border-amber-200 rounded-lg p-4 text-center">
+                                    <div className="bg-white rounded-lg p-4 text-center">
                                       <div className="text-2xl mb-2">⚠️</div>
                                       <div className="text-sm font-bold text-amber-700 mb-1">최근 한 달 판매 없음</div>
                                       <div className="text-xs text-slate-600">판매가 이루어지지 않았습니다</div>
@@ -1078,21 +1220,21 @@ export default function RecommendationsPage() {
                                     (rValue || fValue || mValue) && (
                                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                         {rValue && (
-                                          <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-100">
+                                          <div className="bg-white rounded-lg p-3 text-center">
                                             <div className="text-xs text-slate-500 font-medium mb-2">최근 판매 기간</div>
                                             <div className="text-xl font-bold text-amber-600 mb-1">{rValue}</div>
                                             <div className="text-xs text-slate-500">일 내 판매 발생</div>
                                           </div>
                                         )}
                                         {fValue && (
-                                          <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-100">
+                                          <div className="bg-white rounded-lg p-3 text-center">
                                             <div className="text-xs text-slate-500 font-medium mb-2">한 달 판매 횟수</div>
                                             <div className="text-xl font-bold text-amber-600 mb-1">{parseFloat(fValue).toLocaleString()}</div>
                                             <div className="text-xs text-slate-500">회 판매</div>
                                           </div>
                                         )}
                                         {mValue && (
-                                          <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-100">
+                                          <div className="bg-white rounded-lg p-3 text-center">
                                             <div className="text-xs text-slate-500 font-medium mb-2">총 매출액</div>
                                             <div className="text-xl font-bold text-amber-600 mb-1">{parseInt(mValue).toLocaleString()}원</div>
                                             <div className="text-xs text-slate-500">한 달 기준</div>
