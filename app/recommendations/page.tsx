@@ -908,7 +908,11 @@ export default function RecommendationsPage() {
                     {/* 이미지 영역 - 왼쪽 */}
                     {selectedProduct.item_img && (
                       <div className="flex-shrink-0 w-full md:w-1/2">
-                        <h4 className="text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wider">상품 이미지</h4>
+                        {selectedProduct.rank !== null && selectedProduct.rank <= 10 && (
+                          <h4 className="text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wider">
+                            추천 순위: {selectedProduct.rank}위
+                          </h4>
+                        )}
                         <div className="relative w-full h-64 md:h-80 overflow-hidden bg-slate-50 rounded-lg flex items-center justify-center">
                           <img
                             src={selectedProduct.item_img}
@@ -1117,38 +1121,6 @@ export default function RecommendationsPage() {
                         )}
                       </div>
                     </div>
-
-                    {/* 순위 정보 */}
-                    {(() => {
-                      if (activeTab === 'recommended') {
-                        // 추천 상품: 기존 rank 사용
-                        return selectedProduct.rank !== null ? (
-                          <div>
-                            <h4 className="text-xs font-semibold text-slate-700 mb-3 uppercase tracking-wider">추천 순위</h4>
-                            <div className="flex items-center">
-                              <span className="text-2xl font-bold text-emerald-600">{selectedProduct.rank}위</span>
-                            </div>
-                          </div>
-                        ) : null
-                      } else {
-                        // 부진재고: 보여지는 순서대로 순위 계산
-                        const category = selectedProduct.item_mddv_nm || '기타'
-                        const categoryProducts = filteredGroupedProducts[category] || []
-                        const displayRank = categoryProducts.findIndex(p => 
-                          p.store_code === selectedProduct.store_code && 
-                          p.item_cd === selectedProduct.item_cd
-                        ) + 1
-                        
-                        return displayRank > 0 ? (
-                          <div>
-                            <h4 className="text-xs font-semibold text-slate-700 mb-3 uppercase tracking-wider">발주 제외 권장 순위</h4>
-                            <div className="flex items-center">
-                              <span className="text-2xl font-bold text-amber-600">{displayRank}위</span>
-                            </div>
-                          </div>
-                        ) : null
-                      }
-                    })()}
                   </div>
                   
                 </div>
