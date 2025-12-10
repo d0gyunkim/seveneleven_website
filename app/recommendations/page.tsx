@@ -636,13 +636,6 @@ export default function RecommendationsPage() {
               </div>
             )}
 
-            {activeTab === 'excluded' && (
-              <div className="bg-white p-8 md:p-12 mb-6 md:mb-8 text-center">
-                <p className="text-2xl md:text-3xl lg:text-4xl text-slate-900 leading-relaxed">
-                  <span className="font-bold">발주 제외 권장 상품</span>을 확인하여 매장 운영을 더욱 효율적으로 관리하세요.
-                </p>
-              </div>
-            )}
           </div>
 
           {/* 메인 콘텐츠 영역 - 필터 + 상품 그리드 */}
