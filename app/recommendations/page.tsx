@@ -566,10 +566,10 @@ export default function RecommendationsPage() {
 
   return (
     <Layout>
-      <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-50 overflow-hidden">
-        <div className="w-full flex flex-col flex-1 min-h-0 px-4 md:px-6 lg:px-8">
+      <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50">
+        <div className="w-full px-4 md:px-6 lg:px-8">
           {/* 고정 헤더 섹션 */}
-          <div className="flex-shrink-0 pt-3 md:pt-4 pb-3 md:pb-4 bg-gradient-to-br from-gray-50 via-white to-gray-50">
+          <div className="sticky top-0 z-20 pt-3 md:pt-4 pb-3 md:pb-4 bg-gradient-to-br from-gray-50 via-white to-gray-50 shadow-sm">
             {/* 페이지 제목 */}
             <div className="mb-4 md:mb-5 border-b border-gray-200 pb-3">
               <div className="flex items-start justify-between mb-2">
@@ -677,8 +677,8 @@ export default function RecommendationsPage() {
             )}
           </div>
 
-          {/* 스크롤 가능한 상품 목록 영역 */}
-          <div className="flex-1 overflow-y-auto min-h-0 pb-6">
+          {/* 상품 목록 영역 */}
+          <div className="pb-6">
             {/* 중분류별 상품 그룹 */}
           {Object.keys(filteredGroupedProducts).length === 0 ? (
             <div className="text-center py-16 bg-white border border-slate-200 rounded-lg">
