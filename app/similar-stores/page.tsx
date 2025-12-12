@@ -531,34 +531,11 @@ export default function SimilarStoresPage() {
                                 }`}>
                                   세븐일레븐 {store.store_nm}
                                 </p>
-                                {store.similarity_score && (
-                                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                                    store.similarity_score >= 95
-                                      ? 'bg-green-100 text-green-700'
-                                      : store.similarity_score >= 90
-                                      ? 'bg-blue-100 text-blue-700'
-                                      : 'bg-gray-100 text-gray-700'
-                                  }`}>
-                                    {store.similarity_score}%
-                                  </span>
-                                )}
                               </div>
                               {store.address && (
                                 <p className="text-xs text-gray-500 line-clamp-1 mb-1">
                                   {store.address}
                                 </p>
-                              )}
-                              {store.similarity_reasons && store.similarity_reasons.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {store.similarity_reasons.slice(0, 2).map((reason, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded"
-                                    >
-                                      {reason}
-                                    </span>
-                                  ))}
-                                </div>
                               )}
                             </div>
                             <svg
@@ -881,26 +858,6 @@ export default function SimilarStoresPage() {
                       시간대별 고객 유입 패턴 분석 결과, <span className="font-semibold">주중 오후 12-18시</span>와 
                       <span className="font-semibold">주말 저녁 18-24시</span>에 매출이 집중되는 패턴이 
                       유사 매장들과 <span className="font-semibold">높은 일치도</span>를 보입니다.
-                    </p>
-                  </div>
-                  <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
-                    <p className="text-xs font-semibold text-blue-900 mb-2">💡 평균 정보의 한계</p>
-                    <p className="text-xs text-blue-700 leading-relaxed">
-                      평균값은 전체적인 패턴을 파악하는 데 유용하지만, 개별 매장의 특수성을 반영하지 못할 수 있습니다. 
-                      더 정밀한 분석이 필요하면 "개별 매장 비교" 모드로 전환하여 특정 매장과의 상세 비교를 확인하세요.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 border-l-4 border-green-600 p-5">
-                <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-900 mb-1">핵심 인사이트</p>
-                    <p className="text-xs text-gray-700 leading-relaxed">
-                      유사 매장들의 평균 발주 패턴과 재고 관리 전략을 참고하여 본 매장의 발주 최적화를 진행하면 재고 회전율 향상과 매출 증대 효과를 기대할 수 있습니다. 개별 매장 비교를 통해 더 구체적인 인사이트를 얻을 수 있습니다.
                     </p>
                   </div>
                 </div>
