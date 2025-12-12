@@ -426,11 +426,10 @@ export default function SimilarStoresPage() {
                     <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
                       유사 매장 분석
                     </h2>
-                    <p className="text-xs text-gray-500 mt-1 font-medium">SIMILAR STORE ANALYSIS</p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 leading-relaxed max-w-2xl ml-6">
-                  판매 패턴 분석을 통한 유사 매장 발굴 및 발주 최적화 인사이트 제공
+                  매달 우리매장과 가장 유사한 5개의 매장입니다
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -606,13 +605,7 @@ export default function SimilarStoresPage() {
                 <div className="w-1 h-10 bg-green-600"></div>
                 <div>
                   <h3 className="text-2xl font-bold text-gray-900">유사 매장 평균 분석</h3>
-                  <p className="text-xs text-gray-500 mt-1 font-medium uppercase tracking-wide">SIMILAR STORE AVERAGE ANALYSIS</p>
                 </div>
-              </div>
-              <div className="ml-6 mt-2">
-                <p className="text-sm text-gray-600">
-                  <span className="font-semibold">9월 기준</span> 모든 유사매장의 평균값을 보여줍니다. 전체적인 패턴을 파악하기에 좋습니다.
-                </p>
               </div>
             </div>
 
@@ -1469,7 +1462,7 @@ export default function SimilarStoresPage() {
 
               {/* 유사 매장 인기 상품 순위 제목 */}
               <div className="border-t-2 border-gray-300 pt-8 mt-10">
-                <div className="flex items-center justify-between mb-6">
+                <div className="mb-6">
                   <div className="flex items-baseline gap-4">
                     <div className="w-1 h-8 bg-green-600"></div>
                     <div>
@@ -1479,24 +1472,6 @@ export default function SimilarStoresPage() {
                       <p className="text-xs text-gray-500 mt-1">유사 매장 판매량 기준</p>
                     </div>
                   </div>
-                  <button
-                    className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                    내 매장 상품 제외
-                  </button>
                 </div>
 
                 {/* 대분류 탭 */}
