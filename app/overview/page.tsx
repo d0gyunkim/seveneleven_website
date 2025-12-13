@@ -7,10 +7,19 @@ import Layout from '@/components/Layout'
 
 export default function OverviewPage() {
   const [isVisible, setIsVisible] = useState(false)
+  const [heroVisible, setHeroVisible] = useState(false)
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([])
   const buttonRefs = useRef<(HTMLDivElement | null)[]>([])
   const searchParams = useSearchParams()
   const storeCode = searchParams.get('storeCode')
+
+  // 첫 화면 텍스트 애니메이션
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHeroVisible(true)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -58,30 +67,33 @@ export default function OverviewPage() {
 
   return (
     <Layout>
-      <div className="bg-white min-h-screen">
-        {/* 상단 흰색 영역 - SEVEN PICK 헤더 */}
-        <div className="bg-white px-4 md:px-6 lg:px-8 py-12 md:py-16 lg:py-20">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center gap-4">
+      <div className="bg-white">
+        {/* 첫 화면 - 전체 화면 높이, SEVEN PICK 헤더만 표시 */}
+        <div className="bg-white min-h-screen flex items-end justify-start px-4 md:px-6 lg:px-8 pb-12 md:pb-16 lg:pb-20">
+          <div className="w-full">
+            <div className={`flex items-center gap-4 transition-all duration-1000 ease-out ${
+              heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}>
               {/* 왼쪽 얇은 연한 초록색 수직선 */}
-              <div className="w-1 h-16 md:h-20 bg-green-200"></div>
+              <div className={`w-1 h-16 md:h-20 lg:h-24 bg-green-200 flex-shrink-0 transition-all duration-1000 delay-200 ${
+                heroVisible ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0'
+              }`} style={{ transformOrigin: 'bottom' }}></div>
               
               {/* 텍스트 영역 */}
               <div className="flex flex-col">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-green-600 mb-2">
+                <h1 className={`text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-green-600 mb-2 leading-tight transition-all duration-1000 delay-300 ${
+                  heroVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
+                }`}>
                   SEVEN PICK:
                 </h1>
-                <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-black">
+                <h2 className={`text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-black leading-tight transition-all duration-1000 delay-500 ${
+                  heroVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
+                }`}>
                   발주를 바꾸는 새로운 AI 추천
                 </h2>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* 중간 큰 연한 초록색 블록 */}
-        <div className="bg-green-100 w-full py-20 md:py-32 lg:py-40">
-          {/* 이 영역은 이미지에서 큰 초록색 블록으로 보입니다 */}
         </div>
 
         {/* 섹션 1: 당신의 매장과 유사한 매장을 AI가 찾아드립니다 */}

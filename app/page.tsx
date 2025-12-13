@@ -13,7 +13,7 @@ export default function LoginPage() {
     if (code && code.length === 5 && /^\d+$/.test(code)) {
       // sessionStorage에 storeCode 저장
       sessionStorage.setItem('storeCode', code)
-      router.push(`/recommendations?storeCode=${encodeURIComponent(code)}`)
+      router.push(`/overview?storeCode=${encodeURIComponent(code)}`)
     }
   }
 
