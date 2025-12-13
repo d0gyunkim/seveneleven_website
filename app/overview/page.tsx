@@ -1,187 +1,310 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import Layout from '@/components/Layout'
 
 export default function OverviewPage() {
+  const [isVisible, setIsVisible] = useState(false)
+  const sectionRefs = useRef<(HTMLDivElement | null)[]>([])
+  const buttonRefs = useRef<(HTMLDivElement | null)[]>([])
+  const searchParams = useSearchParams()
+  const storeCode = searchParams.get('storeCode')
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate-fade-in')
+            // 버튼도 함께 나타나도록
+            const index = sectionRefs.current.findIndex(ref => ref === entry.target)
+            if (index >= 0 && buttonRefs.current[index]) {
+              setTimeout(() => {
+                buttonRefs.current[index]?.classList.add('animate-fade-in')
+              }, 300)
+            }
+          }
+        })
+      },
+      { threshold: 0.1 }
+    )
+
+    sectionRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref)
+    })
+
+    return () => {
+      sectionRefs.current.forEach((ref) => {
+        if (ref) observer.unobserve(ref)
+      })
+    }
+  }, [])
+
+  const getRecommendationsHref = () => {
+    if (storeCode) {
+      return `/recommendations?storeCode=${encodeURIComponent(storeCode)}&tab=recommended`
+    }
+    return '/recommendations?tab=recommended'
+  }
+
+  const getSimilarStoresHref = () => {
+    if (storeCode) {
+      return `/similar-stores?storeCode=${encodeURIComponent(storeCode)}`
+    }
+    return '/similar-stores'
+  }
+
   return (
     <Layout>
-      <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50 min-h-screen">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12">
-          {/* 페이지 제목 */}
-          <div className="mb-8 md:mb-12">
-            <div className="flex items-baseline gap-3 mb-4">
-              <div className="w-1 h-10 bg-emerald-500 rounded-full"></div>
-              <div>
-                <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-                  서비스 개요
+      <div className="bg-white min-h-screen">
+        {/* 상단 흰색 영역 - SEVEN PICK 헤더 */}
+        <div className="bg-white px-4 md:px-6 lg:px-8 py-12 md:py-16 lg:py-20">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center gap-4">
+              {/* 왼쪽 얇은 연한 초록색 수직선 */}
+              <div className="w-1 h-16 md:h-20 bg-green-200"></div>
+              
+              {/* 텍스트 영역 */}
+              <div className="flex flex-col">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-green-600 mb-2">
+                  SEVEN PICK:
                 </h1>
-                <p className="text-sm md:text-base text-slate-600 mt-2 font-medium">
-                  데이터 기반 맞춤형 상품 추천 및 발주 최적화 인사이트 제공
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* 주요 기능 섹션 */}
-          <div className="grid md:grid-cols-2 gap-6 md:gap-8 mb-12">
-            {/* 발주 추천 */}
-            <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                  </svg>
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold text-slate-900">발주 추천</h2>
-              </div>
-              <p className="text-slate-700 leading-relaxed mb-4">
-                유사 매장들의 판매 데이터를 분석하여 우리 매장에 추천할 상품을 선별합니다. 
-                최근 판매 실적, 판매 빈도, 매출액을 종합적으로 고려하여 판매 성과가 우수한 상품을 추천합니다.
-              </p>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="flex items-start gap-2">
-                  <span className="text-emerald-500 mt-1">•</span>
-                  <span>유사 매장 기반 상품 추천</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-emerald-500 mt-1">•</span>
-                  <span>R, F, M 지표 기반 분석</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-emerald-500 mt-1">•</span>
-                  <span>카테고리별 상품 필터링</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* 부진재고 분석 */}
-            <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold text-slate-900">부진재고 분석</h2>
-              </div>
-              <p className="text-slate-700 leading-relaxed mb-4">
-                매장의 상품군별 발주 제외 권장 대상 상품을 분석합니다. 
-                판매 실적이 낮은 상품을 식별하여 매장 운영 효율화에 도움을 드립니다.
-              </p>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="flex items-start gap-2">
-                  <span className="text-amber-500 mt-1">•</span>
-                  <span>판매 실적 기반 분석</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-amber-500 mt-1">•</span>
-                  <span>발주 제외 권장 상품 식별</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-amber-500 mt-1">•</span>
-                  <span>매장 운영 효율화 지원</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* 유사매장 분석 */}
-            <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold text-slate-900">유사매장 분석</h2>
-              </div>
-              <p className="text-slate-700 leading-relaxed mb-4">
-                우리 매장과 유사한 특성을 가진 매장들을 분석하여 참고할 수 있는 인사이트를 제공합니다. 
-                유사 매장의 판매 패턴과 트렌드를 파악할 수 있습니다.
-              </p>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-1">•</span>
-                  <span>유사 매장 식별 및 분석</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-1">•</span>
-                  <span>판매 패턴 비교 분석</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-1">•</span>
-                  <span>트렌드 파악 지원</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* 데이터 기반 의사결정 */}
-            <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold text-slate-900">데이터 기반 의사결정</h2>
-              </div>
-              <p className="text-slate-700 leading-relaxed mb-4">
-                실제 판매 데이터를 기반으로 
-                 한 객관적인 분석 결과를 제공합니다. 
-                직관적인 대시보드와 상세한 분석 정보를 통해 효율적인 발주 결정을 지원합니다.
-              </p>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-500 mt-1">•</span>
-                  <span>실시간 데이터 분석</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-500 mt-1">•</span>
-                  <span>직관적인 대시보드</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-500 mt-1">•</span>
-                  <span>상세한 분석 정보 제공</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* 서비스 특징 */}
-          <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-slate-200">
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-6">서비스 특징</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">빠른 분석</h3>
-                <p className="text-sm text-slate-600">실시간 데이터 기반으로<br />빠르고 정확한 분석 결과를 제공합니다.</p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">신뢰할 수 있는 데이터</h3>
-                <p className="text-sm text-slate-600">검증된 매장 데이터를 기반으로<br />신뢰할 수 있는 분석을 제공합니다.</p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">맞춤형 추천</h3>
-                <p className="text-sm text-slate-600">각 매장의 특성에 맞는<br />개인화된 상품 추천을 제공합니다.</p>
+                <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-black">
+                  발주를 바꾸는 새로운 AI 추천
+                </h2>
               </div>
             </div>
           </div>
         </div>
+
+        {/* 중간 큰 연한 초록색 블록 */}
+        <div className="bg-green-100 w-full py-20 md:py-32 lg:py-40">
+          {/* 이 영역은 이미지에서 큰 초록색 블록으로 보입니다 */}
+        </div>
+
+        {/* 섹션 1: 당신의 매장과 유사한 매장을 AI가 찾아드립니다 */}
+        <section className="bg-white py-32 md:py-40 lg:py-48">
+          <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
+            <div
+              ref={(el) => { sectionRefs.current[0] = el }}
+              className="opacity-0 transition-opacity duration-1000"
+            >
+              <h2 className="text-5xl md:text-6xl lg:text-7xl font-light text-center text-gray-900 leading-tight mb-8 tracking-tight">
+                당신의 매장과 유사한<br />
+                <span className="font-semibold text-green-600">매장을 AI가 찾아드립니다</span>
+              </h2>
+              <p className="text-xl md:text-2xl text-center text-gray-600 max-w-3xl mx-auto leading-relaxed mb-12">
+                머신러닝 알고리즘으로 판매 패턴을 분석하여<br />
+                가장 유사한 특성을 가진 매장을 선별합니다
+              </p>
+              
+              {/* 버튼 */}
+              <div
+                ref={(el) => { buttonRefs.current[0] = el }}
+                className="opacity-0 flex justify-center mt-12"
+              >
+                <Link
+                  href={getSimilarStoresHref()}
+                  className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white bg-green-600 rounded-full transition-all duration-300 hover:bg-green-700 hover:scale-105 hover:shadow-xl"
+                >
+                  <span>유사 매장 알아보기</span>
+                  <svg 
+                    className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 구분선 */}
+        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+
+        {/* 섹션 2: 단 우리의 기술은 이렇게 다릅니다 */}
+        <section className="bg-white py-32 md:py-40 lg:py-48">
+          <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
+            <div
+              ref={(el) => { sectionRefs.current[1] = el }}
+              className="opacity-0 transition-opacity duration-1000"
+            >
+              <h2 className="text-5xl md:text-6xl lg:text-7xl font-light text-center text-gray-900 leading-tight mb-16 tracking-tight">
+                단, 우리의 기술은<br />
+                <span className="font-semibold text-green-600">이렇게 다릅니다</span>
+              </h2>
+              
+              <div className="grid md:grid-cols-3 gap-12 md:gap-16 mt-20">
+                <div className="text-center">
+                  <div className="mb-6">
+                    <div className="w-16 h-16 md:w-20 md:h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 md:w-10 md:h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">실시간 분석</h3>
+                  <p className="text-lg text-gray-600 leading-relaxed">
+                    최신 데이터를 기반으로<br />
+                    지속적으로 업데이트되는<br />
+                    유사도 분석
+                  </p>
+                </div>
+
+                <div className="text-center">
+                  <div className="mb-6">
+                    <div className="w-16 h-16 md:w-20 md:h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 md:w-10 md:h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">다차원 분석</h3>
+                  <p className="text-lg text-gray-600 leading-relaxed">
+                    판매 패턴, 시간대,<br />
+                    주중/주말 비율 등<br />
+                    다양한 지표 종합 분석
+                  </p>
+                </div>
+
+                <div className="text-center">
+                  <div className="mb-6">
+                    <div className="w-16 h-16 md:w-20 md:h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 md:w-10 md:h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">유동인구 반영</h3>
+                  <p className="text-lg text-gray-600 leading-relaxed">
+                    실시간 유동인구 데이터를<br />
+                    결합하여 더욱 정확한<br />
+                    상권 특성 파악
+                  </p>
+                </div>
+              </div>
+
+              {/* 버튼 */}
+              <div
+                ref={(el) => { buttonRefs.current[1] = el }}
+                className="opacity-0 flex justify-center mt-16"
+              >
+                <Link
+                  href={getRecommendationsHref()}
+                  className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white bg-green-600 rounded-full transition-all duration-300 hover:bg-green-700 hover:scale-105 hover:shadow-xl"
+                >
+                  <span>추천 상품 알아보기</span>
+                  <svg 
+                    className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 구분선 */}
+        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+
+        {/* 섹션 3: 상권은 동적으로 변화합니다 */}
+        <section className="bg-white py-32 md:py-40 lg:py-48">
+          <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
+            <div
+              ref={(el) => { sectionRefs.current[2] = el }}
+              className="opacity-0 transition-opacity duration-1000"
+            >
+              <h2 className="text-5xl md:text-6xl lg:text-7xl font-light text-center text-gray-900 leading-tight mb-8 tracking-tight">
+                <span className="font-semibold text-green-600">상권은 동적으로 변화합니다</span>
+              </h2>
+              <p className="text-xl md:text-2xl text-center text-gray-600 max-w-3xl mx-auto leading-relaxed mb-16">
+                계절, 이벤트, 주변 환경 변화에 따라<br />
+                상권 특성이 달라지므로
+              </p>
+
+              <div className="mt-20 space-y-8">
+                <div className="bg-gradient-to-r from-green-50 to-white p-8 md:p-12 rounded-2xl border border-green-100">
+                  <div className="flex items-start gap-6">
+                    <div className="flex-shrink-0 w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xl font-bold">1</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">Rolling Window 알고리즘</h3>
+                      <p className="text-lg text-gray-600 leading-relaxed">
+                        최근 4주 데이터를 유지하며 매주 자동 갱신하여<br />
+                        상권의 점진적이고 유동적인 변화를 실시간으로 포착합니다
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-green-50 to-white p-8 md:p-12 rounded-2xl border border-green-100">
+                  <div className="flex items-start gap-6">
+                    <div className="flex-shrink-0 w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xl font-bold">2</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">시기별 재계산</h3>
+                      <p className="text-lg text-gray-600 leading-relaxed">
+                        매달 새로운 데이터 기반으로 유사 매장을 재선정하여<br />
+                        항상 최신 분석 결과를 제공합니다
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 버튼 */}
+              <div
+                ref={(el) => { buttonRefs.current[2] = el }}
+                className="opacity-0 flex justify-center mt-16"
+              >
+                <Link
+                  href={getSimilarStoresHref()}
+                  className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white bg-green-600 rounded-full transition-all duration-300 hover:bg-green-700 hover:scale-105 hover:shadow-xl"
+                >
+                  <span>유사 매장 알아보기</span>
+                  <svg 
+                    className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fadeIn 1s ease-out forwards;
+        }
+      `}</style>
     </Layout>
   )
 }
