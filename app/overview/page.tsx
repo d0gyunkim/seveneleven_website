@@ -69,7 +69,7 @@ export default function OverviewPage() {
     <Layout>
       <div className="bg-white">
         {/* 첫 화면 - 전체 화면 높이, SEVEN PICK 헤더만 표시 */}
-        <div className="bg-white min-h-screen flex items-end justify-start px-4 md:px-6 lg:px-8 pb-12 md:pb-16 lg:pb-20">
+        <div className="bg-white min-h-screen flex items-center justify-start px-4 md:px-6 lg:px-8">
           <div className="w-full">
             <div className={`flex items-center gap-4 transition-all duration-1000 ease-out ${
               heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
