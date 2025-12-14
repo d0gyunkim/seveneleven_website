@@ -20,6 +20,14 @@ interface Product {
   cost: number | null
   sale_price: number | null
   rec_reason: string | null
+  mean_recency: number | null
+  mean_frequency: number | null
+  mean_monetary: number | null
+  pred_rfm: number | null
+  recency: number | null
+  frequency: number | null
+  monetary: number | null
+  rfm_score: number | null
 }
 
 interface GroupedProducts {
@@ -128,12 +136,11 @@ export default function RecommendationsPage() {
 
       setStoreName(foundStoreName)
 
-      // 추천 상품 조회 - rank 순서로 정렬
+      // 추천 상품 조회 - 모든 필드 포함
       const { data: recommendedData, error: recommendedError } = await supabase
         .from(recommendedTable)
         .select('*')
         .eq('store_code', code)
-        .order('rank', { ascending: true })
 
       if (recommendedError) {
         console.error('추천 상품 조회 오류:', recommendedError)
@@ -141,14 +148,13 @@ export default function RecommendationsPage() {
         setRecommendedProducts(recommendedData || [])
       }
 
-      // 부진재고 조회 - rank 순서로 정렬
+      // 부진재고 조회 - 모든 필드 포함
       let excludedData: Product[] = []
       if (excludedTable) {
         const { data: excludedDataResult, error: excludedError } = await supabase
           .from(excludedTable)
           .select('*')
           .eq('store_code', code)
-          .order('rank', { ascending: true })
 
         if (excludedError) {
           console.error('부진재고 조회 오류:', excludedError)
@@ -191,7 +197,7 @@ export default function RecommendationsPage() {
     return { r: rValue, f: fValue, m: mValue }
   }, [])
 
-  // 중분류별로 그룹화하고 각 그룹 내에서 rank 순서로 정렬
+  // 중분류별로 그룹화하고 각 그룹 내에서 mean_monetary 순서로 정렬
   // 상품명이 동일한 경우 판매가가 큰 것만 표시
   // R, F, M 값 중 하나라도 0이면 제외
   const groupedRecommendedProducts = useMemo(() => {
@@ -234,11 +240,12 @@ export default function RecommendationsPage() {
         }
       })
       
-      // 필터링된 상품들을 배열로 변환하고 rank 순서로 정렬
+      // 필터링된 상품들을 배열로 변환하고 mean_monetary 순서로 정렬 (중분류별)
       grouped[category] = Array.from(productMap.values()).sort((a, b) => {
-        const rankA = a.rank ?? Infinity
-        const rankB = b.rank ?? Infinity
-        return rankA - rankB
+        const meanMonetaryA = a.mean_monetary ?? -Infinity
+        const meanMonetaryB = b.mean_monetary ?? -Infinity
+        // mean_monetary가 높을수록 우선순위가 높음 (내림차순)
+        return meanMonetaryB - meanMonetaryA
       })
     })
 
@@ -278,11 +285,16 @@ export default function RecommendationsPage() {
         }
       })
       
-      // 필터링된 상품들을 배열로 변환하고 rank 순서로 정렬
+      // 필터링된 상품들을 배열로 변환하고 monetary (frequency * sale_price) 순서로 정렬 (낮을수록 상위, 오름차순)
       grouped[category] = Array.from(productMap.values()).sort((a, b) => {
-        const rankA = a.rank ?? Infinity
-        const rankB = b.rank ?? Infinity
-        return rankA - rankB
+        const frequencyA = a.frequency ?? 0
+        const frequencyB = b.frequency ?? 0
+        const salePriceA = a.sale_price ?? 0
+        const salePriceB = b.sale_price ?? 0
+        const monetaryA = frequencyA * salePriceA
+        const monetaryB = frequencyB * salePriceB
+        // monetary가 낮을수록 우선순위가 높음 (오름차순)
+        return monetaryA - monetaryB
       })
     })
 
@@ -388,30 +400,27 @@ export default function RecommendationsPage() {
       let sortedProducts: Product[]
       
       if (activeTab === 'excluded') {
-        // 부진재고: rank 0부터, rank가 같으면 판매가가 작은 순으로 정렬
+        // 부진재고: monetary (frequency * sale_price)가 낮을수록 상위 (오름차순)
         sortedProducts = Array.from(productMap.values()).sort((a, b) => {
-        const rankA = a.rank ?? Infinity
-        const rankB = b.rank ?? Infinity
-          
-          // rank가 같으면 판매가가 작은 순으로
-          if (rankA === rankB) {
-            const priceA = a.sale_price ?? 0
-            const priceB = b.sale_price ?? 0
-            return priceA - priceB
-          }
-          
-          // rank 순서대로 (0 -> 1 -> 2 ...)
-        return rankA - rankB
-      })
+          const frequencyA = a.frequency ?? 0
+          const frequencyB = b.frequency ?? 0
+          const salePriceA = a.sale_price ?? 0
+          const salePriceB = b.sale_price ?? 0
+          const monetaryA = frequencyA * salePriceA
+          const monetaryB = frequencyB * salePriceB
+          // monetary가 낮을수록 우선순위가 높음 (오름차순)
+          return monetaryA - monetaryB
+        })
         
         // 중분류별로 최대 5개만 선택
         sortedProducts = sortedProducts.slice(0, 5)
       } else {
-        // 추천 상품: 기존 로직 유지 (rank 순서로 정렬)
+        // 추천 상품: mean_monetary 순서로 정렬 (중분류별)
         sortedProducts = Array.from(productMap.values()).sort((a, b) => {
-          const rankA = a.rank ?? Infinity
-          const rankB = b.rank ?? Infinity
-          return rankA - rankB
+          const meanMonetaryA = a.mean_monetary ?? -Infinity
+          const meanMonetaryB = b.mean_monetary ?? -Infinity
+          // mean_monetary가 높을수록 우선순위가 높음 (내림차순)
+          return meanMonetaryB - meanMonetaryA
         })
       }
       
@@ -833,8 +842,8 @@ export default function RecommendationsPage() {
                     {products.map((product, index) => {
                       const itemId = `${product.store_code}-${product.item_cd}`
                       const isVisible = visibleItems.has(itemId)
-                      // 부진재고의 경우 인덱스 기반으로 순위 계산 (1부터 시작)
-                      const displayRank = activeTab === 'excluded' ? index + 1 : (product.rank ?? index + 1)
+                      // 추천 상품과 부진재고 모두 인덱스 기반으로 순위 계산 (1부터 시작)
+                      const displayRank = index + 1
                       const showBadge = displayRank <= 3
                       
                       return (
@@ -955,20 +964,15 @@ export default function RecommendationsPage() {
 
       {/* 추천 근거 모달 */}
           {selectedProduct && (() => {
-            // 모달에서도 동일한 순위 계산 로직 적용
+            // 모달에서도 동일한 순위 계산 로직 적용 (인덱스 기반)
             let modalDisplayRank: number | null = null
             for (const [category, products] of Object.entries(filteredGroupedProducts)) {
               const productIndex = products.findIndex(
                 p => p.store_code === selectedProduct.store_code && p.item_cd === selectedProduct.item_cd
               )
               if (productIndex !== -1) {
-                // 부진재고는 항상 인덱스 기반, 추천 상품은 rank 값 사용 (null이면 인덱스 기반)
-                if (activeTab === 'excluded') {
-                  modalDisplayRank = productIndex + 1
-                } else {
-                  const productRank = products[productIndex].rank
-                  modalDisplayRank = productRank !== null ? productRank : productIndex + 1
-                }
+                // 추천 상품과 부진재고 모두 인덱스 기반으로 순위 계산
+                modalDisplayRank = productIndex + 1
                 break
               }
             }
@@ -1080,26 +1084,20 @@ export default function RecommendationsPage() {
                         {activeTab === 'recommended' ? '추천 근거' : '부진 근거'}
                       </h4>
                       <div className="space-y-3">
-                        {selectedProduct.rec_reason ? (
-                          (() => {
-                            const recReason = selectedProduct.rec_reason
-                            const itemName = selectedProduct.item_nm
+                        {(() => {
+                          const itemName = selectedProduct.item_nm
+                          
+                          if (activeTab === 'recommended') {
+                            // 추천 상품: mean_recency, mean_frequency, mean_monetary 사용
+                            const meanRecency = selectedProduct.mean_recency ?? null
+                            const meanFrequency = selectedProduct.mean_frequency ?? null
+                            const meanMonetary = selectedProduct.mean_monetary ?? null
                             
-                            if (activeTab === 'recommended') {
-                              // 추천 상품: R, F, M 값 추출
-                              const rMatch = recReason.match(/(\d+\.?\d*)\s*일/)
-                              const rValue = rMatch ? rMatch[1] : null
-                              
-                              const fMatch = recReason.match(/(\d+\.?\d*)\s*회/)
-                              const fValue = fMatch ? fMatch[1] : null
-                              
-                              const mMatch = recReason.match(/([\d,]+)\s*원/)
-                              const mValue = mMatch ? mMatch[1].replace(/,/g, '') : null
-                              
-                              // 결론 부분 추출 (따라서/그래서/권장드립니다 등 포함)
-                              const conclusionMatch = recReason.match(/(따라서|그래서|그러므로|결론적으로|종합적으로).+?권장드립니다/)
-                              const conclusion = conclusionMatch ? conclusionMatch[0] : null
-                              
+                            // mean_recency는 30에서 뺀 값을 사용
+                            const daysSinceLastSale = meanRecency !== null ? Math.round(30 - meanRecency) : null
+                            
+                            // mean 값들이 하나라도 있으면 추천 근거 표시
+                            if (daysSinceLastSale !== null || meanFrequency !== null || meanMonetary !== null) {
                               return (
                                 <div className="space-y-4">
                                   {/* 인사말 및 상품 소개 */}
@@ -1109,61 +1107,64 @@ export default function RecommendationsPage() {
                                     </p>
                                   </div>
                                   
+                                  {/* 추천 설명 */}
+                                  <div className="p-4 bg-white rounded-lg border border-emerald-200">
+                                    <p className="text-sm text-slate-900 leading-relaxed mb-2">
+                                      최근 4주 기준으로 보면, 이 상품은 분석 기준일로부터 <span className="font-semibold text-emerald-600">{daysSinceLastSale !== null ? daysSinceLastSale : 'N/A'}</span>일 이내에 판매가 발생했습니다.
+                                    </p>
+                                    <p className="text-sm text-slate-900 leading-relaxed">
+                                      같은 기간 동안 총 <span className="font-semibold text-emerald-600">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-emerald-600">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원입니다.
+                                    </p>
+                                  </div>
+                                  
                                   {/* R, F, M 지표 카드 */}
-                                  {(rValue || fValue || mValue) && (
+                                  {(daysSinceLastSale !== null || meanFrequency !== null || meanMonetary !== null) && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                      {rValue && (
-                                        <div className="bg-white rounded-lg p-3 text-center">
+                                      {daysSinceLastSale !== null && (
+                                        <div className="bg-white rounded-lg p-3 text-center border border-emerald-200">
                                           <div className="text-xs text-slate-500 font-medium mb-2">최근 판매 기간</div>
-                                          <div className="text-xl font-bold text-emerald-600 mb-1">{rValue}</div>
+                                          <div className="text-xl font-bold text-emerald-600 mb-1">{daysSinceLastSale}</div>
                                           <div className="text-xs text-slate-500">일 내 판매 발생</div>
                                         </div>
                                       )}
-                                      {fValue && (
-                                        <div className="bg-white rounded-lg p-3 text-center">
+                                      {meanFrequency !== null && (
+                                        <div className="bg-white rounded-lg p-3 text-center border border-emerald-200">
                                           <div className="text-xs text-slate-500 font-medium mb-2">한 달 판매 횟수</div>
-                                          <div className="text-xl font-bold text-emerald-600 mb-1">{parseFloat(fValue).toLocaleString()}</div>
-                                          <div className="text-xs text-slate-500">회 이상 판매</div>
+                                          <div className="text-xl font-bold text-emerald-600 mb-1">{Math.round(meanFrequency).toLocaleString()}</div>
+                                          <div className="text-xs text-slate-500">회 판매</div>
                                         </div>
                                       )}
-                                      {mValue && (
-                                        <div className="bg-white rounded-lg p-3 text-center">
+                                      {meanMonetary !== null && (
+                                        <div className="bg-white rounded-lg p-3 text-center border border-emerald-200">
                                           <div className="text-xs text-slate-500 font-medium mb-2">총 매출액</div>
-                                          <div className="text-xl font-bold text-emerald-600 mb-1">{parseInt(mValue).toLocaleString()}원</div>
+                                          <div className="text-xl font-bold text-emerald-600 mb-1">{Math.round(meanMonetary).toLocaleString()}원</div>
                                           <div className="text-xs text-slate-500">한 달 기준</div>
                                         </div>
                                       )}
                                     </div>
                                   )}
-                                  
-                                  {/* 결론/권장사항 */}
-                                  {conclusion && (
-                                    <div className="p-3 bg-emerald-600 rounded-lg">
-                                      <div className="text-white text-sm leading-relaxed font-medium">
-                                        {conclusion}
-                                      </div>
-                                    </div>
-                                  )}
                                 </div>
                               )
                             } else {
-                              // 부진재고: 판매 없음 또는 낮은 판매 실적
-                              const isNoSale = recReason.includes('판매가 이루어지지 않았습니다') || 
-                                             recReason.includes('판매가 발생하지 않았습니다') ||
-                                             recReason.includes('판매가 없었습니다')
-                              
-                              const rMatch = recReason.match(/(\d+\.?\d*)\s*일\s*내/)
-                              const rValue = rMatch ? rMatch[1] : null
-                              
-                              const fMatch = recReason.match(/(\d+\.?\d*)\s*회\s*판매/)
-                              const fValue = fMatch ? fMatch[1] : null
-                              
-                              const mMatch = recReason.match(/(\d+)\s*원/)
-                              const mValue = mMatch ? mMatch[1] : null
-                              
-                              const conclusionMatch = recReason.match(/(따라서|그래서|그러므로|결론적으로|종합적으로).+?권장드립니다/)
-                              const conclusion = conclusionMatch ? conclusionMatch[0] : null
-                              
+                              return (
+                                <p className="text-slate-500 text-sm">
+                                  추천 근거가 없습니다.
+                                </p>
+                              )
+                            }
+                          } else {
+                            // 부진재고: recency, frequency 사용, monetary는 frequency * sale_price로 계산
+                            const recency = selectedProduct.recency ?? null
+                            const frequency = selectedProduct.frequency ?? null
+                            const salePrice = selectedProduct.sale_price ?? 0
+                            const calculatedMonetary = frequency !== null ? frequency * salePrice : null
+                            const rfmScore = selectedProduct.rfm_score ?? null
+                            
+                            // rfm_score가 0이거나 frequency가 0이거나 계산된 monetary가 0이면 판매 없음
+                            const isNoSale = rfmScore === 0 || frequency === 0 || calculatedMonetary === 0
+                            
+                            // recency, frequency, 계산된 monetary 값이 하나라도 있으면 부진 근거 표시
+                            if (isNoSale || recency !== null || frequency !== null || calculatedMonetary !== null) {
                               return (
                                 <div className="space-y-4">
                                   {/* 인사말 및 상품 소개 */}
@@ -1173,58 +1174,67 @@ export default function RecommendationsPage() {
                                     </p>
                                   </div>
                                   
-                                  {/* 판매 없음 또는 낮은 판매 지표 */}
+                                  {/* 판매 없음 메시지 */}
                                   {isNoSale ? (
-                                    <div className="bg-white rounded-lg p-4 text-center">
+                                    <div className="bg-white rounded-lg p-4 text-center border border-amber-200">
                                       <div className="text-2xl mb-2">⚠️</div>
-                                      <div className="text-sm font-bold text-amber-700 mb-1">최근 한 달 판매 없음</div>
-                                      <div className="text-xs text-slate-600">판매가 이루어지지 않았습니다</div>
+                                      <div className="text-sm font-bold text-amber-700 mb-1">한달 동안 판매가 이루어지지 않았습니다</div>
+                                      <div className="text-xs text-slate-600">발주 제외를 권장드립니다</div>
                                     </div>
                                   ) : (
-                                    (rValue || fValue || mValue) && (
-                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                        {rValue && (
-                                          <div className="bg-white rounded-lg p-3 text-center">
-                                            <div className="text-xs text-slate-500 font-medium mb-2">최근 판매 기간</div>
-                                            <div className="text-xl font-bold text-amber-600 mb-1">{rValue}</div>
-                                            <div className="text-xs text-slate-500">일 내 판매 발생</div>
-                                          </div>
-                                        )}
-                                        {fValue && (
-                                          <div className="bg-white rounded-lg p-3 text-center">
-                                            <div className="text-xs text-slate-500 font-medium mb-2">한 달 판매 횟수</div>
-                                            <div className="text-xl font-bold text-amber-600 mb-1">{parseFloat(fValue).toLocaleString()}</div>
-                                            <div className="text-xs text-slate-500">회 판매</div>
-                                          </div>
-                                        )}
-                                        {mValue && (
-                                          <div className="bg-white rounded-lg p-3 text-center">
-                                            <div className="text-xs text-slate-500 font-medium mb-2">총 매출액</div>
-                                            <div className="text-xl font-bold text-amber-600 mb-1">{parseInt(mValue).toLocaleString()}원</div>
-                                            <div className="text-xs text-slate-500">한 달 기준</div>
-                                          </div>
-                                        )}
+                                    <>
+                                      {/* 발주 제외 권장 설명 */}
+                                      <div className="p-4 bg-white rounded-lg border border-amber-200">
+                                        <p className="text-sm text-slate-900 leading-relaxed mb-2">
+                                          최근 판매 분석 결과, 이 상품은 분석 기준일로부터 <span className="font-semibold text-amber-600">{recency !== null ? Math.round(recency) : 'N/A'}</span>일 이내에 판매가 발생했습니다.
+                                        </p>
+                                        <p className="text-sm text-slate-900 leading-relaxed mb-2">
+                                          같은 기간 동안 총 <span className="font-semibold text-amber-600">{frequency !== null ? Math.round(frequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-amber-600">{calculatedMonetary !== null ? Math.round(calculatedMonetary).toLocaleString() : 'N/A'}</span>원입니다.
+                                        </p>
+                                        <p className="text-sm text-amber-700 font-semibold mt-3">
+                                          판매 실적이 낮아 발주 제외를 권장드립니다.
+                                        </p>
                                       </div>
-                                    )
-                                  )}
-                                  
-                                  {/* 결론/권장사항 */}
-                                  {conclusion && (
-                                    <div className="p-3 bg-amber-600 rounded-lg">
-                                      <div className="text-white text-sm leading-relaxed font-medium">
-                                        {conclusion}
-                                      </div>
-                                    </div>
+                                      
+                                      {/* R, F, M 지표 카드 */}
+                                      {(recency !== null || frequency !== null || calculatedMonetary !== null) && (
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                          {recency !== null && (
+                                            <div className="bg-white rounded-lg p-3 text-center border border-amber-200">
+                                              <div className="text-xs text-slate-500 font-medium mb-2">최근 판매 기간</div>
+                                              <div className="text-xl font-bold text-amber-600 mb-1">{Math.round(recency)}</div>
+                                              <div className="text-xs text-slate-500">일 내 판매 발생</div>
+                                            </div>
+                                          )}
+                                          {frequency !== null && (
+                                            <div className="bg-white rounded-lg p-3 text-center border border-amber-200">
+                                              <div className="text-xs text-slate-500 font-medium mb-2">한 달 판매 횟수</div>
+                                              <div className="text-xl font-bold text-amber-600 mb-1">{Math.round(frequency).toLocaleString()}</div>
+                                              <div className="text-xs text-slate-500">회 판매</div>
+                                            </div>
+                                          )}
+                                          {calculatedMonetary !== null && (
+                                            <div className="bg-white rounded-lg p-3 text-center border border-amber-200">
+                                              <div className="text-xs text-slate-500 font-medium mb-2">총 매출액</div>
+                                              <div className="text-xl font-bold text-amber-600 mb-1">{Math.round(calculatedMonetary).toLocaleString()}원</div>
+                                              <div className="text-xs text-slate-500">한 달 기준</div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </>
                                   )}
                                 </div>
                               )
+                            } else {
+                              return (
+                                <p className="text-slate-500 text-sm">
+                                  부진 근거가 없습니다.
+                                </p>
+                              )
                             }
-                          })()
-                        ) : (
-                          <p className="text-slate-500 text-sm">
-                            {activeTab === 'recommended' ? '추천 근거가 없습니다.' : '부진 근거가 없습니다.'}
-                          </p>
-                        )}
+                          }
+                        })()}
                       </div>
                     </div>
                   </div>
