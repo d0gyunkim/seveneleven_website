@@ -286,7 +286,7 @@ export default function RecommendationsPage() {
       })
       
       // 필터링된 상품들을 배열로 변환하고 monetary (frequency * sale_price) 순서로 정렬 (낮을수록 상위, 오름차순)
-      grouped[category] = Array.from(productMap.values()).sort((a, b) => {
+      const sortedProducts = Array.from(productMap.values()).sort((a, b) => {
         const frequencyA = a.frequency ?? 0
         const frequencyB = b.frequency ?? 0
         const salePriceA = a.sale_price ?? 0
@@ -296,6 +296,13 @@ export default function RecommendationsPage() {
         // monetary가 낮을수록 우선순위가 높음 (오름차순)
         return monetaryA - monetaryB
       })
+      
+      // 중분류별로 5개 미만이면 1개만, 5개 이상이면 최대 5개만 선택
+      if (sortedProducts.length < 5) {
+        grouped[category] = sortedProducts.slice(0, 1)
+      } else {
+        grouped[category] = sortedProducts.slice(0, 5)
+      }
     })
 
     return grouped
@@ -412,8 +419,12 @@ export default function RecommendationsPage() {
           return monetaryA - monetaryB
         })
         
-        // 중분류별로 최대 5개만 선택
-        sortedProducts = sortedProducts.slice(0, 5)
+        // 중분류별로 5개 미만이면 1개만, 5개 이상이면 최대 5개만 선택
+        if (sortedProducts.length < 5) {
+          sortedProducts = sortedProducts.slice(0, 1)
+        } else {
+          sortedProducts = sortedProducts.slice(0, 5)
+        }
       } else {
         // 추천 상품: mean_monetary 순서로 정렬 (중분류별)
         sortedProducts = Array.from(productMap.values()).sort((a, b) => {
@@ -694,7 +705,43 @@ export default function RecommendationsPage() {
                           }
                         }
                       })
-                      const totalCount = productMap.size
+                      
+                      let totalCount = productMap.size
+                      
+                      // 부진재고의 경우 중분류별로 정렬 후 개수 제한 적용
+                      if (activeTab === 'excluded') {
+                        // 중분류별로 그룹화
+                        const categoryGroups = new Map<string, Product[]>()
+                        productMap.forEach((product) => {
+                          const category = product.item_mddv_nm || '기타'
+                          if (!categoryGroups.has(category)) {
+                            categoryGroups.set(category, [])
+                          }
+                          categoryGroups.get(category)!.push(product)
+                        })
+                        
+                        // 각 중분류별로 정렬 후 개수 제한
+                        totalCount = 0
+                        categoryGroups.forEach((products) => {
+                          // 정렬 (monetary 낮은 순)
+                          const sorted = products.sort((a, b) => {
+                            const frequencyA = a.frequency ?? 0
+                            const frequencyB = b.frequency ?? 0
+                            const salePriceA = a.sale_price ?? 0
+                            const salePriceB = b.sale_price ?? 0
+                            const monetaryA = frequencyA * salePriceA
+                            const monetaryB = frequencyB * salePriceB
+                            return monetaryA - monetaryB
+                          })
+                          
+                          // 5개 미만이면 1개만, 5개 이상이면 최대 5개만
+                          if (sorted.length < 5) {
+                            totalCount += 1
+                          } else {
+                            totalCount += 5
+                          }
+                        })
+                      }
                       
                       const isAllSelected = selectedMiddleCategories.length === 0 || selectedMiddleCategories.length === middleCategories.length
                       
@@ -760,7 +807,30 @@ export default function RecommendationsPage() {
                           }
                         }
                       })
-                      const categoryCount = productMap.size
+                      
+                      let categoryCount = productMap.size
+                      
+                      // 부진재고의 경우 정렬 후 개수 제한 적용
+                      if (activeTab === 'excluded') {
+                        const products = Array.from(productMap.values())
+                        // 정렬 (monetary 낮은 순)
+                        const sorted = products.sort((a, b) => {
+                          const frequencyA = a.frequency ?? 0
+                          const frequencyB = b.frequency ?? 0
+                          const salePriceA = a.sale_price ?? 0
+                          const salePriceB = b.sale_price ?? 0
+                          const monetaryA = frequencyA * salePriceA
+                          const monetaryB = frequencyB * salePriceB
+                          return monetaryA - monetaryB
+                        })
+                        
+                        // 5개 미만이면 1개만, 5개 이상이면 최대 5개만
+                        if (sorted.length < 5) {
+                          categoryCount = 1
+                        } else {
+                          categoryCount = 5
+                        }
+                      }
                       
                       const isSelected = selectedMiddleCategories.includes(category)
                       
