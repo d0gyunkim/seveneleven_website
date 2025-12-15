@@ -1561,7 +1561,7 @@ export default function RecommendationsPage() {
                 className={`bg-white ${
                   isMobile 
                     ? 'w-full h-full flex flex-col' 
-                    : 'max-w-7xl w-full h-[95vh] overflow-hidden flex flex-col rounded-lg'
+                    : 'max-w-7xl w-full h-[98vh] overflow-hidden flex flex-col rounded-lg'
                 }`}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -1619,7 +1619,7 @@ export default function RecommendationsPage() {
 
                 {/* 웹 스타일: 헤더 */}
                 {!isMobile && (
-                  <div className="sticky top-0 bg-white px-6 py-4 z-10 border-b border-gray-200">
+                  <div className="sticky top-0 bg-white px-6 py-3 z-10 border-b border-gray-200 flex-shrink-0">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg md:text-xl font-bold text-slate-900">상품 정보</h3>
                       <button
@@ -1635,7 +1635,7 @@ export default function RecommendationsPage() {
                   </div>
                 )}
 
-                <div className={`overflow-y-auto flex-1 ${isMobile ? 'px-4 py-4' : 'px-8 py-6'}`} style={{ maxHeight: isMobile ? 'calc(100vh - 180px)' : 'calc(95vh - 80px)' }}>
+                <div className={`flex-1 ${isMobile ? 'px-4 py-4 overflow-y-auto' : 'px-8 py-6 overflow-y-auto'}`} style={{ maxHeight: isMobile ? 'calc(100vh - 180px)' : 'calc(98vh - 60px)' }}>
                   {/* 모바일 앱 스타일: 상품정보 탭 */}
                   {isMobile && productDetailTab === 'info' && (
                     <>
