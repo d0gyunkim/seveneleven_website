@@ -144,8 +144,6 @@ export default function RecommendationsPage() {
 
       if (recommendedError) {
         console.error('추천 상품 조회 오류:', recommendedError)
-      } else {
-        setRecommendedProducts(recommendedData || [])
       }
 
       // 부진재고 조회 - 모든 필드 포함
@@ -160,8 +158,69 @@ export default function RecommendationsPage() {
           console.error('부진재고 조회 오류:', excludedError)
         } else {
           excludedData = excludedDataResult || []
-          setExcludedProducts(excludedData)
         }
+      }
+
+      // 상품마스터에서 이미지 가져오기
+      const allItemCds = new Set<string>()
+      if (recommendedData) {
+        recommendedData.forEach((product: any) => {
+          if (product.item_cd) {
+            allItemCds.add(product.item_cd.toString())
+          }
+        })
+      }
+      excludedData.forEach((product: any) => {
+        if (product.item_cd) {
+          allItemCds.add(product.item_cd.toString())
+        }
+      })
+
+      // 상품마스터 테이블에서 이미지 조회
+      const itemImgMap = new Map<string, string>()
+      if (allItemCds.size > 0) {
+        try {
+          const { data: masterData, error: masterError } = await supabase
+            .from('상품마스터')
+            .select('ITEM_CD, item_img')
+            .in('ITEM_CD', Array.from(allItemCds))
+
+          if (masterError) {
+            console.error('상품마스터 조회 오류:', masterError)
+          } else if (masterData) {
+            masterData.forEach((item: any) => {
+              if (item.ITEM_CD && item.item_img) {
+                itemImgMap.set(item.ITEM_CD.toString(), item.item_img)
+              }
+            })
+          }
+        } catch (masterErr: any) {
+          console.error('상품마스터 조회 중 오류:', masterErr)
+        }
+      }
+
+      // 추천 상품에 이미지 적용
+      if (recommendedData) {
+        const updatedRecommendedData = recommendedData.map((product: any) => {
+          const itemCd = product.item_cd?.toString()
+          if (itemCd && itemImgMap.has(itemCd) && !product.item_img) {
+            return { ...product, item_img: itemImgMap.get(itemCd) }
+          }
+          return product
+        })
+        setRecommendedProducts(updatedRecommendedData)
+      }
+
+      // 부진재고에 이미지 적용
+      if (excludedData.length > 0) {
+        const updatedExcludedData = excludedData.map((product: any) => {
+          const itemCd = product.item_cd?.toString()
+          if (itemCd && itemImgMap.has(itemCd) && !product.item_img) {
+            return { ...product, item_img: itemImgMap.get(itemCd) }
+          }
+          return product
+        })
+        setExcludedProducts(updatedExcludedData)
       }
 
       if (recommendedError) {
