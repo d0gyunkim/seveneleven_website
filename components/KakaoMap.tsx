@@ -28,9 +28,11 @@ interface KakaoMapProps {
   currentStoreName?: string
   className?: string
   selectedStore?: SelectedStoreInfo | null
+  onStoreDetailClick?: (storeCode: string) => void
+  openStoreCode?: string | null // 특정 매장의 InfoWindow를 열기 위한 prop
 }
 
-export default function KakaoMap({ stores, currentStoreName, className = '', selectedStore }: KakaoMapProps) {
+export default function KakaoMap({ stores, currentStoreName, className = '', selectedStore, onStoreDetailClick, openStoreCode }: KakaoMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<any>(null)
   const [markers, setMarkers] = useState<any[]>([])
@@ -38,6 +40,7 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
   const [isSearching, setIsSearching] = useState(false)
   const overlayRef = useRef<any>(null)
   const markerOverlaysRef = useRef<any[]>([])
+  const infoWindowsRef = useRef<Map<string, { infoWindow: any, marker: any }>>(new Map())
 
   // 카카오맵 스크립트 로드
   useEffect(() => {
@@ -152,19 +155,60 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
         invisibleMarker.store_code = String(storeInfo.store_code || '')
         invisibleMarker.store_nm = storeInfo.store_nm || ''
 
-        // 인포윈도우 생성
-        const infoWindow = new window.kakao.maps.InfoWindow({
-          content: `
-            <div style="padding: 8px; min-width: 150px;">
-              <div style="font-weight: bold; font-size: 14px; margin-bottom: 4px; color: ${markerColor};">
-                ${isCurrentStore ? '현재 매장' : `#${storeInfo.rank} 유사 매장`}
-              </div>
-              <div style="font-size: 13px; color: #333;">
-                세븐일레븐 ${storeInfo.store_nm}
-              </div>
+        // 인포윈도우 생성 (자세히 보기 버튼 포함)
+        const storeCodeForClick = String(storeInfo.store_code || '')
+        const infoWindowContent = `
+          <div style="padding: 12px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <div style="font-weight: bold; font-size: 14px; margin-bottom: 6px; color: ${markerColor};">
+              ${isCurrentStore ? '현재 매장' : `#${storeInfo.rank} 유사 매장`}
             </div>
-          `,
+            <div style="font-size: 13px; color: #333; margin-bottom: 8px;">
+              세븐일레븐 ${storeInfo.store_nm}
+            </div>
+            <button 
+              id="detail-btn-${storeCodeForClick}"
+              style="
+                width: 100%;
+                padding: 8px 12px;
+                background: linear-gradient(135deg, ${markerColor} 0%, ${isCurrentStore ? '#B91C1C' : '#059669'} 100%);
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: opacity 0.2s;
+              "
+              onmouseover="this.style.opacity='0.9'"
+              onmouseout="this.style.opacity='1'"
+            >
+              자세히 보기
+            </button>
+          </div>
+        `
+        
+        const infoWindow = new window.kakao.maps.InfoWindow({
+          content: infoWindowContent,
         })
+        
+        // InfoWindow가 열릴 때 버튼 이벤트 리스너 추가
+        const originalOpen = infoWindow.open.bind(infoWindow)
+        infoWindow.open = function(map: any, marker: any) {
+          originalOpen(map, marker)
+          // DOM이 렌더링된 후 이벤트 리스너 추가
+          setTimeout(() => {
+            const button = document.getElementById(`detail-btn-${storeCodeForClick}`)
+            if (button && onStoreDetailClick) {
+              button.addEventListener('click', (e) => {
+                e.stopPropagation()
+                onStoreDetailClick(storeCodeForClick)
+              })
+            }
+          }, 100)
+        }
+        
+        // InfoWindow와 마커를 Map에 저장 (나중에 열기 위해)
+        infoWindowsRef.current.set(storeCodeForClick, { infoWindow, marker: invisibleMarker })
 
         // DOM 요소로 직접 생성하여 클릭 이벤트 추가
         const overlayDiv = document.createElement('div')
@@ -255,7 +299,7 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
     })
 
     setMarkers(newMarkers)
-  }, [isLoaded, stores, currentStoreName])
+  }, [isLoaded, stores, currentStoreName, onStoreDetailClick])
 
     // 선택된 매장의 오버레이 강조 표시
   useEffect(() => {
@@ -318,19 +362,56 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
           headerDiv.appendChild(textDiv)
           defaultDiv.appendChild(headerDiv)
           
-          // 클릭 이벤트 추가
-          const infoWindow = new window.kakao.maps.InfoWindow({
-            content: `
-              <div style="padding: 8px; min-width: 150px;">
-                <div style="font-weight: bold; font-size: 14px; margin-bottom: 4px; color: ${markerColor};">
-                  ${isCurrentStore ? '현재 매장' : `#${storeInfo.rank || ''} 유사 매장`}
-                </div>
-                <div style="font-size: 13px; color: #333;">
-                  세븐일레븐 ${storeInfo.store_nm}
-                </div>
+          // 클릭 이벤트 추가 (자세히 보기 버튼 포함)
+          const storeCodeForClick = String(storeInfo.store_code || '')
+          const infoWindowContent = `
+            <div style="padding: 12px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              <div style="font-weight: bold; font-size: 14px; margin-bottom: 6px; color: ${markerColor};">
+                ${isCurrentStore ? '현재 매장' : `#${storeInfo.rank || ''} 유사 매장`}
               </div>
-            `,
+              <div style="font-size: 13px; color: #333; margin-bottom: 8px;">
+                세븐일레븐 ${storeInfo.store_nm}
+              </div>
+              <button 
+                id="detail-btn-default-${storeCodeForClick}"
+                style="
+                  width: 100%;
+                  padding: 8px 12px;
+                  background: linear-gradient(135deg, ${markerColor} 0%, ${isCurrentStore ? '#B91C1C' : '#059669'} 100%);
+                  color: white;
+                  border: none;
+                  border-radius: 4px;
+                  font-size: 12px;
+                  font-weight: 600;
+                  cursor: pointer;
+                  transition: opacity 0.2s;
+                "
+                onmouseover="this.style.opacity='0.9'"
+                onmouseout="this.style.opacity='1'"
+              >
+                자세히 보기
+              </button>
+            </div>
+          `
+          
+          const infoWindow = new window.kakao.maps.InfoWindow({
+            content: infoWindowContent,
           })
+          
+          // InfoWindow가 열릴 때 버튼 이벤트 리스너 추가
+          const originalOpen = infoWindow.open.bind(infoWindow)
+          infoWindow.open = function(map: any, marker: any) {
+            originalOpen(map, marker)
+            setTimeout(() => {
+              const button = document.getElementById(`detail-btn-default-${storeCodeForClick}`)
+              if (button && onStoreDetailClick) {
+                button.addEventListener('click', (e) => {
+                  e.stopPropagation()
+                  onStoreDetailClick(storeCodeForClick)
+                })
+              }
+            }, 100)
+          }
           
           defaultDiv.addEventListener('click', () => {
             infoWindow.open(map, marker)
@@ -389,19 +470,56 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
           headerDiv.appendChild(typeDiv)
           highlightedDiv.appendChild(headerDiv)
           
-          // 클릭 이벤트 추가
-          const infoWindow = new window.kakao.maps.InfoWindow({
-            content: `
-              <div style="padding: 8px; min-width: 150px;">
-                <div style="font-weight: bold; font-size: 14px; margin-bottom: 4px; color: ${markerColor};">
-                  ${isCurrentStore ? '현재 매장' : `#${overlay.storeInfo?.rank || ''} 유사 매장`}
-                </div>
-                <div style="font-size: 13px; color: #333;">
-                  세븐일레븐 ${selectedStore.store_nm}
-                </div>
+          // 클릭 이벤트 추가 (자세히 보기 버튼 포함)
+          const storeCodeForClick = String(overlay.storeInfo?.store_code || selectedStore.store_code || '')
+          const infoWindowContent = `
+            <div style="padding: 12px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              <div style="font-weight: bold; font-size: 14px; margin-bottom: 6px; color: ${markerColor};">
+                ${isCurrentStore ? '현재 매장' : `#${overlay.storeInfo?.rank || ''} 유사 매장`}
               </div>
-            `,
+              <div style="font-size: 13px; color: #333; margin-bottom: 8px;">
+                세븐일레븐 ${selectedStore.store_nm}
+              </div>
+              <button 
+                id="detail-btn-selected-${storeCodeForClick}"
+                style="
+                  width: 100%;
+                  padding: 8px 12px;
+                  background: linear-gradient(135deg, ${markerColor} 0%, ${isCurrentStore ? '#B91C1C' : '#059669'} 100%);
+                  color: white;
+                  border: none;
+                  border-radius: 4px;
+                  font-size: 12px;
+                  font-weight: 600;
+                  cursor: pointer;
+                  transition: opacity 0.2s;
+                "
+                onmouseover="this.style.opacity='0.9'"
+                onmouseout="this.style.opacity='1'"
+              >
+                자세히 보기
+              </button>
+            </div>
+          `
+          
+          const infoWindow = new window.kakao.maps.InfoWindow({
+            content: infoWindowContent,
           })
+          
+          // InfoWindow가 열릴 때 버튼 이벤트 리스너 추가
+          const originalOpen = infoWindow.open.bind(infoWindow)
+          infoWindow.open = function(map: any, marker: any) {
+            originalOpen(map, marker)
+            setTimeout(() => {
+              const button = document.getElementById(`detail-btn-selected-${storeCodeForClick}`)
+              if (button && onStoreDetailClick) {
+                button.addEventListener('click', (e) => {
+                  e.stopPropagation()
+                  onStoreDetailClick(storeCodeForClick)
+                })
+              }
+            }, 100)
+          }
           
           highlightedDiv.addEventListener('click', () => {
             infoWindow.open(map, marker)
@@ -420,7 +538,30 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
         }
       }
     })
-  }, [map, selectedStore, markerOverlaysRef.current, currentStoreName])
+  }, [map, selectedStore, currentStoreName, onStoreDetailClick])
+
+  // openStoreCode가 변경되면 해당 매장의 InfoWindow 열기
+  useEffect(() => {
+    if (!map || !openStoreCode || infoWindowsRef.current.size === 0) {
+      return
+    }
+
+    const storeInfo = infoWindowsRef.current.get(String(openStoreCode))
+    if (storeInfo) {
+      // 기존에 열려있는 InfoWindow 닫기
+      infoWindowsRef.current.forEach(({ infoWindow }) => {
+        infoWindow.close()
+      })
+      
+      // 해당 매장의 InfoWindow 열기
+      storeInfo.infoWindow.open(map, storeInfo.marker)
+      
+      // 지도 중심을 해당 마커로 이동
+      const position = storeInfo.marker.getPosition()
+      map.setCenter(position)
+      map.setLevel(Math.max(map.getLevel(), 5))
+    }
+  }, [map, openStoreCode])
 
   if (!isLoaded) {
     return (
