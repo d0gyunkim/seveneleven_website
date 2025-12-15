@@ -4,12 +4,33 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import Layout from '@/components/Layout'
+import { supabase } from '@/lib/supabase'
+
+interface Product {
+  store_code: string
+  item_cd: string
+  store_nm: string
+  item_nm: string
+  item_img: string | null
+  pred_score: number | null
+  rank: number | null
+  item_mddv_cd: number | null
+  item_mddv_nm: string | null
+  item_lrdv_nm: string | null
+  item_smdv_nm: string | null
+  cost: number | null
+  sale_price: number | null
+  rec_reason: string | null
+}
 
 export default function OverviewPage() {
   const [isVisible, setIsVisible] = useState(false)
   const [heroVisible, setHeroVisible] = useState(false)
   const [isApp, setIsApp] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [topRecommendedProducts, setTopRecommendedProducts] = useState<Product[]>([])
+  const [topUnderperformingProducts, setTopUnderperformingProducts] = useState<Product[]>([])
+  const [loadingProducts, setLoadingProducts] = useState(false)
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([])
   const buttonRefs = useRef<(HTMLDivElement | null)[]>([])
   const hasAppearedRef = useRef<Set<number>>(new Set())
@@ -38,6 +59,171 @@ export default function OverviewPage() {
     window.addEventListener('resize', checkAppEnvironment)
     return () => window.removeEventListener('resize', checkAppEnvironment)
   }, [])
+
+  // 추천 상품 및 부진 상품 데이터 가져오기
+  useEffect(() => {
+    const fetchTopProducts = async () => {
+      if (!storeCode) return
+
+      setLoadingProducts(true)
+      try {
+        const knownStores = ['대치본점', '대치은마사거리점']
+        let foundStoreName: string | null = null
+        let recommendedTable: string | null = null
+        let excludedTable: string | null = null
+
+        // 매장 테이블 찾기
+        for (const storeName of knownStores) {
+          const recTable = `${storeName}_추천상품`
+          const excTable = `${storeName}_부진재고`
+
+          const codeVariants = [storeCode, storeCode.toString(), parseInt(storeCode).toString()]
+          
+          for (const codeVariant of codeVariants) {
+            const { data: recData, error: recError } = await supabase
+              .from(recTable)
+              .select('store_nm, store_code')
+              .eq('store_code', codeVariant)
+              .limit(1)
+
+            if (!recError && recData && recData.length > 0) {
+              foundStoreName = recData[0].store_nm || storeName
+              recommendedTable = recTable
+              excludedTable = excTable
+              break
+            }
+          }
+          
+          if (foundStoreName) break
+        }
+
+        if (!foundStoreName || !recommendedTable) {
+          console.log('매장 데이터를 찾을 수 없습니다.')
+          setLoadingProducts(false)
+          return
+        }
+
+        // 추천 상품 상위 3개 가져오기
+        const { data: recommendedData, error: recommendedError } = await supabase
+          .from(recommendedTable)
+          .select('*')
+          .eq('store_code', storeCode)
+          .order('rank', { ascending: true, nullsFirst: false })
+          .limit(3)
+
+        if (recommendedError) {
+          console.error('추천 상품 조회 오류:', recommendedError)
+        } else if (recommendedData) {
+          // 상품마스터에서 이미지 가져오기
+          const itemCds = recommendedData.map((p: any) => p.item_cd?.toString()).filter(Boolean)
+          const itemImgMap = new Map<string, string>()
+          
+          if (itemCds.length > 0) {
+            const { data: masterData } = await supabase
+              .from('상품마스터')
+              .select('ITEM_CD, item_img')
+              .in('ITEM_CD', itemCds)
+
+            if (masterData) {
+              masterData.forEach((item: any) => {
+                if (item.ITEM_CD && item.item_img) {
+                  itemImgMap.set(item.ITEM_CD.toString(), item.item_img)
+                }
+              })
+            }
+          }
+
+          // 이미지 적용
+          const updatedRecommended = recommendedData.map((product: any) => {
+            const itemCd = product.item_cd?.toString()
+            if (itemCd && itemImgMap.has(itemCd) && !product.item_img) {
+              return { ...product, item_img: itemImgMap.get(itemCd) }
+            }
+            return product
+          })
+          setTopRecommendedProducts(updatedRecommended)
+        }
+
+        // 부진 상품 상위 3개 가져오기
+        if (excludedTable) {
+          const codeVariants = [storeCode, storeCode.toString(), parseInt(storeCode).toString()]
+          let excludedData: any[] | null = null
+          let excludedError: any = null
+
+          // 여러 codeVariants로 시도
+          for (const codeVariant of codeVariants) {
+            // 먼저 rank로 정렬 시도
+            const { data: dataWithRank, error: errorWithRank } = await supabase
+              .from(excludedTable)
+              .select('*')
+              .eq('store_code', codeVariant)
+              .order('rank', { ascending: true, nullsFirst: false })
+              .limit(3)
+
+            if (!errorWithRank && dataWithRank && dataWithRank.length > 0) {
+              excludedData = dataWithRank
+              break
+            }
+
+            // rank 필드가 없거나 오류가 있으면 rank 없이 조회
+            if (errorWithRank || !dataWithRank || dataWithRank.length === 0) {
+              const { data: dataWithoutRank, error: errorWithoutRank } = await supabase
+                .from(excludedTable)
+                .select('*')
+                .eq('store_code', codeVariant)
+                .limit(3)
+
+              if (!errorWithoutRank && dataWithoutRank && dataWithoutRank.length > 0) {
+                excludedData = dataWithoutRank
+                break
+              } else if (errorWithoutRank && !excludedError) {
+                excludedError = errorWithoutRank
+              }
+            }
+          }
+
+          if (excludedError && !excludedData) {
+            console.error('부진 상품 조회 오류:', excludedError)
+          } else if (excludedData) {
+            // 상품마스터에서 이미지 가져오기
+            const itemCds = excludedData.map((p: any) => p.item_cd?.toString()).filter(Boolean)
+            const itemImgMap = new Map<string, string>()
+            
+            if (itemCds.length > 0) {
+              const { data: masterData } = await supabase
+                .from('상품마스터')
+                .select('ITEM_CD, item_img')
+                .in('ITEM_CD', itemCds)
+
+              if (masterData) {
+                masterData.forEach((item: any) => {
+                  if (item.ITEM_CD && item.item_img) {
+                    itemImgMap.set(item.ITEM_CD.toString(), item.item_img)
+                  }
+                })
+              }
+            }
+
+            // 이미지 적용
+            const updatedExcluded = excludedData.map((product: any) => {
+              const itemCd = product.item_cd?.toString()
+              if (itemCd && itemImgMap.has(itemCd) && !product.item_img) {
+                return { ...product, item_img: itemImgMap.get(itemCd) }
+              }
+              return product
+            })
+            setTopUnderperformingProducts(updatedExcluded)
+          }
+        }
+      } catch (err) {
+        console.error('상품 데이터 조회 중 오류:', err)
+      } finally {
+        setLoadingProducts(false)
+      }
+    }
+
+    fetchTopProducts()
+  }, [storeCode])
 
   // 첫 화면 텍스트 애니메이션
   useEffect(() => {
@@ -179,9 +365,9 @@ export default function OverviewPage() {
 
   const getUnderperformingHref = () => {
     if (storeCode) {
-      return `/recommendations?storeCode=${encodeURIComponent(storeCode)}&tab=underperforming`
+      return `/recommendations?storeCode=${encodeURIComponent(storeCode)}&tab=excluded`
     }
-    return '/recommendations?tab=underperforming'
+    return '/recommendations?tab=excluded'
   }
 
   return (
@@ -492,79 +678,55 @@ export default function OverviewPage() {
                   </p>
 
                   {/* 상품 카드 그리드 */}
-                  <div className="grid grid-cols-2 gap-4 mb-8">
-                    {/* 상품 카드 1: 자일리톨 */}
-                    <div className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-lg">
-                      <div className="flex items-center justify-center h-32 mb-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-end gap-1">
-                          {[1, 2, 3, 4, 5, 6].map((i) => (
-                            <div 
-                              key={i}
-                              className="w-6 h-12 bg-white border-2 border-green-600 rounded-full flex items-center justify-center"
-                              style={{ 
-                                transform: i <= 4 ? 'translateY(0)' : 'translateY(-6px)',
-                                zIndex: 7 - i
-                              }}
-                            >
-                              <div className="w-4 h-10 bg-green-600 rounded-full"></div>
+                  {loadingProducts ? (
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="bg-gray-100 border-2 border-gray-200 rounded-xl p-4 shadow-lg animate-pulse">
+                          <div className="h-32 bg-gray-200 rounded-lg mb-3"></div>
+                          <div className="h-4 bg-gray-200 rounded"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : topRecommendedProducts.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                      {topRecommendedProducts.slice(0, 3).map((product, index) => (
+                        <div key={product.item_cd || index} className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-lg hover:shadow-xl transition-shadow">
+                          <div className="flex items-center justify-center h-32 mb-3 bg-gray-50 rounded-lg overflow-hidden">
+                            {product.item_img ? (
+                              <img 
+                                src={product.item_img} 
+                                alt={product.item_nm || '상품 이미지'} 
+                                className="w-full h-full object-contain"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none'
+                                  const parent = (e.target as HTMLImageElement).parentElement
+                                  if (parent) {
+                                    parent.innerHTML = '<div class="text-xs text-gray-400">이미지 없음</div>'
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <div className="text-xs text-gray-400">이미지 없음</div>
+                            )}
+                          </div>
+                          <div className="text-xs font-semibold text-gray-900 text-center line-clamp-2">
+                            {product.item_nm || '상품명 없음'}
+                          </div>
+                          {product.sale_price && (
+                            <div className="text-xs text-gray-600 text-center mt-1">
+                              {product.sale_price.toLocaleString()}원
                             </div>
-                          ))}
+                          )}
                         </div>
-                      </div>
-                      <div className="text-xs font-semibold text-gray-900 text-center">
-                        XYLITOL α
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                      <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 text-center text-sm text-gray-500">
+                        추천 상품 데이터가 없습니다
                       </div>
                     </div>
-
-                    {/* 상품 카드 2: 빼빼로 */}
-                    <div className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-lg">
-                      <div className="flex items-center justify-center h-32 mb-3 bg-yellow-50 rounded-lg">
-                        <div className="w-24 h-28 bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-lg shadow-md flex items-center justify-center">
-                          <div className="text-white text-xs font-bold text-center px-2">
-                            빼빼로<br />크런키
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-xs font-semibold text-gray-900 text-center">
-                        LOTTE PEPERO
-                      </div>
-                    </div>
-
-                    {/* 상품 카드 3: 치토스 & 꼬깔콘 */}
-                    <div className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-lg">
-                      <div className="flex flex-col items-center justify-center h-32 mb-3 bg-gray-50 rounded-lg p-3">
-                        <div className="flex gap-1 mb-1">
-                          <div className="w-12 h-16 bg-orange-500 rounded-lg"></div>
-                          <div className="w-12 h-16 bg-orange-500 rounded-lg"></div>
-                        </div>
-                        <div className="flex gap-1">
-                          <div className="w-10 h-12 bg-yellow-400 rounded-lg"></div>
-                          <div className="w-10 h-12 bg-yellow-400 rounded-lg"></div>
-                          <div className="w-10 h-12 bg-yellow-400 rounded-lg"></div>
-                        </div>
-                      </div>
-                      <div className="text-xs font-semibold text-gray-900 text-center">
-                        Cheetos & 꼬깔콘
-                      </div>
-                    </div>
-
-                    {/* 상품 카드 4: Fruit-tella */}
-                    <div className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-lg relative">
-                      <div className="absolute top-2 right-2 bg-yellow-400 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-gray-900 z-10">
-                        1개
-                      </div>
-                      <div className="flex items-center justify-center h-32 mb-3 bg-blue-50 rounded-lg">
-                        <div className="w-24 h-28 bg-gradient-to-b from-blue-200 to-blue-400 rounded-lg shadow-md flex items-center justify-center">
-                          <div className="text-white text-xs font-bold text-center">
-                            Fruit-tella<br />YO!GURT
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-xs font-semibold text-gray-900 text-center">
-                        Fruit-tella YOGURT
-                      </div>
-                    </div>
-                  </div>
+                  )}
 
                   {/* 버튼 */}
                   <div
@@ -622,28 +784,56 @@ export default function OverviewPage() {
                     실제 발주 및 판매 데이터 분석을 통해 내 매장의 상품군별 부진 상품 현황을 알려드립니다.
                   </p>
 
-                  {/* 쓰레기통 아이콘 */}
-                  <div className="flex justify-center mb-8">
-                    <div className="w-40 h-40 flex items-center justify-center relative">
-                      <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-800 rounded-lg transform rotate-3 shadow-2xl opacity-20"></div>
-                      <div className="relative">
-                        <svg 
-                          className="w-full h-full text-gray-700" 
-                          fill="currentColor" 
-                          viewBox="0 0 24 24"
-                          style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))' }}
-                        >
-                          <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
-                            stroke="currentColor" 
-                            strokeWidth="2" 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round"
-                            fill="none"
-                          />
-                        </svg>
+                  {/* 부진 상품 카드 그리드 */}
+                  {loadingProducts ? (
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="bg-gray-100 border-2 border-gray-200 rounded-xl p-4 shadow-lg animate-pulse">
+                          <div className="h-32 bg-gray-200 rounded-lg mb-3"></div>
+                          <div className="h-4 bg-gray-200 rounded"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : topUnderperformingProducts.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                      {topUnderperformingProducts.slice(0, 3).map((product, index) => (
+                        <div key={product.item_cd || index} className="bg-white border-2 border-red-200 rounded-xl p-4 shadow-lg hover:shadow-xl transition-shadow">
+                          <div className="flex items-center justify-center h-32 mb-3 bg-gray-50 rounded-lg overflow-hidden">
+                            {product.item_img ? (
+                              <img 
+                                src={product.item_img} 
+                                alt={product.item_nm || '상품 이미지'} 
+                                className="w-full h-full object-contain opacity-75"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none'
+                                  const parent = (e.target as HTMLImageElement).parentElement
+                                  if (parent) {
+                                    parent.innerHTML = '<div class="text-xs text-gray-400">이미지 없음</div>'
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <div className="text-xs text-gray-400">이미지 없음</div>
+                            )}
+                          </div>
+                          <div className="text-xs font-semibold text-gray-900 text-center line-clamp-2">
+                            {product.item_nm || '상품명 없음'}
+                          </div>
+                          {product.sale_price && (
+                            <div className="text-xs text-gray-600 text-center mt-1">
+                              {product.sale_price.toLocaleString()}원
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                      <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 text-center text-sm text-gray-500">
+                        부진 상품 데이터가 없습니다
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* 버튼 */}
                   <div
@@ -1154,79 +1344,55 @@ export default function OverviewPage() {
               </p>
 
               {/* 상품 카드 그리드 */}
-              <div className="grid grid-cols-2 gap-6 md:gap-8 mb-16 max-w-4xl mx-auto">
-                {/* 상품 카드 1: 자일리톨 */}
-                <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
-                  <div className="flex items-center justify-center h-48 mb-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-end gap-2">
-                      {[1, 2, 3, 4, 5, 6].map((i) => (
-                        <div 
-                          key={i}
-                          className="w-8 h-16 bg-white border-2 border-green-600 rounded-full flex items-center justify-center"
-                          style={{ 
-                            transform: i <= 4 ? 'translateY(0)' : 'translateY(-8px)',
-                            zIndex: 7 - i
-                          }}
-                        >
-                          <div className="w-6 h-12 bg-green-600 rounded-full"></div>
+              {loadingProducts ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mb-16 max-w-4xl mx-auto">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-gray-100 border-2 border-gray-200 rounded-xl p-6 shadow-lg animate-pulse">
+                      <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
+                      <div className="h-4 bg-gray-200 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : topRecommendedProducts.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mb-16 max-w-4xl mx-auto">
+                  {topRecommendedProducts.slice(0, 3).map((product, index) => (
+                    <div key={product.item_cd || index} className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                      <div className="flex items-center justify-center h-48 mb-4 bg-gray-50 rounded-lg overflow-hidden">
+                        {product.item_img ? (
+                          <img 
+                            src={product.item_img} 
+                            alt={product.item_nm || '상품 이미지'} 
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none'
+                              const parent = (e.target as HTMLImageElement).parentElement
+                              if (parent) {
+                                parent.innerHTML = '<div class="text-sm text-gray-400">이미지 없음</div>'
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div className="text-sm text-gray-400">이미지 없음</div>
+                        )}
+                      </div>
+                      <div className="text-sm font-semibold text-gray-900 text-center line-clamp-2">
+                        {product.item_nm || '상품명 없음'}
+                      </div>
+                      {product.sale_price && (
+                        <div className="text-sm text-gray-600 text-center mt-2">
+                          {product.sale_price.toLocaleString()}원
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                  <div className="text-sm font-semibold text-gray-900 text-center">
-                    XYLITOL α
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mb-16 max-w-4xl mx-auto">
+                  <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-6 text-center text-base text-gray-500">
+                    추천 상품 데이터가 없습니다
                   </div>
                 </div>
-
-                {/* 상품 카드 2: 빼빼로 */}
-                <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
-                  <div className="flex items-center justify-center h-48 mb-4 bg-yellow-50 rounded-lg relative">
-                    <div className="w-32 h-40 bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-lg shadow-md flex items-center justify-center">
-                      <div className="text-white text-xs font-bold text-center px-2">
-                        빼빼로<br />크런키
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-sm font-semibold text-gray-900 text-center">
-                    LOTTE PEPERO
-                  </div>
-                </div>
-
-                {/* 상품 카드 3: 치토스 & 꼬깔콘 */}
-                <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
-                  <div className="flex flex-col items-center justify-center h-48 mb-4 bg-gray-50 rounded-lg p-4">
-                    <div className="flex gap-2 mb-2">
-                      <div className="w-16 h-20 bg-orange-500 rounded-lg"></div>
-                      <div className="w-16 h-20 bg-orange-500 rounded-lg"></div>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="w-12 h-16 bg-yellow-400 rounded-lg"></div>
-                      <div className="w-12 h-16 bg-yellow-400 rounded-lg"></div>
-                      <div className="w-12 h-16 bg-yellow-400 rounded-lg"></div>
-                    </div>
-                  </div>
-                  <div className="text-sm font-semibold text-gray-900 text-center">
-                    Cheetos & 꼬깔콘
-                  </div>
-                </div>
-
-                {/* 상품 카드 4: Fruit-tella */}
-                <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow relative">
-                  <div className="absolute top-4 right-4 bg-yellow-400 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold text-gray-900 z-10">
-                    1개
-                  </div>
-                  <div className="flex items-center justify-center h-48 mb-4 bg-blue-50 rounded-lg">
-                    <div className="w-32 h-40 bg-gradient-to-b from-blue-200 to-blue-400 rounded-lg shadow-md flex items-center justify-center">
-                      <div className="text-white text-xs font-bold text-center">
-                        Fruit-tella<br />YO!GURT
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-sm font-semibold text-gray-900 text-center">
-                    Fruit-tella YOGURT
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* 버튼 */}
               <div
@@ -1286,28 +1452,56 @@ export default function OverviewPage() {
                 실제 발주 및 판매 데이터 분석을 통해 내 매장의 상품군별 부진 상품 현황을 알려드립니다.
               </p>
 
-              {/* 쓰레기통 아이콘 */}
-              <div className="flex justify-center mb-16">
-                <div className="w-48 h-48 md:w-64 md:h-64 flex items-center justify-center relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-800 rounded-lg transform rotate-3 shadow-2xl opacity-20"></div>
-                  <div className="relative">
-                    <svg 
-                      className="w-full h-full text-gray-700 drop-shadow-2xl" 
-                      fill="currentColor" 
-                      viewBox="0 0 24 24"
-                      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))' }}
-                    >
-                      <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                        fill="none"
-                      />
-                    </svg>
+              {/* 부진 상품 카드 그리드 */}
+              {loadingProducts ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mb-16 max-w-4xl mx-auto">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-gray-100 border-2 border-gray-200 rounded-xl p-6 shadow-lg animate-pulse">
+                      <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
+                      <div className="h-4 bg-gray-200 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : topUnderperformingProducts.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mb-16 max-w-4xl mx-auto">
+                  {topUnderperformingProducts.slice(0, 3).map((product, index) => (
+                    <div key={product.item_cd || index} className="bg-white border-2 border-red-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                      <div className="flex items-center justify-center h-48 mb-4 bg-gray-50 rounded-lg overflow-hidden">
+                        {product.item_img ? (
+                          <img 
+                            src={product.item_img} 
+                            alt={product.item_nm || '상품 이미지'} 
+                            className="w-full h-full object-contain opacity-75"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none'
+                              const parent = (e.target as HTMLImageElement).parentElement
+                              if (parent) {
+                                parent.innerHTML = '<div class="text-sm text-gray-400">이미지 없음</div>'
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div className="text-sm text-gray-400">이미지 없음</div>
+                        )}
+                      </div>
+                      <div className="text-sm font-semibold text-gray-900 text-center line-clamp-2">
+                        {product.item_nm || '상품명 없음'}
+                      </div>
+                      {product.sale_price && (
+                        <div className="text-sm text-gray-600 text-center mt-2">
+                          {product.sale_price.toLocaleString()}원
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mb-16 max-w-4xl mx-auto">
+                  <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-6 text-center text-base text-gray-500">
+                    부진 상품 데이터가 없습니다
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* 버튼 */}
               <div
