@@ -50,6 +50,20 @@ export default function RecommendationsPage() {
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set())
   const [selectedLargeCategory, setSelectedLargeCategory] = useState<string | null>(null)
   const [selectedMiddleCategories, setSelectedMiddleCategories] = useState<string[]>([])
+  const [isMobile, setIsMobile] = useState(false)
+  const [productDetailTab, setProductDetailTab] = useState<'info' | 'reason'>('info')
+
+  useEffect(() => {
+    // 모바일 감지
+    const checkMobile = () => {
+      const isMobileDevice = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      setIsMobile(isMobileDevice)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     // URL에서 storeCode 가져오기, 없으면 sessionStorage에서 가져오기
@@ -476,13 +490,13 @@ export default function RecommendationsPage() {
           const monetaryB = frequencyB * salePriceB
           // monetary가 낮을수록 우선순위가 높음 (오름차순)
           return monetaryA - monetaryB
-        })
+      })
         
         // 중분류별로 5개 미만이면 1개만, 5개 이상이면 최대 5개만 선택
         if (sortedProducts.length < 5) {
           sortedProducts = sortedProducts.slice(0, 1)
         } else {
-          sortedProducts = sortedProducts.slice(0, 5)
+        sortedProducts = sortedProducts.slice(0, 5)
         }
       } else {
         // 추천 상품: mean_monetary 순서로 정렬 (중분류별)
@@ -688,8 +702,42 @@ export default function RecommendationsPage() {
   return (
     <Layout>
       <div className="bg-white flex justify-center">
-        <div className="w-full max-w-[1500px] ml-8 md:ml-12 lg:ml-16">
-          {/* 고정 헤더 섹션 */}
+        <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-[1500px] ml-8 md:ml-12 lg:ml-16'}`}>
+          {/* 모바일 앱 스타일: 대분류 탭 */}
+          {isMobile && largeCategories.length > 0 && (
+            <div className="sticky top-0 z-20 bg-white pt-4 pb-3 px-4 border-b border-gray-100 shadow-sm">
+              <h2 className="text-center text-xl font-bold text-gray-900 mb-3">대분류 카테고리</h2>
+              <div 
+                className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide" 
+                style={{ 
+                  scrollbarWidth: 'none', 
+                  msOverflowStyle: 'none',
+                  WebkitOverflowScrolling: 'touch',
+                  scrollSnapType: 'x proximity'
+                }}
+              >
+                {largeCategories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedLargeCategory(category)}
+                    className={`px-5 py-2.5 text-sm font-semibold transition-all duration-200 whitespace-nowrap flex-shrink-0 rounded-lg active:scale-95 ${
+                      selectedLargeCategory === category
+                        ? activeTab === 'recommended' 
+                          ? 'text-emerald-600 bg-emerald-50 border-b-2 border-emerald-600'
+                          : 'text-amber-600 bg-amber-50 border-b-2 border-amber-600'
+                        : 'text-gray-700 bg-gray-50'
+                    }`}
+                    style={{ scrollSnapAlign: 'start' }}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 웹 스타일: 고정 헤더 섹션 */}
+          {!isMobile && (
           <div className="sticky top-0 z-20 pt-6 md:pt-8 pb-4 md:pb-6 bg-white px-4 md:px-6 lg:px-8">
             {/* 대분류 탭 - 상단 가로 배치 */}
             {largeCategories.length > 0 && (
@@ -714,13 +762,13 @@ export default function RecommendationsPage() {
                 </div>
               </div>
             )}
-
           </div>
+          )}
 
           {/* 메인 콘텐츠 영역 - 필터 + 상품 그리드 */}
-          <div className="flex gap-6 pb-6 px-4 md:px-6 lg:px-8">
-            {/* 왼쪽 사이드바 - 중분류 필터 */}
-            {selectedLargeCategory && middleCategories.length > 0 && (
+          <div className={`flex gap-6 pb-6 ${isMobile ? 'px-0' : 'px-4 md:px-6 lg:px-8'}`}>
+            {/* 왼쪽 사이드바 - 중분류 필터 (웹만) */}
+            {!isMobile && selectedLargeCategory && middleCategories.length > 0 && (
               <aside className="hidden md:block w-56 flex-shrink-0">
                 <div className="bg-white rounded-lg border border-gray-200 p-4 sticky top-24">
                   {/* 필터 헤더 */}
@@ -938,6 +986,173 @@ export default function RecommendationsPage() {
 
             {/* 메인 콘텐츠 영역 */}
             <div className="flex-1 min-w-0">
+              {/* 모바일 앱 스타일: 중분류 필터 (가로 스크롤) */}
+              {isMobile && selectedLargeCategory && middleCategories.length > 0 && (
+                <div className="sticky top-[73px] z-10 bg-white px-4 py-3 border-b border-gray-100 mb-3 shadow-sm">
+                  <div 
+                    className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide" 
+                    style={{ 
+                      scrollbarWidth: 'none', 
+                      msOverflowStyle: 'none',
+                      WebkitOverflowScrolling: 'touch',
+                      scrollSnapType: 'x proximity'
+                    }}
+                  >
+                    {(() => {
+                      const currentProducts = activeTab === 'recommended' ? recommendedProducts : excludedProducts
+                      let allProducts = currentProducts.filter((product) => {
+                        if (product.item_lrdv_nm !== selectedLargeCategory) return false
+                        if (activeTab === 'recommended') {
+                          const { r, f, m } = extractRFMValues(product.rec_reason)
+                          return !(r === 0 || f === 0 || m === 0)
+                        }
+                        return true
+                      })
+                      
+                      const productMap = new Map<string, Product>()
+                      allProducts.forEach((product) => {
+                        const itemName = product.item_nm
+                        const existingProduct = productMap.get(itemName)
+                        if (!existingProduct) {
+                          productMap.set(itemName, product)
+                        } else {
+                          if ((product.sale_price || 0) > (existingProduct.sale_price || 0)) {
+                            productMap.set(itemName, product)
+                          }
+                        }
+                      })
+                      
+                      let totalCount = productMap.size
+                      
+                      if (activeTab === 'excluded') {
+                        const categoryGroups = new Map<string, Product[]>()
+                        productMap.forEach((product) => {
+                          const category = product.item_mddv_nm || '기타'
+                          if (!categoryGroups.has(category)) {
+                            categoryGroups.set(category, [])
+                          }
+                          categoryGroups.get(category)!.push(product)
+                        })
+                        
+                        totalCount = 0
+                        categoryGroups.forEach((products) => {
+                          const sorted = products.sort((a, b) => {
+                            const frequencyA = a.frequency ?? 0
+                            const frequencyB = b.frequency ?? 0
+                            const salePriceA = a.sale_price ?? 0
+                            const salePriceB = b.sale_price ?? 0
+                            const monetaryA = frequencyA * salePriceA
+                            const monetaryB = frequencyB * salePriceB
+                            return monetaryA - monetaryB
+                          })
+                          
+                          if (sorted.length < 5) {
+                            totalCount += 1
+                          } else {
+                            totalCount += 5
+                          }
+                        })
+                      }
+                      
+                      const isAllSelected = selectedMiddleCategories.length === 0 || selectedMiddleCategories.length === middleCategories.length
+                      
+                      return (
+                        <>
+                          <button
+                            onClick={() => {
+                              if (isAllSelected) {
+                                setSelectedMiddleCategories([])
+                              } else {
+                                setSelectedMiddleCategories([...middleCategories])
+                              }
+                            }}
+                            className={`px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-all duration-200 active:scale-95 shadow-sm ${
+                              isAllSelected
+                                ? activeTab === 'recommended' 
+                                  ? 'bg-emerald-600 text-white shadow-emerald-200' 
+                                  : 'bg-amber-600 text-white shadow-amber-200'
+                                : 'bg-gray-100 text-gray-700 border border-gray-200'
+                            }`}
+                            style={{ scrollSnapAlign: 'start' }}
+                          >
+                            전체({totalCount})
+                          </button>
+                          {middleCategories.map((category) => {
+                            let categoryProducts = currentProducts.filter((product) => {
+                              if (product.item_lrdv_nm !== selectedLargeCategory) return false
+                              if (product.item_mddv_nm !== category) return false
+                              if (activeTab === 'recommended') {
+                                const { r, f, m } = extractRFMValues(product.rec_reason)
+                                return !(r === 0 || f === 0 || m === 0)
+                              }
+                              return true
+                            })
+                            
+                            const categoryMap = new Map<string, Product>()
+                            categoryProducts.forEach((product) => {
+                              const itemName = product.item_nm
+                              const existingProduct = categoryMap.get(itemName)
+                              if (!existingProduct) {
+                                categoryMap.set(itemName, product)
+                              } else {
+                                if ((product.sale_price || 0) > (existingProduct.sale_price || 0)) {
+                                  categoryMap.set(itemName, product)
+                                }
+                              }
+                            })
+                            
+                            let categoryCount = categoryMap.size
+                            
+                            if (activeTab === 'excluded') {
+                              const products = Array.from(categoryMap.values())
+                              const sorted = products.sort((a, b) => {
+                                const frequencyA = a.frequency ?? 0
+                                const frequencyB = b.frequency ?? 0
+                                const salePriceA = a.sale_price ?? 0
+                                const salePriceB = b.sale_price ?? 0
+                                const monetaryA = frequencyA * salePriceA
+                                const monetaryB = frequencyB * salePriceB
+                                return monetaryA - monetaryB
+                              })
+                              
+                              if (sorted.length < 5) {
+                                categoryCount = 1
+                              } else {
+                                categoryCount = 5
+                              }
+                            }
+                            
+                            const isSelected = selectedMiddleCategories.includes(category)
+                            
+                            return (
+                              <button
+                                key={category}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setSelectedMiddleCategories(selectedMiddleCategories.filter(c => c !== category))
+                                  } else {
+                                    setSelectedMiddleCategories([...selectedMiddleCategories, category])
+                                  }
+                                }}
+                                className={`px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-all duration-200 active:scale-95 shadow-sm ${
+                                  isSelected
+                                    ? activeTab === 'recommended' 
+                                      ? 'bg-emerald-600 text-white shadow-emerald-200' 
+                                      : 'bg-amber-600 text-white shadow-amber-200'
+                                    : 'bg-gray-100 text-gray-700 border border-gray-200'
+                                }`}
+                                style={{ scrollSnapAlign: 'start' }}
+                              >
+                                {category}({categoryCount})
+                              </button>
+                            )
+                          })}
+                        </>
+                      )
+                    })()}
+                  </div>
+                </div>
+              )}
 
               {/* 중분류별 상품 그룹 */}
           {Object.keys(filteredGroupedProducts).length === 0 ? (
@@ -953,11 +1168,21 @@ export default function RecommendationsPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-8 md:space-y-10">
+            <div className={`${isMobile ? 'space-y-6' : 'space-y-8 md:space-y-10'}`}>
               {Object.entries(filteredGroupedProducts).map(([category, products]) => (
-                <div key={category} className="space-y-4">
-                  {/* 카테고리 제목 - 중분류가 선택되지 않았을 때만 표시 */}
-                  {selectedMiddleCategories.length === 0 && (
+                <div key={category} className={`${isMobile ? 'px-4' : 'space-y-4'}`}>
+                  {/* 모바일 앱 스타일: 카테고리 제목 */}
+                  {isMobile && selectedMiddleCategories.length === 0 && (
+                    <div className="flex items-center gap-2.5 mb-4 mt-2">
+                      <div className={`w-1 h-6 rounded-full ${
+                        activeTab === 'recommended' ? 'bg-emerald-500' : 'bg-amber-500'
+                      }`}></div>
+                      <h3 className="text-lg font-bold text-slate-900">{category}</h3>
+                    </div>
+                  )}
+                  
+                  {/* 웹 스타일: 카테고리 제목 */}
+                  {!isMobile && selectedMiddleCategories.length === 0 && (
                     <div className="flex items-center gap-2">
                       <div className={`w-1 h-6 rounded-full ${
                         activeTab === 'recommended' ? 'bg-emerald-500' : 'bg-amber-500'
@@ -966,27 +1191,109 @@ export default function RecommendationsPage() {
                     </div>
                   )}
                   
-                  {/* 상품 그리드 */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5">
+                  {/* 모바일 앱 스타일: 가로 스크롤 가능한 상품 리스트 */}
+                  {isMobile ? (
+                    <div 
+                      className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide" 
+                      style={{ 
+                        scrollbarWidth: 'none', 
+                        msOverflowStyle: 'none',
+                        WebkitOverflowScrolling: 'touch',
+                        scrollSnapType: 'x mandatory',
+                        scrollPaddingLeft: '16px'
+                      }}
+                    >
                     {products.map((product, index) => {
                       const itemId = `${product.store_code}-${product.item_cd}`
                       const isVisible = visibleItems.has(itemId)
-                      // 추천 상품과 부진재고 모두 인덱스 기반으로 순위 계산 (1부터 시작)
-                      const displayRank = index + 1
+                        const displayRank = index + 1
                       const showBadge = displayRank <= 3
                       
+                        // PB 상품 체크 (item_nm에 PB, 7-SELECT, 7SELECT 등이 포함되어 있는지 확인)
+                        const isPBProduct = product.item_nm?.includes('PB)') || 
+                                          product.item_nm?.includes('7-SELECT') || 
+                                          product.item_nm?.includes('7SELECT') ||
+                                          product.item_nm?.includes('PB ')
+                        
                       return (
                         <div
                           key={itemId}
                           ref={(el) => setItemRef(itemId, el)}
                           data-item-id={itemId}
                           onClick={() => setSelectedProduct(product)}
-                          className="group bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer flex flex-col relative transition-all duration-300"
+                            className={`group cursor-pointer flex flex-col relative transition-all duration-200 flex-shrink-0 active:scale-95 ${
+                              isMobile ? '' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm'
+                            }`}
+                            style={{ 
+                              width: 'calc(50vw - 24px)', 
+                              minWidth: 'calc(50vw - 24px)',
+                              scrollSnapAlign: 'start'
+                            }}
                         >
                           {isVisible ? (
                             <>
+                              {/* 모바일 앱 스타일: 상품 이미지 (테두리 있음) */}
+                              {isMobile && (
+                                <div className="relative aspect-square bg-white rounded-xl border border-gray-200 overflow-hidden flex items-center justify-center mb-3 shadow-sm">
                               {/* 순위 배지 */}
                               {showBadge && (
+                                    <div className="absolute top-2 left-2 z-10">
+                                      <div className={`${
+                                        displayRank === 1 ? 'bg-yellow-400 shadow-yellow-300' :
+                                        displayRank === 2 ? 'bg-gray-400 shadow-gray-300' :
+                                        'bg-orange-400 shadow-orange-300'
+                                      } w-7 h-7 rounded-lg flex items-center justify-center shadow-lg`}>
+                                        <span className="text-white font-bold text-xs">
+                                          {displayRank}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* PB 상품 태그 */}
+                                  {isPBProduct && (
+                                    <div className="absolute top-2 right-2 z-10">
+                                      <div className="bg-emerald-500 text-white px-2 py-1 rounded-full text-[10px] font-bold shadow-md">
+                                        seven only
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {product.item_img ? (
+                                    <img
+                                      src={product.item_img}
+                                      alt={product.item_nm}
+                                      className="h-full w-auto object-contain p-3 transition-transform duration-300"
+                                      loading="lazy"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none'
+                                        const parent = e.currentTarget.parentElement
+                                        if (parent && !parent.querySelector('.image-placeholder')) {
+                                          const placeholder = document.createElement('div')
+                                          placeholder.className = 'image-placeholder w-full h-full flex flex-col items-center justify-center text-gray-300'
+                                          placeholder.innerHTML = `
+                                            <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <span class="text-xs text-gray-400">이미지 없음</span>
+                                          `
+                                          parent.appendChild(placeholder)
+                                        }
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
+                                      <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                      </svg>
+                                      <span className="text-xs text-gray-400">이미지 없음</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              
+                              {/* 웹 스타일: 순위 배지 */}
+                              {!isMobile && showBadge && (
                                 <div className="absolute top-2 left-2 z-10">
                                   <div className={`relative ${
                                     displayRank === 1 ? 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600' :
@@ -1009,7 +1316,8 @@ export default function RecommendationsPage() {
                                 </div>
                               )}
 
-                              {/* 상품 이미지 */}
+                              {/* 웹 스타일: 상품 이미지 */}
+                              {!isMobile && (
                               <div className="relative aspect-square bg-white overflow-hidden flex items-center justify-center">
                                 {product.item_img ? (
                                   <img
@@ -1042,8 +1350,28 @@ export default function RecommendationsPage() {
                                   </div>
                                 )}
                               </div>
+                              )}
 
-                              {/* 상품 정보 */}
+                              {/* 모바일 앱 스타일: 상품 정보 (테두리 없음) */}
+                              {isMobile && (
+                                <div className="flex flex-col space-y-1.5 mt-0">
+                                  <h4 className="text-xs font-semibold text-slate-900 line-clamp-2 leading-tight">
+                                    {product.item_nm}
+                                  </h4>
+                                  
+                                  {/* 가격 정보 */}
+                                  {product.sale_price !== null && (
+                                    <div className="pt-0.5">
+                                      <span className="text-base font-bold text-slate-900">
+                                        {product.sale_price.toLocaleString()}원
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* 웹 스타일: 상품 정보 */}
+                              {!isMobile && (
                               <div className="px-4 pb-4 pt-2 flex flex-col space-y-2">
                                 <h4 className="text-sm font-medium text-slate-900 line-clamp-2 leading-snug">
                                   {product.item_nm}
@@ -1058,6 +1386,7 @@ export default function RecommendationsPage() {
                                   </div>
                                 )}
                               </div>
+                              )}
                             </>
                           ) : (
                             // 경량 플레이스홀더 - 스크롤 전까지 표시
@@ -1071,6 +1400,126 @@ export default function RecommendationsPage() {
                       )
                     })}
                   </div>
+                  ) : (
+                    /* 웹 스타일: 상품 그리드 */
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5">
+                      {products.map((product, index) => {
+                        const itemId = `${product.store_code}-${product.item_cd}`
+                        const isVisible = visibleItems.has(itemId)
+                        const displayRank = index + 1
+                        const showBadge = displayRank <= 3
+                        
+                        // PB 상품 체크
+                        const isPBProduct = product.item_nm?.includes('PB)') || 
+                                          product.item_nm?.includes('7-SELECT') || 
+                                          product.item_nm?.includes('7SELECT') ||
+                                          product.item_nm?.includes('PB ')
+                        
+                        return (
+                          <div
+                            key={itemId}
+                            ref={(el) => setItemRef(itemId, el)}
+                            data-item-id={itemId}
+                            onClick={() => setSelectedProduct(product)}
+                            className="group cursor-pointer flex flex-col relative transition-all duration-300"
+                          >
+                            {isVisible ? (
+                              <>
+                                {/* 웹 스타일: 상품 이미지 (테두리 있음) */}
+                                <div className="relative aspect-square bg-white rounded-xl border border-gray-200 overflow-hidden flex items-center justify-center mb-3 shadow-sm">
+                                  {/* 순위 배지 */}
+                                  {showBadge && (
+                                    <div className="absolute top-2 left-2 z-10">
+                                      <div className={`relative ${
+                                        displayRank === 1 ? 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600' :
+                                        displayRank === 2 ? 'bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500' :
+                                        'bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600'
+                                      } rounded-lg shadow-xl transform rotate-[-8deg] hover:rotate-0 transition-all duration-300 hover:scale-110`}
+                                      style={{
+                                        padding: '6px 10px',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3)',
+                                      }}>
+                                        <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent rounded-lg"></div>
+                                        <div className="absolute -inset-0.5 bg-black/10 rounded-lg blur-sm"></div>
+                                        <span className="relative text-white font-black text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] tracking-tight">
+                                          {displayRank}
+                                        </span>
+                                        {displayRank === 1 && (
+                                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-300 rounded-full animate-pulse shadow-md"></div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* PB 상품 태그 */}
+                                  {isPBProduct && (
+                                    <div className="absolute top-2 right-2 z-10">
+                                      <div className="bg-emerald-500 text-white px-2 py-1 rounded-full text-[10px] font-bold shadow-md">
+                                        seven only
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {product.item_img ? (
+                                    <img
+                                      src={product.item_img}
+                                      alt={product.item_nm}
+                                      className="h-full w-auto object-contain p-4 md:p-6 transition-transform duration-300 group-hover:scale-105"
+                                      loading="lazy"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none'
+                                        const parent = e.currentTarget.parentElement
+                                        if (parent && !parent.querySelector('.image-placeholder')) {
+                                          const placeholder = document.createElement('div')
+                                          placeholder.className = 'image-placeholder w-full h-full flex flex-col items-center justify-center text-gray-300'
+                                          placeholder.innerHTML = `
+                                            <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <span class="text-xs text-gray-400">이미지 없음</span>
+                                          `
+                                          parent.appendChild(placeholder)
+                                        }
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
+                                      <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                      </svg>
+                                      <span className="text-xs text-gray-400">이미지 없음</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* 웹 스타일: 상품 정보 (테두리 없음) */}
+                                <div className="flex flex-col space-y-2 mt-0">
+                                  <h4 className="text-sm font-medium text-slate-900 line-clamp-2 leading-snug">
+                                    {product.item_nm}
+                                  </h4>
+                                  
+                                  {/* 가격 정보 */}
+                                  {product.sale_price !== null && (
+                                    <div className="pt-1">
+                                      <span className="text-lg font-bold text-slate-900">
+                                        {product.sale_price.toLocaleString()} 원
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </>
+                            ) : (
+                              <div className="w-full aspect-square flex flex-col items-center justify-center bg-white">
+                                <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg mb-2 animate-pulse"></div>
+                                <div className="w-3/4 h-2.5 bg-gray-200 rounded-lg mb-1.5 animate-pulse"></div>
+                                <div className="w-1/2 h-2.5 bg-gray-200 rounded-lg animate-pulse"></div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -1080,7 +1529,8 @@ export default function RecommendationsPage() {
         </div>
       </div>
 
-      {/* 스크롤 투 탑 버튼 */}
+      {/* 스크롤 투 탑 버튼 (웹만) */}
+      {!isMobile && (
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         className="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-12 h-12 md:w-14 md:h-14 bg-emerald-600 hover:bg-emerald-700 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 z-40 hover:scale-110 active:scale-95"
@@ -1090,103 +1540,148 @@ export default function RecommendationsPage() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" />
         </svg>
       </button>
+      )}
 
-      {/* 추천 근거 모달 */}
+      {/* 상품 상세 모달 */}
           {selectedProduct && (() => {
-            // 모달에서도 동일한 순위 계산 로직 적용 (인덱스 기반)
-            let modalDisplayRank: number | null = null
-            for (const [category, products] of Object.entries(filteredGroupedProducts)) {
-              const productIndex = products.findIndex(
-                p => p.store_code === selectedProduct.store_code && p.item_cd === selectedProduct.item_cd
-              )
-              if (productIndex !== -1) {
-                // 추천 상품과 부진재고 모두 인덱스 기반으로 순위 계산
-                modalDisplayRank = productIndex + 1
-                break
-              }
-            }
+            // PB 상품 체크
+            const isPBProduct = selectedProduct.item_nm?.includes('PB)') || 
+                              selectedProduct.item_nm?.includes('7-SELECT') || 
+                              selectedProduct.item_nm?.includes('7SELECT') ||
+                              selectedProduct.item_nm?.includes('PB ')
             
             return (
             <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-in fade-in duration-200"
+              className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-50 ${
+                isMobile ? 'flex flex-col' : 'flex items-center justify-center p-4'
+              } animate-in fade-in duration-200`}
               onClick={() => setSelectedProduct(null)}
             >
               <div
-                className="bg-white max-w-3xl w-full max-h-[85vh] md:max-h-[80vh] overflow-hidden flex flex-col rounded-lg"
+                className={`bg-white ${
+                  isMobile 
+                    ? 'w-full h-full flex flex-col' 
+                    : 'max-w-7xl w-full h-[95vh] overflow-hidden flex flex-col rounded-lg'
+                }`}
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* 모달 헤더 */}
-                <div className="sticky top-0 bg-white px-6 py-4 z-10">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 pr-4">
-                      <h3 className="text-lg md:text-xl font-bold text-slate-900 leading-tight mb-1">
-                        {selectedProduct.item_nm}
+                {/* 모바일 앱 스타일: 헤더 */}
+                {isMobile && (
+                  <>
+                    <div className="sticky top-0 bg-white px-4 py-3 border-b border-gray-200 z-10 flex items-center justify-between">
+                      <button
+                        onClick={() => {
+                          setSelectedProduct(null)
+                          setProductDetailTab('info')
+                        }}
+                        className="w-10 h-10 flex items-center justify-center text-gray-700"
+                        aria-label="닫기"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <h3 className="text-base font-bold text-slate-900 flex-1 text-center pr-10">
+                        상품 정보
                       </h3>
-                      <p className="text-xs text-slate-500 mb-3">상품 상세 정보</p>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedProduct.item_mddv_nm && (
-                          <span className="text-xs text-slate-800 bg-slate-200 px-2.5 py-1 font-medium rounded-md">
-                            {selectedProduct.item_mddv_nm}
-                          </span>
-                        )}
-                        {selectedProduct.item_smdv_nm && (
-                          <span className="text-xs text-slate-800 bg-slate-200 px-2.5 py-1 font-medium rounded-md">
-                            {selectedProduct.item_smdv_nm}
-                          </span>
-                        )}
+                    </div>
+                    {/* 모바일 앱 스타일: 탭 */}
+                    <div className="sticky top-[57px] bg-white border-b border-gray-200 z-10">
+                      <div className="flex">
+                        <button
+                          onClick={() => setProductDetailTab('info')}
+                          className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                            productDetailTab === 'info'
+                              ? activeTab === 'recommended'
+                                ? 'text-emerald-600 border-b-2 border-emerald-600'
+                                : 'text-amber-600 border-b-2 border-amber-600'
+                              : 'text-gray-500'
+                          }`}
+                        >
+                          상품정보
+                        </button>
+                        <button
+                          onClick={() => setProductDetailTab('reason')}
+                          className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                            productDetailTab === 'reason'
+                              ? activeTab === 'recommended'
+                                ? 'text-emerald-600 border-b-2 border-emerald-600'
+                                : 'text-amber-600 border-b-2 border-amber-600'
+                              : 'text-gray-500'
+                          }`}
+                        >
+                          {activeTab === 'recommended' ? '추천근거' : '부진근거'}
+                        </button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setSelectedProduct(null)}
-                      className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors rounded-lg"
-                      aria-label="닫기"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                  </>
+                )}
+
+                {/* 웹 스타일: 헤더 */}
+                {!isMobile && (
+                  <div className="sticky top-0 bg-white px-6 py-4 z-10 border-b border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg md:text-xl font-bold text-slate-900">상품 정보</h3>
+                      <button
+                        onClick={() => setSelectedProduct(null)}
+                        className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors rounded-lg"
+                        aria-label="닫기"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div className="px-6 py-4 overflow-y-auto flex-1" style={{ maxHeight: 'calc(85vh - 140px)' }}>
-                  {/* 상단: 이미지(왼쪽) + 가격 정보(오른쪽) */}
-                  <div className="flex flex-col md:flex-row gap-6 mb-6">
-                    {/* 이미지 영역 - 왼쪽 */}
-                    {selectedProduct.item_img && (
-                      <div className="flex-shrink-0 w-full md:w-1/2">
-                        <div className="relative w-full h-48 md:h-56 overflow-hidden bg-white rounded-lg flex items-center justify-center">
-                          <img
-                            src={selectedProduct.item_img}
-                            alt={selectedProduct.item_nm}
-                            className="w-full h-full object-contain p-4"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none'
-                              const parent = e.currentTarget.parentElement
-                              if (parent && !parent.querySelector('.image-placeholder')) {
-                                const placeholder = document.createElement('div')
-                                placeholder.className = 'image-placeholder w-full h-full flex flex-col items-center justify-center text-gray-400'
-                                placeholder.innerHTML = `
-                                  <svg class="w-10 h-10 mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                  </svg>
-                                  <span class="text-xs text-slate-400">이미지 없음</span>
-                                `
-                                parent.appendChild(placeholder)
-                              }
-                            }}
-                          />
+                <div className={`overflow-y-auto flex-1 ${isMobile ? 'px-4 py-4' : 'px-8 py-6'}`} style={{ maxHeight: isMobile ? 'calc(100vh - 180px)' : 'calc(95vh - 80px)' }}>
+                  {/* 모바일 앱 스타일: 상품정보 탭 */}
+                  {isMobile && productDetailTab === 'info' && (
+                    <>
+                      {/* 상품 이미지 */}
+                      {selectedProduct.item_img && (
+                        <div className="mb-4">
+                          <div className="relative w-full aspect-square bg-white rounded-xl border border-gray-200 overflow-hidden flex items-center justify-center">
+                            {isPBProduct && (
+                              <div className="absolute top-3 right-3 z-10">
+                                <div className="bg-emerald-500 text-white px-2.5 py-1 rounded-full text-[10px] font-bold shadow-md">
+                                  seven only
+                                </div>
+                              </div>
+                            )}
+                            <img
+                              src={selectedProduct.item_img}
+                              alt={selectedProduct.item_nm}
+                              className="w-full h-full object-contain p-4"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none'
+                                const parent = e.currentTarget.parentElement
+                                if (parent && !parent.querySelector('.image-placeholder')) {
+                                  const placeholder = document.createElement('div')
+                                  placeholder.className = 'image-placeholder w-full h-full flex flex-col items-center justify-center text-gray-300'
+                                  placeholder.innerHTML = `
+                                    <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <span class="text-xs text-gray-400">이미지 없음</span>
+                                  `
+                                  parent.appendChild(placeholder)
+                                }
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* 가격 정보 영역 - 오른쪽 */}
-                    <div className="flex-1">
-                      <h4 className="text-xs font-semibold text-slate-700 mb-3 uppercase tracking-wider">가격 정보</h4>
-                      <div className="space-y-3">
+                      {/* 상품명 및 가격 */}
+                      <div className="mb-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-2 leading-tight">
+                          {selectedProduct.item_nm}
+                        </h3>
                         {selectedProduct.sale_price !== null && (
-                          <div className="flex items-center justify-between pb-3">
-                            <span className="text-sm text-slate-600 font-medium">판매가</span>
-                            <span className={`text-lg font-bold ${
+                          <div className="flex items-baseline gap-2">
+                            <span className={`text-2xl font-bold ${
                               activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
                             }`}>
                               {selectedProduct.sale_price.toLocaleString()}원
@@ -1194,83 +1689,372 @@ export default function RecommendationsPage() {
                           </div>
                         )}
                         {selectedProduct.cost !== null && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-slate-600 font-medium">원가</span>
-                            <span className="text-base text-slate-800 font-semibold">
-                              {selectedProduct.cost.toLocaleString()}원
-                            </span>
+                          <div className="mt-2">
+                            <span className="text-sm text-gray-500">원가: {selectedProduct.cost.toLocaleString()}원</span>
                           </div>
                         )}
                       </div>
+
+                      {/* 상품 상세 정보 */}
+                      <div className="space-y-4">
+                        {selectedProduct.item_mddv_nm && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-gray-500 mb-1">중분류</h4>
+                            <p className="text-sm text-slate-900">{selectedProduct.item_mddv_nm}</p>
+                          </div>
+                        )}
+                        {selectedProduct.item_smdv_nm && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-gray-500 mb-1">소분류</h4>
+                            <p className="text-sm text-slate-900">{selectedProduct.item_smdv_nm}</p>
+                          </div>
+                        )}
+                        {selectedProduct.item_lrdv_nm && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-gray-500 mb-1">대분류</h4>
+                            <p className="text-sm text-slate-900">{selectedProduct.item_lrdv_nm}</p>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {/* 모바일 앱 스타일: 추천근거/부진근거 탭 */}
+                  {isMobile && productDetailTab === 'reason' && (
+                    <div className="space-y-4">
+                      {(() => {
+                        const itemName = selectedProduct.item_nm
+                        
+                        if (activeTab === 'recommended') {
+                          // 추천 상품: mean_frequency, mean_monetary 사용
+                          const meanFrequency = selectedProduct.mean_frequency ?? null
+                          const meanMonetary = selectedProduct.mean_monetary ?? null
+                          
+                          // F, M 값이 하나라도 있으면 추천 근거 표시
+                          if (meanFrequency !== null || meanMonetary !== null) {
+                            return (
+                              <div className="space-y-4">
+                                <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100">
+                                  <p className="text-sm text-slate-900 leading-relaxed mb-4">
+                                    <span className="font-semibold">{itemName}</span>은(는) 내 매장과 유사한 매장에서 판매 성과가 우수한 상품입니다.
+                                  </p>
+                                  <p className="text-sm text-slate-900 leading-relaxed">
+                                    최근 4주 기준으로 보면, 같은 기간 동안 총 <span className="font-semibold text-emerald-600">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-emerald-600">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원입니다.
+                                  </p>
+                                </div>
+                                
+                                {/* F, M 지표 카드 */}
+                                {(meanFrequency !== null || meanMonetary !== null) && (
+                                  <div className="grid grid-cols-2 gap-3">
+                                    {meanFrequency !== null && (
+                                      <div className="bg-white rounded-xl p-4 text-center border border-emerald-200 shadow-sm">
+                                        <div className="text-xs text-slate-500 font-medium mb-2">판매 횟수</div>
+                                        <div className="text-2xl font-bold text-emerald-600 mb-1">{Math.round(meanFrequency).toLocaleString()}</div>
+                                        <div className="text-xs text-slate-500">회</div>
+                                      </div>
+                                    )}
+                                    {meanMonetary !== null && (
+                                      <div className="bg-white rounded-xl p-4 text-center border border-emerald-200 shadow-sm">
+                                        <div className="text-xs text-slate-500 font-medium mb-2">총 매출액</div>
+                                        <div className="text-2xl font-bold text-emerald-600 mb-1">{Math.round(meanMonetary).toLocaleString()}</div>
+                                        <div className="text-xs text-slate-500">원</div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          } else {
+                            return (
+                              <p className="text-slate-500 text-sm">
+                                추천 근거가 없습니다.
+                              </p>
+                            )
+                          }
+                        } else {
+                          // 부진재고: recency, frequency 사용, monetary는 frequency * sale_price로 계산
+                          const recency = selectedProduct.recency ?? null
+                          const frequency = selectedProduct.frequency ?? null
+                          const salePrice = selectedProduct.sale_price ?? 0
+                          const calculatedMonetary = frequency !== null ? frequency * salePrice : null
+                          const rfmScore = selectedProduct.rfm_score ?? null
+                          
+                          // rfm_score가 0이거나 frequency가 0이거나 계산된 monetary가 0이면 판매 없음
+                          const isNoSale = rfmScore === 0 || frequency === 0 || calculatedMonetary === 0
+                          
+                          // recency, frequency, 계산된 monetary 값이 하나라도 있으면 부진 근거 표시
+                          if (isNoSale || recency !== null || frequency !== null || calculatedMonetary !== null) {
+                            return (
+                              <div className="space-y-3">
+                                {isNoSale ? (
+                                  <div className="bg-white rounded-xl p-4 text-center border border-amber-200">
+                                    <div className="text-3xl mb-2">⚠️</div>
+                                    <div className="text-sm font-bold text-amber-700 mb-1">한달 동안 판매가 이루어지지 않았습니다</div>
+                                    <div className="text-xs text-slate-600">발주 제외를 권장드립니다</div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="p-4 bg-amber-50 rounded-xl">
+                                      <p className="text-sm text-slate-900 leading-relaxed mb-3">
+                                        <span className="font-semibold">{itemName}</span>은(는) 내 매장에서 판매 실적이 낮은 상품입니다.
+                                      </p>
+                                      <div className="space-y-2 pt-3 border-t border-amber-200">
+                                        <p className="text-sm text-slate-900 leading-relaxed">
+                                          최근 판매 분석 결과, 이 상품은 분석 기준일로부터 <span className="font-semibold text-amber-600">{recency !== null ? Math.round(recency) : 'N/A'}</span>일 이내에 판매가 발생했습니다.
+                                        </p>
+                                        <p className="text-sm text-slate-900 leading-relaxed">
+                                          같은 기간 동안 총 <span className="font-semibold text-amber-600">{frequency !== null ? Math.round(frequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-amber-600">{calculatedMonetary !== null ? Math.round(calculatedMonetary).toLocaleString() : 'N/A'}</span>원입니다.
+                                        </p>
+                                        <p className="text-sm text-amber-700 font-semibold mt-2">
+                                          판매 실적이 낮아 발주 제외를 권장드립니다.
+                                        </p>
+                                      </div>
+                                    </div>
+                                    
+                                    {/* R, F, M 지표 카드 */}
+                                    {(recency !== null || frequency !== null || calculatedMonetary !== null) && (
+                                      <div className="grid grid-cols-3 gap-2">
+                                        {recency !== null && (
+                                          <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
+                                            <div className="text-[10px] text-slate-500 font-medium mb-1.5">최근 판매 기간</div>
+                                            <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(recency)}</div>
+                                            <div className="text-[10px] text-slate-500">일 내</div>
+                                          </div>
+                                        )}
+                                        {frequency !== null && (
+                                          <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
+                                            <div className="text-[10px] text-slate-500 font-medium mb-1.5">판매 횟수</div>
+                                            <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(frequency).toLocaleString()}</div>
+                                            <div className="text-[10px] text-slate-500">회</div>
+                                          </div>
+                                        )}
+                                        {calculatedMonetary !== null && (
+                                          <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
+                                            <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 매출액</div>
+                                            <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(calculatedMonetary).toLocaleString()}</div>
+                                            <div className="text-[10px] text-slate-500">원</div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            )
+                          } else {
+                            return (
+                              <p className="text-slate-500 text-sm">
+                                부진 근거가 없습니다.
+                              </p>
+                            )
+                          }
+                        }
+                      })()}
                     </div>
-                  </div>
+                  )}
 
-                  {/* 하단: 추천 근거 및 순위 정보 */}
-                  <div className="space-y-4">
+                  {/* 웹 스타일: 이미지 + 상품 정보 */}
+                  {!isMobile && (
+                    <div className="flex flex-row gap-12 mb-8">
+                      {/* 이미지 영역 - 왼쪽 */}
+                      {selectedProduct.item_img && (
+                        <div className="flex-shrink-0 w-96">
+                          <div className="relative w-full aspect-square bg-white rounded-xl border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
+                            {isPBProduct && (
+                              <div className="absolute top-3 right-3 z-10">
+                                <div className="bg-emerald-500 text-white px-2.5 py-1 rounded-full text-[10px] font-bold shadow-md">
+                                  seven only
+                                </div>
+                              </div>
+                            )}
+                            <img
+                              src={selectedProduct.item_img}
+                              alt={selectedProduct.item_nm}
+                              className="w-full h-full object-contain p-6"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none'
+                                const parent = e.currentTarget.parentElement
+                                if (parent && !parent.querySelector('.image-placeholder')) {
+                                  const placeholder = document.createElement('div')
+                                  placeholder.className = 'image-placeholder w-full h-full flex flex-col items-center justify-center text-gray-400'
+                                  placeholder.innerHTML = `
+                                    <svg class="w-10 h-10 mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <span class="text-xs text-slate-400">이미지 없음</span>
+                                  `
+                                  parent.appendChild(placeholder)
+                                }
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
 
+                      {/* 상품 정보 영역 - 오른쪽 */}
+                      <div className="flex-1 flex flex-col">
+                        {/* 상품명 */}
+                        <h3 className="text-3xl font-bold text-slate-900 mb-8 leading-tight">
+                          {selectedProduct.item_nm}
+                        </h3>
+                        
+                        {/* 구분선 */}
+                        <div className="border-t border-dashed border-gray-300 mb-6"></div>
+                        
+                        {/* 가격 */}
+                        {selectedProduct.sale_price !== null && (
+                          <div className="mb-6">
+                            <div className="text-base text-slate-600 mb-2">가격</div>
+                            <div className={`text-4xl font-bold ${
+                              activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
+                            }`}>
+                              {selectedProduct.sale_price.toLocaleString()}원
+                            </div>
+                            {selectedProduct.cost !== null && (
+                              <div className="text-base text-gray-500 mt-2">
+                                원가: {selectedProduct.cost.toLocaleString()}원
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* 구분선 */}
+                        <div className="border-t border-dashed border-gray-300 mb-6"></div>
+                        
+                        {/* 상품 설명 */}
+                        <div className="mb-6">
+                          <div className="text-base text-slate-600 mb-3">상품 설명</div>
+                          <div className="text-base text-slate-900 leading-relaxed">
+                            {selectedProduct.item_mddv_nm && (
+                              <div className="mb-2">
+                                <span className="font-medium">중분류:</span> {selectedProduct.item_mddv_nm}
+                              </div>
+                            )}
+                            {selectedProduct.item_smdv_nm && (
+                              <div className="mb-2">
+                                <span className="font-medium">소분류:</span> {selectedProduct.item_smdv_nm}
+                              </div>
+                            )}
+                            {selectedProduct.item_lrdv_nm && (
+                              <div className="mb-2">
+                                <span className="font-medium">대분류:</span> {selectedProduct.item_lrdv_nm}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* 구분선 */}
+                        <div className="border-t border-dashed border-gray-300 mb-6"></div>
+                        
+                        {/* 태그 */}
+                        <div>
+                          <div className="text-base text-slate-600 mb-3">태그</div>
+                          <div className="flex flex-wrap gap-3">
+                            {selectedProduct.item_mddv_nm && (
+                              <span className="px-4 py-2 bg-gray-100 text-slate-700 text-base rounded-md border border-gray-200">
+                                {selectedProduct.item_mddv_nm}
+                              </span>
+                            )}
+                            {selectedProduct.item_smdv_nm && (
+                              <span className="px-4 py-2 bg-gray-100 text-slate-700 text-base rounded-md border border-gray-200">
+                                {selectedProduct.item_smdv_nm}
+                              </span>
+                            )}
+                            {selectedProduct.item_lrdv_nm && (
+                              <span className="px-4 py-2 bg-gray-100 text-slate-700 text-base rounded-md border border-gray-200">
+                                {selectedProduct.item_lrdv_nm}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 웹 스타일: 추천 근거 */}
+                  {!isMobile && (
+                  <div className="space-y-6">
                     <div>
-                      <h4 className="text-xs font-semibold text-slate-700 mb-3 uppercase tracking-wider">
+                      <h4 className="text-lg font-semibold text-slate-700 mb-4">
                         {activeTab === 'recommended' ? '추천 근거' : '부진 근거'}
                       </h4>
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {(() => {
                           const itemName = selectedProduct.item_nm
                           
                           if (activeTab === 'recommended') {
-                            // 추천 상품: mean_recency, mean_frequency, mean_monetary 사용
-                            const meanRecency = selectedProduct.mean_recency ?? null
+                            // 추천 상품: mean_frequency, mean_monetary 사용
                             const meanFrequency = selectedProduct.mean_frequency ?? null
                             const meanMonetary = selectedProduct.mean_monetary ?? null
                             
-                            // mean_recency는 30에서 뺀 값을 사용
-                            const daysSinceLastSale = meanRecency !== null ? Math.round(30 - meanRecency) : null
-                            
-                            // mean 값들이 하나라도 있으면 추천 근거 표시
-                            if (daysSinceLastSale !== null || meanFrequency !== null || meanMonetary !== null) {
+                            // F, M 값이 하나라도 있으면 추천 근거 표시
+                            if (meanFrequency !== null || meanMonetary !== null) {
                               return (
                                 <div className="space-y-4">
-                                  {/* 인사말 및 상품 소개 */}
-                                  <div className="p-3 bg-emerald-50 rounded-lg">
-                                    <p className="text-sm text-slate-900 leading-relaxed">
-                                      <span className="font-semibold">{itemName}</span>은(는) 내 매장과 유사한 매장에서 판매 성과가 우수한 상품입니다.
-                                    </p>
-                                  </div>
-                                  
-                                  {/* 추천 설명 */}
-                                  <div className="p-4 bg-white rounded-lg border border-emerald-200">
-                                    <p className="text-sm text-slate-900 leading-relaxed mb-2">
-                                      최근 4주 기준으로 보면, 이 상품은 분석 기준일로부터 <span className="font-semibold text-emerald-600">{daysSinceLastSale !== null ? daysSinceLastSale : 'N/A'}</span>일 이내에 판매가 발생했습니다.
-                                    </p>
-                                    <p className="text-sm text-slate-900 leading-relaxed">
-                                      같은 기간 동안 총 <span className="font-semibold text-emerald-600">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-emerald-600">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원입니다.
-                                    </p>
-                                  </div>
-                                  
-                                  {/* R, F, M 지표 카드 */}
-                                  {(daysSinceLastSale !== null || meanFrequency !== null || meanMonetary !== null) && (
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                      {daysSinceLastSale !== null && (
-                                        <div className="bg-white rounded-lg p-3 text-center border border-emerald-200">
-                                          <div className="text-xs text-slate-500 font-medium mb-2">최근 판매 기간</div>
-                                          <div className="text-xl font-bold text-emerald-600 mb-1">{daysSinceLastSale}</div>
-                                          <div className="text-xs text-slate-500">일 내 판매 발생</div>
-                                        </div>
-                                      )}
-                                      {meanFrequency !== null && (
-                                        <div className="bg-white rounded-lg p-3 text-center border border-emerald-200">
-                                          <div className="text-xs text-slate-500 font-medium mb-2">한 달 판매 횟수</div>
-                                          <div className="text-xl font-bold text-emerald-600 mb-1">{Math.round(meanFrequency).toLocaleString()}</div>
-                                          <div className="text-xs text-slate-500">회 판매</div>
-                                        </div>
-                                      )}
-                                      {meanMonetary !== null && (
-                                        <div className="bg-white rounded-lg p-3 text-center border border-emerald-200">
-                                          <div className="text-xs text-slate-500 font-medium mb-2">총 매출액</div>
-                                          <div className="text-xl font-bold text-emerald-600 mb-1">{Math.round(meanMonetary).toLocaleString()}원</div>
-                                          <div className="text-xs text-slate-500">한 달 기준</div>
+                                  {/* 모바일 앱 스타일: 추천 설명 */}
+                                  {isMobile ? (
+                                    <div className="space-y-4">
+                                      <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100">
+                                        <p className="text-sm text-slate-900 leading-relaxed mb-4">
+                                          <span className="font-semibold">{itemName}</span>은(는) 내 매장과 유사한 매장에서 판매 성과가 우수한 상품입니다.
+                                        </p>
+                                        <p className="text-sm text-slate-900 leading-relaxed">
+                                          최근 4주 기준으로 보면, 같은 기간 동안 총 <span className="font-semibold text-emerald-600">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-emerald-600">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원입니다.
+                                        </p>
+                                      </div>
+                                      
+                                      {/* F, M 지표 카드 */}
+                                      {(meanFrequency !== null || meanMonetary !== null) && (
+                                        <div className="grid grid-cols-2 gap-3">
+                                          {meanFrequency !== null && (
+                                            <div className="bg-white rounded-xl p-4 text-center border border-emerald-200 shadow-sm">
+                                              <div className="text-xs text-slate-500 font-medium mb-2">판매 횟수</div>
+                                              <div className="text-2xl font-bold text-emerald-600 mb-1">{Math.round(meanFrequency).toLocaleString()}</div>
+                                              <div className="text-xs text-slate-500">회</div>
+                                            </div>
+                                          )}
+                                          {meanMonetary !== null && (
+                                            <div className="bg-white rounded-xl p-4 text-center border border-emerald-200 shadow-sm">
+                                              <div className="text-xs text-slate-500 font-medium mb-2">총 매출액</div>
+                                              <div className="text-2xl font-bold text-emerald-600 mb-1">{Math.round(meanMonetary).toLocaleString()}</div>
+                                              <div className="text-xs text-slate-500">원</div>
+                                            </div>
+                                          )}
                                         </div>
                                       )}
                                     </div>
+                                  ) : (
+                                    /* 웹 스타일: 추천 설명 */
+                                    <>
+                                      <div className="p-6 bg-emerald-50 rounded-lg border border-emerald-100">
+                                        <p className="text-base text-slate-900 leading-relaxed mb-5">
+                                          <span className="font-semibold text-lg">{itemName}</span>은(는) 내 매장과 유사한 매장에서 판매 성과가 우수한 상품입니다.
+                                        </p>
+                                        <p className="text-base text-slate-900 leading-relaxed">
+                                          최근 4주 기준으로 보면, 같은 기간 동안 총 <span className="font-semibold text-emerald-600 text-lg">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-emerald-600 text-lg">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원입니다.
+                                        </p>
+                                      </div>
+                                      
+                                      {/* F, M 지표 카드 */}
+                                      {(meanFrequency !== null || meanMonetary !== null) && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                          {meanFrequency !== null && (
+                                            <div className="bg-white rounded-lg p-5 text-center border border-emerald-200 shadow-sm">
+                                              <div className="text-sm text-slate-500 font-medium mb-3">한 달 판매 횟수</div>
+                                              <div className="text-3xl font-bold text-emerald-600 mb-2">{Math.round(meanFrequency).toLocaleString()}</div>
+                                              <div className="text-sm text-slate-500">회 판매</div>
+                                            </div>
+                                          )}
+                                          {meanMonetary !== null && (
+                                            <div className="bg-white rounded-lg p-5 text-center border border-emerald-200 shadow-sm">
+                                              <div className="text-sm text-slate-500 font-medium mb-3">총 매출액</div>
+                                              <div className="text-3xl font-bold text-emerald-600 mb-2">{Math.round(meanMonetary).toLocaleString()}원</div>
+                                              <div className="text-sm text-slate-500">한 달 기준</div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </>
                                   )}
                                 </div>
                               )
@@ -1288,7 +2072,7 @@ export default function RecommendationsPage() {
                             const salePrice = selectedProduct.sale_price ?? 0
                             const calculatedMonetary = frequency !== null ? frequency * salePrice : null
                             const rfmScore = selectedProduct.rfm_score ?? null
-                            
+                              
                             // rfm_score가 0이거나 frequency가 0이거나 계산된 monetary가 0이면 판매 없음
                             const isNoSale = rfmScore === 0 || frequency === 0 || calculatedMonetary === 0
                             
@@ -1296,82 +2080,162 @@ export default function RecommendationsPage() {
                             if (isNoSale || recency !== null || frequency !== null || calculatedMonetary !== null) {
                               return (
                                 <div className="space-y-4">
-                                  {/* 인사말 및 상품 소개 */}
-                                  <div className="p-3 bg-amber-50 rounded-lg">
+                                  {/* 모바일 앱 스타일: 부진 근거 */}
+                                  {isMobile ? (
+                                    <div className="space-y-3">
+                                      {isNoSale ? (
+                                        <div className="bg-white rounded-xl p-4 text-center border border-amber-200">
+                                          <div className="text-3xl mb-2">⚠️</div>
+                                          <div className="text-sm font-bold text-amber-700 mb-1">한달 동안 판매가 이루어지지 않았습니다</div>
+                                          <div className="text-xs text-slate-600">발주 제외를 권장드립니다</div>
+                                        </div>
+                                      ) : (
+                                        <>
+                                          <div className="p-4 bg-amber-50 rounded-xl">
+                                            <p className="text-sm text-slate-900 leading-relaxed mb-3">
+                                              <span className="font-semibold">{itemName}</span>은(는) 내 매장에서 판매 실적이 낮은 상품입니다.
+                                            </p>
+                                            <div className="space-y-2 pt-3 border-t border-amber-200">
                                     <p className="text-sm text-slate-900 leading-relaxed">
-                                      <span className="font-semibold">{itemName}</span>은(는) 내 매장에서 판매 실적이 낮은 상품입니다.
+                                                최근 판매 분석 결과, 이 상품은 분석 기준일로부터 <span className="font-semibold text-amber-600">{recency !== null ? Math.round(recency) : 'N/A'}</span>일 이내에 판매가 발생했습니다.
+                                              </p>
+                                              <p className="text-sm text-slate-900 leading-relaxed">
+                                                같은 기간 동안 총 <span className="font-semibold text-amber-600">{frequency !== null ? Math.round(frequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-amber-600">{calculatedMonetary !== null ? Math.round(calculatedMonetary).toLocaleString() : 'N/A'}</span>원입니다.
+                                              </p>
+                                              <p className="text-sm text-amber-700 font-semibold mt-2">
+                                                판매 실적이 낮아 발주 제외를 권장드립니다.
                                     </p>
+                                            </div>
                                   </div>
                                   
-                                  {/* 판매 없음 메시지 */}
-                                  {isNoSale ? (
-                                    <div className="bg-white rounded-lg p-4 text-center border border-amber-200">
-                                      <div className="text-2xl mb-2">⚠️</div>
-                                      <div className="text-sm font-bold text-amber-700 mb-1">한달 동안 판매가 이루어지지 않았습니다</div>
-                                      <div className="text-xs text-slate-600">발주 제외를 권장드립니다</div>
+                                  {/* R, F, M 지표 카드 */}
+                                          {(recency !== null || frequency !== null || calculatedMonetary !== null) && (
+                                            <div className="grid grid-cols-3 gap-2">
+                                              {recency !== null && (
+                                                <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
+                                                  <div className="text-[10px] text-slate-500 font-medium mb-1.5">최근 판매 기간</div>
+                                                  <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(recency)}</div>
+                                                  <div className="text-[10px] text-slate-500">일 내</div>
+                                        </div>
+                                      )}
+                                              {frequency !== null && (
+                                                <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
+                                                  <div className="text-[10px] text-slate-500 font-medium mb-1.5">판매 횟수</div>
+                                                  <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(frequency).toLocaleString()}</div>
+                                                  <div className="text-[10px] text-slate-500">회</div>
+                                        </div>
+                                      )}
+                                              {calculatedMonetary !== null && (
+                                                <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
+                                                  <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 매출액</div>
+                                                  <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(calculatedMonetary).toLocaleString()}</div>
+                                                  <div className="text-[10px] text-slate-500">원</div>
+                                        </div>
+                                      )}
                                     </div>
+                                  )}
+                                        </>
+                                  )}
+                                </div>
                                   ) : (
+                                    /* 웹 스타일: 부진 근거 */
                                     <>
-                                      {/* 발주 제외 권장 설명 */}
-                                      <div className="p-4 bg-white rounded-lg border border-amber-200">
-                                        <p className="text-sm text-slate-900 leading-relaxed mb-2">
-                                          최근 판매 분석 결과, 이 상품은 분석 기준일로부터 <span className="font-semibold text-amber-600">{recency !== null ? Math.round(recency) : 'N/A'}</span>일 이내에 판매가 발생했습니다.
-                                        </p>
-                                        <p className="text-sm text-slate-900 leading-relaxed mb-2">
-                                          같은 기간 동안 총 <span className="font-semibold text-amber-600">{frequency !== null ? Math.round(frequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-amber-600">{calculatedMonetary !== null ? Math.round(calculatedMonetary).toLocaleString() : 'N/A'}</span>원입니다.
-                                        </p>
-                                        <p className="text-sm text-amber-700 font-semibold mt-3">
-                                          판매 실적이 낮아 발주 제외를 권장드립니다.
+                                      <div className="p-6 bg-amber-50 rounded-lg border border-amber-100">
+                                        <p className="text-base text-slate-900 leading-relaxed">
+                                          <span className="font-semibold text-lg">{itemName}</span>은(는) 내 매장에서 판매 실적이 낮은 상품입니다.
                                         </p>
                                       </div>
                                       
-                                      {/* R, F, M 지표 카드 */}
-                                      {(recency !== null || frequency !== null || calculatedMonetary !== null) && (
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                          {recency !== null && (
-                                            <div className="bg-white rounded-lg p-3 text-center border border-amber-200">
-                                              <div className="text-xs text-slate-500 font-medium mb-2">최근 판매 기간</div>
-                                              <div className="text-xl font-bold text-amber-600 mb-1">{Math.round(recency)}</div>
-                                              <div className="text-xs text-slate-500">일 내 판매 발생</div>
-                                            </div>
-                                          )}
-                                          {frequency !== null && (
-                                            <div className="bg-white rounded-lg p-3 text-center border border-amber-200">
-                                              <div className="text-xs text-slate-500 font-medium mb-2">한 달 판매 횟수</div>
-                                              <div className="text-xl font-bold text-amber-600 mb-1">{Math.round(frequency).toLocaleString()}</div>
-                                              <div className="text-xs text-slate-500">회 판매</div>
-                                            </div>
-                                          )}
-                                          {calculatedMonetary !== null && (
-                                            <div className="bg-white rounded-lg p-3 text-center border border-amber-200">
-                                              <div className="text-xs text-slate-500 font-medium mb-2">총 매출액</div>
-                                              <div className="text-xl font-bold text-amber-600 mb-1">{Math.round(calculatedMonetary).toLocaleString()}원</div>
-                                              <div className="text-xs text-slate-500">한 달 기준</div>
-                                            </div>
-                                          )}
+                                      {isNoSale ? (
+                                        <div className="bg-white rounded-lg p-6 text-center border border-amber-200">
+                                          <div className="text-4xl mb-3">⚠️</div>
+                                          <div className="text-base font-bold text-amber-700 mb-2">한달 동안 판매가 이루어지지 않았습니다</div>
+                                          <div className="text-sm text-slate-600">발주 제외를 권장드립니다</div>
                                         </div>
+                                      ) : (
+                                        <>
+                                          <div className="p-6 bg-white rounded-lg border border-amber-200">
+                                            <p className="text-base text-slate-900 leading-relaxed mb-3">
+                                              최근 판매 분석 결과, 이 상품은 분석 기준일로부터 <span className="font-semibold text-amber-600 text-lg">{recency !== null ? Math.round(recency) : 'N/A'}</span>일 이내에 판매가 발생했습니다.
+                                            </p>
+                                            <p className="text-base text-slate-900 leading-relaxed mb-3">
+                                              같은 기간 동안 총 <span className="font-semibold text-amber-600 text-lg">{frequency !== null ? Math.round(frequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-amber-600 text-lg">{calculatedMonetary !== null ? Math.round(calculatedMonetary).toLocaleString() : 'N/A'}</span>원입니다.
+                                            </p>
+                                            <p className="text-base text-amber-700 font-semibold mt-4">
+                                              판매 실적이 낮아 발주 제외를 권장드립니다.
+                                            </p>
+                                          </div>
+                                          
+                                          {/* R, F, M 지표 카드 */}
+                                          {(recency !== null || frequency !== null || calculatedMonetary !== null) && (
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                              {recency !== null && (
+                                                <div className="bg-white rounded-lg p-5 text-center border border-amber-200 shadow-sm">
+                                                  <div className="text-sm text-slate-500 font-medium mb-3">최근 판매 기간</div>
+                                                  <div className="text-3xl font-bold text-amber-600 mb-2">{Math.round(recency)}</div>
+                                                  <div className="text-sm text-slate-500">일 내 판매 발생</div>
+                                                </div>
+                                              )}
+                                              {frequency !== null && (
+                                                <div className="bg-white rounded-lg p-5 text-center border border-amber-200 shadow-sm">
+                                                  <div className="text-sm text-slate-500 font-medium mb-3">한 달 판매 횟수</div>
+                                                  <div className="text-3xl font-bold text-amber-600 mb-2">{Math.round(frequency).toLocaleString()}</div>
+                                                  <div className="text-sm text-slate-500">회 판매</div>
+                                                </div>
+                                              )}
+                                              {calculatedMonetary !== null && (
+                                                <div className="bg-white rounded-lg p-5 text-center border border-amber-200 shadow-sm">
+                                                  <div className="text-sm text-slate-500 font-medium mb-3">총 매출액</div>
+                                                  <div className="text-3xl font-bold text-amber-600 mb-2">{Math.round(calculatedMonetary).toLocaleString()}원</div>
+                                                  <div className="text-sm text-slate-500">한 달 기준</div>
+                                                </div>
+                                              )}
+                                            </div>
+                                          )}
+                                        </>
                                       )}
                                     </>
                                   )}
-                                </div>
-                              )
+                              </div>
+                            )
                             } else {
-                              return (
+                          return (
                                 <p className="text-slate-500 text-sm">
                                   부진 근거가 없습니다.
                                 </p>
-                              )
+                          )
                             }
                           }
                         })()}
                       </div>
                     </div>
                   </div>
+                  )}
                   
                 </div>
                 
-                {/* 모달 푸터 */}
-                <div className="sticky bottom-0 bg-white px-6 py-4 flex justify-end">
+                {/* 모바일 앱 스타일: 푸터 */}
+                {isMobile && (
+                  <div className="sticky bottom-0 bg-white px-4 py-3 border-t border-gray-200">
+                    <button
+                      onClick={() => {
+                        setSelectedProduct(null)
+                        setProductDetailTab('info')
+                      }}
+                      className={`w-full py-3 text-base text-white font-semibold transition-colors rounded-xl ${
+                        activeTab === 'recommended'
+                          ? 'bg-emerald-600 active:bg-emerald-700'
+                          : 'bg-amber-600 active:bg-amber-700'
+                      }`}
+                    >
+                      확인
+                    </button>
+                  </div>
+                )}
+
+                {/* 웹 스타일: 푸터 */}
+                {!isMobile && (
+                  <div className="sticky bottom-0 bg-white px-6 py-4 flex justify-end border-t border-gray-200">
                   <button
                     onClick={() => setSelectedProduct(null)}
                     className={`px-6 py-2.5 text-sm text-white font-semibold transition-colors rounded-lg ${
@@ -1383,6 +2247,7 @@ export default function RecommendationsPage() {
                     확인
                   </button>
                 </div>
+                )}
               </div>
             </div>
             )
