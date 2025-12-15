@@ -12,6 +12,7 @@ export default function OverviewPage() {
   const [isMobile, setIsMobile] = useState(false)
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([])
   const buttonRefs = useRef<(HTMLDivElement | null)[]>([])
+  const hasAppearedRef = useRef<Set<number>>(new Set())
   const searchParams = useSearchParams()
   const storeCode = searchParams.get('storeCode')
 
@@ -65,61 +66,73 @@ export default function OverviewPage() {
         const isInViewport = elementTop < windowHeight && elementTop > -elementHeight
 
         if (isInViewport) {
+          // 한번 나타났음을 표시
+          hasAppearedRef.current.add(index)
+
           // 뷰포트 중심과의 거리 계산 (0 ~ 1)
           const distanceFromCenter = Math.abs(viewportCenter - elementCenter) / windowHeight
           const progress = Math.max(0, Math.min(1, 1 - distanceFromCenter * 2))
 
           // 앱 환경에서는 애니메이션 효과를 줄임
           if (isApp || isMobile) {
-            // 더 부드러운 opacity와 transform 계산
-            const opacity = Math.max(0, Math.min(1, progress))
+            // 더 부드러운 opacity와 transform 계산 (최소 opacity 보장, scale 제거)
+            const opacity = Math.max(0.3, Math.min(1, progress))
             const translateY = (1 - progress) * 20
-            const scale = 0.95 + progress * 0.05
 
             section.style.opacity = opacity.toString()
-            section.style.transform = `translateY(${translateY}px) scale(${scale})`
+            section.style.transform = `translateY(${translateY}px)`
             section.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out'
 
             // 버튼도 함께 애니메이션 (더 부드럽게)
             if (buttonRefs.current[index]) {
-              const buttonProgress = Math.max(0, Math.min(1, progress))
+              const buttonProgress = Math.max(0.3, Math.min(1, progress))
               buttonRefs.current[index]!.style.opacity = buttonProgress.toString()
               buttonRefs.current[index]!.style.transform = `translateY(${(1 - buttonProgress) * 15}px)`
               buttonRefs.current[index]!.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out'
             }
           } else {
-            // 데스크톱 환경: 기존 강한 애니메이션
-            const opacity = Math.max(0, Math.min(1, progress * 1.5))
+            // 데스크톱 환경: 기존 강한 애니메이션 (최소 opacity 보장, scale 제거)
+            const opacity = Math.max(0.5, Math.min(1, progress * 1.5))
             const translateY = (1 - progress) * 50
-            const scale = 0.8 + progress * 0.2
 
             section.style.opacity = opacity.toString()
-            section.style.transform = `translateY(${translateY}px) scale(${scale})`
+            section.style.transform = `translateY(${translateY}px)`
             section.style.transition = 'opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
 
             // 버튼도 함께 애니메이션
             if (buttonRefs.current[index]) {
-              const buttonProgress = Math.max(0, Math.min(1, (progress - 0.3) * 1.5))
+              const buttonProgress = Math.max(0.3, Math.min(1, (progress - 0.3) * 1.5))
               buttonRefs.current[index]!.style.opacity = buttonProgress.toString()
               buttonRefs.current[index]!.style.transform = `translateY(${(1 - buttonProgress) * 30}px)`
               buttonRefs.current[index]!.style.transition = 'opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
             }
           }
         } else {
-          // 뷰포트 밖에 있으면 투명하게
-          if (isApp || isMobile) {
-            section.style.opacity = '0'
-            section.style.transform = 'translateY(20px) scale(0.95)'
+          // 뷰포트 밖에 있지만 이미 나타난 섹션은 그대로 유지
+          if (hasAppearedRef.current.has(index)) {
+            // 이미 나타난 섹션은 완전히 보이도록 유지
+            section.style.opacity = '1'
+            section.style.transform = 'translateY(0)'
             if (buttonRefs.current[index]) {
-              buttonRefs.current[index]!.style.opacity = '0'
-              buttonRefs.current[index]!.style.transform = 'translateY(15px)'
+              buttonRefs.current[index]!.style.opacity = '1'
+              buttonRefs.current[index]!.style.transform = 'translateY(0)'
             }
           } else {
-            section.style.opacity = '0'
-            section.style.transform = 'translateY(50px) scale(0.95)'
-            if (buttonRefs.current[index]) {
-              buttonRefs.current[index]!.style.opacity = '0'
-              buttonRefs.current[index]!.style.transform = 'translateY(30px)'
+            // 아직 나타나지 않은 섹션은 투명하게
+            if (isApp || isMobile) {
+              section.style.opacity = '0'
+              section.style.transform = 'translateY(20px)'
+              if (buttonRefs.current[index]) {
+                buttonRefs.current[index]!.style.opacity = '0'
+                buttonRefs.current[index]!.style.transform = 'translateY(15px)'
+              }
+            } else {
+              section.style.opacity = '0'
+              section.style.transform = 'translateY(50px)'
+              if (buttonRefs.current[index]) {
+                buttonRefs.current[index]!.style.opacity = '0'
+                buttonRefs.current[index]!.style.transform = 'translateY(30px)'
+              }
             }
           }
         }
@@ -198,23 +211,23 @@ export default function OverviewPage() {
               <div className="h-px bg-gray-200 mb-8"></div>
 
               {/* 섹션 0: SEVEN PICK 서비스 핵심 */}
-              <section className="mb-16">
+              <section className="mb-12">
                 <div
                   ref={(el) => { sectionRefs.current[0] = el }}
                   className="will-change-transform"
-                  style={{ opacity: 0, transform: 'translateY(50px) scale(0.95)' }}
+                  style={{ opacity: 0, transform: 'translateY(50px)' }}
                 >
                   {/* STEP 0 헤더 */}
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-1 h-8 bg-green-200"></div>
-                    <span className="text-green-600 font-semibold text-base">STEP 0 서비스 핵심 요약</span>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-0.5 h-6 bg-green-200"></div>
+                    <span className="text-green-600 font-semibold text-sm">STEP 0 서비스 핵심 요약</span>
                   </div>
 
                   {/* 메인 제목 */}
-                  <h2 className="text-3xl font-extrabold text-gray-900 leading-tight mb-4">
+                  <h2 className="text-2xl font-extrabold text-gray-900 leading-tight mb-3">
                     SEVEN PICK: <span className="text-green-600">서비스 핵심</span>
                   </h2>
-                  <p className="text-base text-gray-600 mb-8 leading-relaxed">
+                  <p className="text-sm text-gray-600 mb-6 leading-relaxed">
                     발주에 대한 고민을 해결하기 위해 SEVEN PICK: 이 나섭니다.
                   </p>
 
@@ -346,74 +359,75 @@ export default function OverviewPage() {
               <div className="h-px bg-gray-200 mb-16"></div>
 
               {/* 섹션 1: STEP 1 유사 매장 선별 */}
-              <section className="mb-16 bg-gray-900 -mx-4 px-4 py-12 rounded-3xl">
+              <section className="mb-12 bg-gradient-to-br from-green-50 via-white to-green-50 -mx-4 px-4 py-8 rounded-2xl border border-green-100">
                 <div
                   ref={(el) => { sectionRefs.current[1] = el }}
                   className="will-change-transform"
-                  style={{ opacity: 0, transform: 'translateY(50px) scale(0.95)' }}
+                  style={{ opacity: 0, transform: 'translateY(50px)' }}
                 >
                   {/* STEP 1 헤더 */}
-                  <div className="flex items-center gap-3 mb-6">
-                    <span className="text-white font-semibold text-base">STEP 1</span>
-                    <span className="text-green-600 font-semibold text-base">유사 매장 선별</span>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-0.5 h-6 bg-green-600"></div>
+                    <span className="text-green-600 font-semibold text-sm">STEP 1</span>
+                    <span className="text-gray-700 font-semibold text-sm">유사 매장 선별</span>
                   </div>
 
                   {/* 메인 제목 */}
-                  <div className="mb-6">
-                    <h2 className="text-green-600 text-2xl font-semibold mb-3">
+                  <div className="mb-4">
+                    <h2 className="text-green-600 text-xl font-semibold mb-2">
                       유사 매장
                     </h2>
-                    <h3 className="text-3xl font-bold text-white leading-tight mb-4">
+                    <h3 className="text-2xl font-bold text-gray-900 leading-tight mb-3">
                       나와 유사한 매장을 확인하세요.
                     </h3>
                   </div>
 
                   {/* 설명 텍스트 */}
-                  <p className="text-base text-white mb-8 leading-relaxed">
+                  <p className="text-sm text-gray-600 mb-6 leading-relaxed">
                     계속 변화하는 상권과 판매흐름을 포착하여 더 정확한, 더 완벽한 유사매장을 선별합니다.
                   </p>
 
-                  {/* 선택 기준 버튼들 */}
-                  <div className="flex flex-wrap gap-3 mb-8">
-                    <button className="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-medium">
-                      매장 판매 추세
-                    </button>
-                    <button className="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-medium">
-                      유동 인구 3분위
-                    </button>
-                    <button className="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-medium">
-                      Rolling Window
-                    </button>
-                  </div>
-
-                  {/* 시각적 요소: 초록색 삼각형과 아이콘 */}
-                  <div className="flex flex-col items-center mb-8">
-                    <div className="relative w-full max-w-xs mb-6 flex justify-center">
-                      <svg 
-                        width="300" 
-                        height="150" 
-                        viewBox="0 0 400 200" 
-                        className="w-full"
-                        preserveAspectRatio="xMidYMid meet"
-                      >
-                        <polygon 
-                          points="0,0 400,0 350,200 50,200" 
-                          fill="#16a34a" 
-                        />
-                      </svg>
-                    </div>
-                    
-                    <div className="relative -mt-12">
-                      <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-xl">
-                        <div className="w-14 h-14 bg-green-600 rounded-lg flex items-center justify-center transform rotate-45">
-                          <svg 
-                            className="w-8 h-8 text-white transform -rotate-45" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  {/* 선택 기준 카드들 */}
+                  <div className="grid grid-cols-1 gap-3 mb-6">
+                    <div className="bg-white rounded-xl p-4 border border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                           </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-1">매장 판매 추세</h4>
+                          <p className="text-xs text-gray-500">실시간 판매 데이터 분석</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-4 border border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-1">유동 인구 3분위</h4>
+                          <p className="text-xs text-gray-500">상권 유동인구 데이터 반영</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-4 border border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-1">Rolling Window</h4>
+                          <p className="text-xs text-gray-500">최근 4주 데이터 기반 분석</p>
                         </div>
                       </div>
                     </div>
@@ -427,7 +441,7 @@ export default function OverviewPage() {
                   >
                     <Link
                       href={getSimilarStoresHref()}
-                      className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-green-600 rounded-lg transition-all duration-300 hover:bg-green-700"
+                      className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-green-600 rounded-lg transition-all duration-300 hover:bg-green-700 shadow-md hover:shadow-lg"
                     >
                       <span>유사 매장 알아보기</span>
                       <svg 
@@ -444,36 +458,36 @@ export default function OverviewPage() {
               </section>
 
               {/* 구분선 */}
-              <div className="h-px bg-gray-200 mb-16"></div>
+              <div className="h-px bg-gray-200 mb-12"></div>
 
               {/* 섹션 2: STEP 2 발주 추천 상품 확인 */}
-              <section className="mb-16">
+              <section className="mb-12">
                 <div
                   ref={(el) => { sectionRefs.current[2] = el }}
                   className="will-change-transform"
-                  style={{ opacity: 0, transform: 'translateY(50px) scale(0.95)' }}
+                  style={{ opacity: 0, transform: 'translateY(50px)' }}
                 >
                   {/* STEP 2 헤더 */}
-                  <div className="flex items-center gap-3 mb-6">
-                    <span className="text-green-600 font-semibold text-base">STEP 2</span>
-                    <span className="text-gray-900 font-semibold text-base">발주 추천 상품 확인</span>
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-green-600 font-semibold text-sm">STEP 2</span>
+                    <span className="text-gray-900 font-semibold text-sm">발주 추천 상품 확인</span>
                   </div>
 
                   {/* 메인 제목 */}
-                  <div className="mb-6">
-                    <h2 className="text-green-600 text-2xl font-semibold mb-3">
+                  <div className="mb-4">
+                    <h2 className="text-green-600 text-xl font-semibold mb-2">
                       추천 상품
                     </h2>
-                    <h3 className="text-3xl font-bold text-gray-900 leading-tight mb-2">
+                    <h3 className="text-2xl font-bold text-gray-900 leading-tight mb-2">
                       추천 상품을 확인하세요.
                     </h3>
-                    <h4 className="text-2xl font-bold text-gray-900 leading-tight mb-4">
+                    <h4 className="text-xl font-bold text-gray-900 leading-tight mb-3">
                       보다 편하고, 보다 자세하게.
                     </h4>
                   </div>
 
                   {/* 설명 텍스트 */}
-                  <p className="text-base text-gray-600 mb-8 leading-relaxed">
+                  <p className="text-sm text-gray-600 mb-6 leading-relaxed">
                     AI 딥러닝 알고리즘을 통해 내 매장에서 잘 팔릴 상품을 추천해드립니다.
                   </p>
 
@@ -577,34 +591,34 @@ export default function OverviewPage() {
               </section>
 
               {/* 구분선 */}
-              <div className="h-px bg-gray-200 mb-16"></div>
+              <div className="h-px bg-gray-200 mb-12"></div>
 
               {/* 섹션 3: STEP 3 부진 상품 확인 */}
-              <section className="mb-16">
+              <section className="mb-12">
                 <div
                   ref={(el) => { sectionRefs.current[3] = el }}
                   className="will-change-transform"
-                  style={{ opacity: 0, transform: 'translateY(50px) scale(0.95)' }}
+                  style={{ opacity: 0, transform: 'translateY(50px)' }}
                 >
                   {/* STEP 3 헤더 */}
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-1 h-8 bg-green-200"></div>
-                    <span className="text-green-600 font-semibold text-base">STEP 3</span>
-                    <span className="text-gray-900 font-semibold text-base">부진 상품 확인</span>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-0.5 h-6 bg-green-200"></div>
+                    <span className="text-green-600 font-semibold text-sm">STEP 3</span>
+                    <span className="text-gray-900 font-semibold text-sm">부진 상품 확인</span>
                   </div>
 
                   {/* 메인 제목 */}
-                  <div className="mb-6">
-                    <h2 className="text-green-600 text-2xl font-semibold mb-3">
+                  <div className="mb-4">
+                    <h2 className="text-green-600 text-xl font-semibold mb-2">
                       부진 상품
                     </h2>
-                    <h3 className="text-3xl font-bold text-gray-900 leading-tight mb-4">
+                    <h3 className="text-2xl font-bold text-gray-900 leading-tight mb-3">
                       창고를 채우고 있는 부진 상품을 확인하세요.
                     </h3>
                   </div>
 
                   {/* 설명 텍스트 */}
-                  <p className="text-base text-gray-600 mb-8 leading-relaxed">
+                  <p className="text-sm text-gray-600 mb-6 leading-relaxed">
                     실제 발주 및 판매 데이터 분석을 통해 내 매장의 상품군별 부진 상품 현황을 알려드립니다.
                   </p>
 
@@ -720,24 +734,24 @@ export default function OverviewPage() {
         <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
 
         {/* 섹션 0: SEVEN PICK 서비스 핵심 */}
-        <section className="bg-white py-32 md:py-40 lg:py-48">
+        <section className="bg-white py-20 md:py-24 lg:py-28">
           <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
             <div
               ref={(el) => { sectionRefs.current[0] = el }}
               className="will-change-transform"
-              style={{ opacity: 0, transform: 'translateY(50px) scale(0.95)' }}
+              style={{ opacity: 0, transform: 'translateY(50px)' }}
             >
               {/* STEP 0 헤더 */}
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-1 h-12 bg-green-200"></div>
-                <span className="text-green-600 font-semibold text-lg">STEP 0 서비스 핵심 요약</span>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-10 bg-green-200"></div>
+                <span className="text-green-600 font-semibold text-base">STEP 0 서비스 핵심 요약</span>
               </div>
 
               {/* 메인 제목 */}
-              <h2 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-tight mb-6 tracking-tight">
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-4 tracking-tight">
                 SEVEN PICK: <span className="text-green-600">서비스 핵심</span>
               </h2>
-              <p className="text-xl md:text-2xl text-gray-600 mb-16 leading-relaxed">
+              <p className="text-lg md:text-xl text-gray-600 mb-12 leading-relaxed">
                 발주에 대한 고민을 해결하기 위해 SEVEN PICK: 이 나섭니다.
               </p>
 
@@ -1010,79 +1024,71 @@ export default function OverviewPage() {
         <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
 
         {/* 섹션 1: STEP 1 유사 매장 선별 */}
-        <section className="bg-gray-900 py-32 md:py-40 lg:py-48">
+        <section className="bg-gradient-to-br from-green-50 via-white to-green-50 py-20 md:py-24 lg:py-28 border-t border-b border-green-100">
           <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
             <div
               ref={(el) => { sectionRefs.current[1] = el }}
               className="will-change-transform"
-              style={{ opacity: 0, transform: 'translateY(50px) scale(0.95)' }}
+              style={{ opacity: 0, transform: 'translateY(50px)' }}
             >
               {/* STEP 1 헤더 */}
-              <div className="flex items-center gap-4 mb-8">
-                <span className="text-white font-semibold text-lg">STEP 1</span>
-                <span className="text-green-600 font-semibold text-lg">유사 매장 선별</span>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-10 bg-green-600"></div>
+                <span className="text-green-600 font-semibold text-base">STEP 1</span>
+                <span className="text-gray-700 font-semibold text-base">유사 매장 선별</span>
               </div>
 
               {/* 메인 제목 */}
-              <div className="mb-6">
-                <h2 className="text-green-600 text-3xl md:text-4xl font-semibold mb-4">
+              <div className="mb-4">
+                <h2 className="text-green-600 text-2xl md:text-3xl font-semibold mb-3">
                   유사 매장
                 </h2>
-                <h3 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6">
+                <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
                   나와 유사한 매장을 확인하세요.
                 </h3>
               </div>
 
               {/* 설명 텍스트 */}
-              <p className="text-xl md:text-2xl text-white mb-16 leading-relaxed max-w-4xl">
+              <p className="text-lg md:text-xl text-gray-600 mb-12 leading-relaxed max-w-4xl">
                 계속 변화하는 상권과 판매흐름을 포착하여 더 정확한, 더 완벽한 유사매장을 선별합니다.
               </p>
 
-              {/* 선택 기준 버튼들 */}
-              <div className="flex flex-wrap gap-4 mb-12">
-                <button className="px-6 py-3 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition-colors">
-                  매장 판매 추세
-                </button>
-                <button className="px-6 py-3 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition-colors">
-                  유동 인구 3분위
-                </button>
-                <button className="px-6 py-3 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition-colors">
-                  Rolling Window
-                </button>
-              </div>
-
-              {/* 시각적 요소: 초록색 삼각형과 아이콘 */}
-              <div className="flex flex-col items-center mb-12">
-                {/* 초록색 삼각형 (깔때기 모양) */}
-                <div className="relative w-full max-w-2xl mb-8 flex justify-center">
-                  <svg 
-                    width="400" 
-                    height="200" 
-                    viewBox="0 0 400 200" 
-                    className="w-full max-w-md"
-                    preserveAspectRatio="xMidYMid meet"
-                  >
-                    <polygon 
-                      points="0,0 400,0 350,200 50,200" 
-                      fill="#16a34a" 
-                      className="drop-shadow-lg"
-                    />
-                  </svg>
-                </div>
-                
-                {/* 중앙 아이콘 */}
-                <div className="relative -mt-16 md:-mt-20">
-                  <div className="w-24 h-24 md:w-32 md:h-32 bg-white rounded-full flex items-center justify-center shadow-xl">
-                    <div className="w-16 h-16 md:w-20 md:h-20 bg-green-600 rounded-lg flex items-center justify-center transform rotate-45">
-                      <svg 
-                        className="w-10 h-10 md:w-12 md:h-12 text-white transform -rotate-45" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              {/* 선택 기준 카드들 */}
+              <div className="grid md:grid-cols-3 gap-6 mb-12">
+                <div className="bg-white rounded-xl p-6 border border-green-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-green-300">
+                  <div className="flex flex-col items-start">
+                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
                     </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">매장 판매 추세</h4>
+                    <p className="text-sm text-gray-500 leading-relaxed">실시간 판매 데이터를 분석하여 유사한 판매 패턴을 가진 매장을 찾습니다.</p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 border border-green-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-green-300">
+                  <div className="flex flex-col items-start">
+                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">유동 인구 3분위</h4>
+                    <p className="text-sm text-gray-500 leading-relaxed">상권의 유동인구 데이터를 반영하여 더욱 정확한 상권 특성을 파악합니다.</p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 border border-green-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-green-300">
+                  <div className="flex flex-col items-start">
+                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">Rolling Window</h4>
+                    <p className="text-sm text-gray-500 leading-relaxed">최근 4주 데이터를 기반으로 상권의 변화를 실시간으로 포착합니다.</p>
                   </div>
                 </div>
               </div>
@@ -1095,7 +1101,7 @@ export default function OverviewPage() {
               >
                 <Link
                   href={getSimilarStoresHref()}
-                  className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white bg-green-600 rounded-lg transition-all duration-300 hover:bg-green-700 hover:scale-105 hover:shadow-xl"
+                  className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white bg-green-600 rounded-lg transition-all duration-300 hover:bg-green-700 shadow-md hover:shadow-lg"
                 >
                   <span>유사 매장 알아보기</span>
                   <svg 
@@ -1116,34 +1122,34 @@ export default function OverviewPage() {
         <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
 
         {/* 섹션 2: STEP 2 발주 추천 상품 확인 */}
-        <section className="bg-white py-32 md:py-40 lg:py-48">
+        <section className="bg-white py-20 md:py-24 lg:py-28">
           <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
             <div
               ref={(el) => { sectionRefs.current[2] = el }}
               className="will-change-transform"
-              style={{ opacity: 0, transform: 'translateY(50px) scale(0.95)' }}
+              style={{ opacity: 0, transform: 'translateY(50px)' }}
             >
               {/* STEP 2 헤더 */}
-              <div className="flex items-center gap-4 mb-8">
-                <span className="text-green-600 font-semibold text-lg">STEP 2</span>
-                <span className="text-gray-900 font-semibold text-lg">발주 추천 상품 확인</span>
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-green-600 font-semibold text-base">STEP 2</span>
+                <span className="text-gray-900 font-semibold text-base">발주 추천 상품 확인</span>
               </div>
 
               {/* 메인 제목 */}
-              <div className="mb-6">
-                <h2 className="text-green-600 text-3xl md:text-4xl font-semibold mb-4">
+              <div className="mb-4">
+                <h2 className="text-green-600 text-2xl md:text-3xl font-semibold mb-3">
                   추천 상품
                 </h2>
-                <h3 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight mb-4">
+                <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-3">
                   추천 상품을 확인하세요.
                 </h3>
-                <h4 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
+                <h4 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
                   보다 편하고, 보다 자세하게.
                 </h4>
               </div>
 
               {/* 설명 텍스트 */}
-              <p className="text-xl md:text-2xl text-gray-600 mb-16 leading-relaxed max-w-4xl">
+              <p className="text-lg md:text-xl text-gray-600 mb-12 leading-relaxed max-w-4xl">
                 AI 딥러닝 알고리즘을 통해 내 매장에서 잘 팔릴 상품을 추천해드립니다.
               </p>
 
@@ -1251,32 +1257,32 @@ export default function OverviewPage() {
         <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
 
         {/* 섹션 3: STEP 3 부진 상품 확인 */}
-        <section className="bg-white py-32 md:py-40 lg:py-48">
+        <section className="bg-white py-20 md:py-24 lg:py-28">
           <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
             <div
               ref={(el) => { sectionRefs.current[3] = el }}
               className="will-change-transform"
-              style={{ opacity: 0, transform: 'translateY(50px) scale(0.95)' }}
+              style={{ opacity: 0, transform: 'translateY(50px)' }}
             >
               {/* STEP 3 헤더 */}
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-1 h-12 bg-green-200"></div>
-                <span className="text-green-600 font-semibold text-lg">STEP 3</span>
-                <span className="text-gray-900 font-semibold text-lg">부진 상품 확인</span>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-10 bg-green-200"></div>
+                <span className="text-green-600 font-semibold text-base">STEP 3</span>
+                <span className="text-gray-900 font-semibold text-base">부진 상품 확인</span>
               </div>
 
               {/* 메인 제목 */}
-              <div className="mb-6">
-                <h2 className="text-green-600 text-3xl md:text-4xl font-semibold mb-4">
+              <div className="mb-4">
+                <h2 className="text-green-600 text-2xl md:text-3xl font-semibold mb-3">
                   부진 상품
                 </h2>
-                <h3 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight mb-6">
+                <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
                   창고를 채우고 있는 부진 상품을 확인하세요.
                 </h3>
               </div>
 
               {/* 설명 텍스트 */}
-              <p className="text-xl md:text-2xl text-gray-600 mb-16 leading-relaxed max-w-4xl">
+              <p className="text-lg md:text-xl text-gray-600 mb-12 leading-relaxed max-w-4xl">
                 실제 발주 및 판매 데이터 분석을 통해 내 매장의 상품군별 부진 상품 현황을 알려드립니다.
               </p>
 
