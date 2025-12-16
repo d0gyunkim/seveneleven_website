@@ -84,6 +84,12 @@ export default function SimilarStoresPage() {
     주중주말패턴?: any
   } | null>(null) // 현재 매장의 패턴 데이터
   const [selectedPatternType, setSelectedPatternType] = useState<'판매패턴' | '시간대패턴' | '주중주말패턴' | null>(null) // 선택된 패턴 타입
+  const [similarStoresPatterns, setSimilarStoresPatterns] = useState<Array<{
+    판매패턴?: any
+    시간대패턴?: any
+    주중주말패턴?: any
+  }>>([]) // 유사매장들의 패턴 데이터
+  const [averageComparisonTab, setAverageComparisonTab] = useState<'주중' | '주말'>('주중') // 평균 비교 섹션의 시간대 탭
 
   useEffect(() => {
     // URL에서 storeCode 가져오기, 없으면 sessionStorage에서 가져오기
@@ -340,6 +346,51 @@ export default function SimilarStoresPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSelectedMonth])
+
+  // 유사매장들의 패턴 데이터 가져오기
+  useEffect(() => {
+    const fetchSimilarStoresPatterns = async () => {
+      if (similarStores.length === 0) {
+        setSimilarStoresPatterns([])
+        return
+      }
+
+      const patterns: Array<{
+        판매패턴?: any
+        시간대패턴?: any
+        주중주말패턴?: any
+      }> = []
+
+      for (const store of similarStores) {
+        try {
+          const { data: storeData, error } = await supabase
+            .from('매장마스터')
+            .select('*')
+            .eq('store_code', store.store_code)
+            .eq('월기준', currentSelectedMonth)
+            .limit(1)
+            .single()
+
+          if (!error && storeData) {
+            const data = storeData as any
+            patterns.push({
+              판매패턴: data['판매패턴'] || data.판매패턴,
+              시간대패턴: data['시간대패턴'] || data.시간대패턴,
+              주중주말패턴: data['주중주말패턴'] || data.주중주말패턴,
+            })
+          }
+        } catch (err) {
+          console.error(`유사매장 ${store.store_code} 패턴 데이터 조회 실패:`, err)
+        }
+      }
+
+      setSimilarStoresPatterns(patterns)
+    }
+
+    if (similarStores.length > 0 && currentSelectedMonth) {
+      fetchSimilarStoresPatterns()
+    }
+  }, [similarStores, currentSelectedMonth])
 
   const fetchStoreDetail = async (storeCode: string) => {
     setLoadingDetail(true)
@@ -777,6 +828,473 @@ export default function SimilarStoresPage() {
                       selectedStoreCode={selectedStoreCode}
                     />
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 판매 패턴 분석 섹션 - 지도 아래 */}
+          {similarStores.length > 0 && currentStorePatterns && similarStoresPatterns.length > 0 && (
+            <div className="mt-8 md:mt-12">
+              <div className="mb-6 pb-4 border-b-2 border-gray-300">
+                <div className="flex items-baseline gap-4">
+                  <div className="w-1 h-10 bg-green-600"></div>
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
+                      판매 패턴 분석
+                    </h2>
+                    <p className="text-sm text-gray-600 mt-1">유사매장들의 평균과 우리매장 비교</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* 1. 카테고리별 판매 비율 */}
+                <div className="bg-white border-2 border-gray-300 rounded-xl p-6">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">카테고리별 판매 비율</h3>
+                    <p className="text-xs text-gray-500">9개 주요 카테고리 비교 분석</p>
+                  </div>
+                  <ResponsiveContainer width="100%" height={320}>
+                    {(() => {
+                      const myStorePattern = currentStorePatterns?.판매패턴
+                      if (!myStorePattern) {
+                        return <div className="flex items-center justify-center h-full text-gray-500">데이터를 불러오는 중...</div>
+                      }
+
+                      const myStoreData = myStorePattern.my_store || {}
+                      const categories = myStorePattern.categories || []
+                      
+                      // 유사매장들의 평균 계산
+                      const averageData: Record<string, number> = {}
+                      categories.forEach((category: string) => {
+                        let sum = 0
+                        let count = 0
+                        similarStoresPatterns.forEach(pattern => {
+                          const value = pattern.판매패턴?.my_store?.[category] || 0
+                          if (value > 0) {
+                            sum += value
+                            count++
+                          }
+                        })
+                        averageData[category] = count > 0 ? sum / count : 0
+                      })
+
+                      const chartData = categories.map((category: string) => ({
+                        category,
+                        내매장: myStoreData[category] || 0,
+                        유사매장평균: averageData[category] || 0,
+                      }))
+
+                      return (
+                        <RadarChart data={chartData}>
+                          <PolarGrid stroke="#e5e7eb" />
+                          <PolarAngleAxis dataKey="category" tick={{ fontSize: 10, fill: '#374151' }} />
+                          <PolarRadiusAxis angle={90} domain={[0, 30]} tick={{ fontSize: 9, fill: '#6b7280' }} />
+                          <Radar name="내 매장" dataKey="내매장" stroke="#16a34a" fill="#16a34a" fillOpacity={0.7} strokeWidth={2} />
+                          <Radar name="유사 매장" dataKey="유사매장평균" stroke="#fb923c" fill="none" strokeWidth={2.5} />
+                          <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} iconType="square" />
+                        </RadarChart>
+                      )
+                    })()}
+                  </ResponsiveContainer>
+                  
+                  {/* 유사도 근거 */}
+                  {(() => {
+                    const myStorePattern = currentStorePatterns?.판매패턴
+                    if (!myStorePattern) return null
+
+                    const myStoreData = myStorePattern.my_store || {}
+                    const categories = myStorePattern.categories || []
+                    
+                    const averageData: Record<string, number> = {}
+                    categories.forEach((category: string) => {
+                      let sum = 0
+                      let count = 0
+                      similarStoresPatterns.forEach(pattern => {
+                        const value = pattern.판매패턴?.my_store?.[category] || 0
+                        if (value > 0) {
+                          sum += value
+                          count++
+                        }
+                      })
+                      averageData[category] = count > 0 ? sum / count : 0
+                    })
+
+                    let totalDiff = 0
+                    let categoryCount = 0
+                    const categoryDiffs: Array<{category: string, diff: number}> = []
+                    
+                    categories.forEach((category: string) => {
+                      const myValue = myStoreData[category] || 0
+                      const avgValue = averageData[category] || 0
+                      if (myValue > 0 || avgValue > 0) {
+                        const diff = Math.abs(myValue - avgValue)
+                        totalDiff += diff
+                        categoryCount++
+                        categoryDiffs.push({ category, diff })
+                      }
+                    })
+                    
+                    const avgDiff = categoryCount > 0 ? totalDiff / categoryCount : 0
+                    const similarityScore = Math.max(0, 100 - (avgDiff * 2))
+                    const mostSimilar = [...categoryDiffs].sort((a, b) => a.diff - b.diff).slice(0, 3)
+
+                    return (
+                      <div className="mt-6 pt-6 border-t-2 border-gray-100">
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
+                          <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <div className="w-1 h-4 bg-green-600 rounded-full"></div>
+                            유사도 근거
+                          </h5>
+                          <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed">
+                            <div className="flex items-start gap-2.5">
+                              <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                              <p className="flex-1">
+                                고객 방문 패턴 유사도가 {similarityScore.toFixed(0)}% 이상으로 상권 특성과 고객층 구성이 유사합니다.
+                              </p>
+                            </div>
+                            <div className="flex items-start gap-2.5">
+                              <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                              <p className="flex-1">
+                                주요 카테고리별 판매 비중이 거의 동일하여 <span className="font-semibold text-gray-900">고객 니즈와 구매 패턴이 유사</span>합니다.
+                              </p>
+                            </div>
+                            {mostSimilar.length > 0 && mostSimilar[0].diff <= 0.5 && (
+                              <div className="flex items-start gap-2.5">
+                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                <p className="flex-1">
+                                  <span className="font-semibold text-gray-900">{mostSimilar.map(c => c.category).join(', ')}</span> 카테고리에서 판매 비중 차이가 {mostSimilar[0].diff.toFixed(1)}%p 이하로 매우 유사합니다.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+
+                {/* 2. 시간대 패턴 */}
+                <div className="bg-white border-2 border-gray-300 rounded-xl p-6">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">시간대 패턴</h3>
+                  </div>
+                  
+                  {/* 주중/주말 탭 */}
+                  <div className="flex gap-2 mb-4">
+                    <button
+                      onClick={() => setAverageComparisonTab('주중')}
+                      className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                        averageComparisonTab === '주중'
+                          ? 'bg-green-600 text-white shadow-sm'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      주중
+                    </button>
+                    <button
+                      onClick={() => setAverageComparisonTab('주말')}
+                      className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                        averageComparisonTab === '주말'
+                          ? 'bg-green-600 text-white shadow-sm'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      주말
+                    </button>
+                  </div>
+
+                  <div className="mb-2">
+                    <p className="text-xs font-semibold text-gray-700">{averageComparisonTab} 시간대별 판매 비율</p>
+                  </div>
+                  
+                  <ResponsiveContainer width="100%" height={300}>
+                    {(() => {
+                      const myStorePattern = currentStorePatterns?.시간대패턴
+                      if (!myStorePattern) {
+                        return <div className="flex items-center justify-center h-full text-gray-500">데이터를 불러오는 중...</div>
+                      }
+
+                      const timeSlots = myStorePattern.time_slots || []
+                      const myStoreData = averageComparisonTab === '주중' 
+                        ? (myStorePattern.weekday?.my_store || [])
+                        : (myStorePattern.weekend?.my_store || [])
+                      
+                      // 유사매장들의 평균 계산
+                      const averageData: number[] = []
+                      timeSlots.forEach((slot: string, index: number) => {
+                        let sum = 0
+                        let count = 0
+                        similarStoresPatterns.forEach(pattern => {
+                          const timePattern = pattern.시간대패턴
+                          if (timePattern) {
+                            const data = averageComparisonTab === '주중'
+                              ? (timePattern.weekday?.my_store || [])
+                              : (timePattern.weekend?.my_store || [])
+                            const value = data[index] || 0
+                            if (value > 0) {
+                              sum += value
+                              count++
+                            }
+                          }
+                        })
+                        averageData.push(count > 0 ? sum / count : 0)
+                      })
+
+                      const chartData = timeSlots.map((slot: string, index: number) => {
+                        const formattedSlot = slot.replace('(', '\n(').replace(')', '시)')
+                        return {
+                          time: formattedSlot,
+                          내매장: myStoreData[index] || 0,
+                          유사매장평균: averageData[index] || 0,
+                        }
+                      })
+
+                      return (
+                        <LineChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis 
+                            dataKey="time" 
+                            tick={{ fontSize: 10, fill: '#374151' }}
+                            interval={0}
+                          />
+                          <YAxis 
+                            domain={[0, 60]} 
+                            ticks={[0, 15, 30, 45, 60]}
+                            tick={{ fontSize: 10, fill: '#6b7280' }}
+                          />
+                          <Tooltip 
+                            formatter={(value: number) => `${value}%`}
+                            contentStyle={{ fontSize: '11px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+                          />
+                          <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                          <Line 
+                            type="monotone" 
+                            dataKey="내매장" 
+                            stroke="#16a34a" 
+                            strokeWidth={2.5} 
+                            name="내 매장" 
+                            dot={{ fill: '#16a34a', r: 4, strokeWidth: 0 }} 
+                            activeDot={{ r: 5 }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="유사매장평균" 
+                            stroke="#fb923c" 
+                            strokeWidth={2.5} 
+                            name="유사 매장" 
+                            dot={{ fill: '#fb923c', r: 4, strokeWidth: 0 }}
+                            activeDot={{ r: 5 }}
+                          />
+                        </LineChart>
+                      )
+                    })()}
+                  </ResponsiveContainer>
+
+                  {/* 유사도 근거 */}
+                  {(() => {
+                    const myStorePattern = currentStorePatterns?.시간대패턴
+                    if (!myStorePattern) return null
+
+                    const timeSlots = myStorePattern.time_slots || []
+                    const myWeekday = myStorePattern.weekday?.my_store || []
+                    const myWeekend = myStorePattern.weekend?.my_store || []
+                    
+                    // 유사매장 평균 계산
+                    const avgWeekday: number[] = []
+                    const avgWeekend: number[] = []
+                    timeSlots.forEach((slot: string, index: number) => {
+                      let weekdaySum = 0, weekendSum = 0
+                      let weekdayCount = 0, weekendCount = 0
+                      similarStoresPatterns.forEach(pattern => {
+                        const timePattern = pattern.시간대패턴
+                        if (timePattern) {
+                          const weekdayData = timePattern.weekday?.my_store || []
+                          const weekendData = timePattern.weekend?.my_store || []
+                          const weekdayValue = weekdayData[index] || 0
+                          const weekendValue = weekendData[index] || 0
+                          if (weekdayValue > 0) {
+                            weekdaySum += weekdayValue
+                            weekdayCount++
+                          }
+                          if (weekendValue > 0) {
+                            weekendSum += weekendValue
+                            weekendCount++
+                          }
+                        }
+                      })
+                      avgWeekday.push(weekdayCount > 0 ? weekdaySum / weekdayCount : 0)
+                      avgWeekend.push(weekendCount > 0 ? weekendSum / weekendCount : 0)
+                    })
+
+                    const myWeekdayAfternoon = myWeekday[2] || 0
+                    const avgWeekdayAfternoon = avgWeekday[2] || 0
+                    const myWeekendEvening = myWeekend[3] || 0
+                    const avgWeekendEvening = avgWeekend[3] || 0
+                    
+                    const weekdayAfternoonDiff = Math.abs(myWeekdayAfternoon - avgWeekdayAfternoon)
+                    const weekendEveningDiff = Math.abs(myWeekendEvening - avgWeekendEvening)
+
+                    return (
+                      <div className="mt-6 pt-6 border-t-2 border-gray-100">
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
+                          <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <div className="w-1 h-4 bg-green-600 rounded-full"></div>
+                            유사도 근거
+                          </h5>
+                          <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed">
+                            {weekdayAfternoonDiff < 5 && (
+                              <div className="flex items-start gap-2.5">
+                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                <p className="flex-1">
+                                  <span className="font-semibold text-gray-900">주중 오후 12-18시</span>에 매출이 집중되는 패턴이 유사합니다 (차이 {weekdayAfternoonDiff.toFixed(1)}%p).
+                                </p>
+                              </div>
+                            )}
+                            {weekendEveningDiff < 5 && (
+                              <div className="flex items-start gap-2.5">
+                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                <p className="flex-1">
+                                  <span className="font-semibold text-gray-900">주말 저녁 18-24시</span>에 매출이 집중되는 패턴이 유사합니다 (차이 {weekendEveningDiff.toFixed(1)}%p).
+                                </p>
+                              </div>
+                            )}
+                            <div className="flex items-start gap-2.5">
+                              <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                              <p className="flex-1">
+                                주중 <span className="font-semibold text-gray-900">오후(12-18시)</span> 시간대에 매출이 가장 집중되는 패턴이 일치합니다.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+
+                {/* 3. 주중/주말 패턴 */}
+                <div className="bg-white border-2 border-gray-300 rounded-xl p-6">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">주중/주말 패턴</h3>
+                    <p className="text-xs text-gray-500">주말/주중 매출 집중도</p>
+                    <p className="text-xs text-gray-500">주말 매출 비중 ÷ 주중 매출 비중으로 계산</p>
+                  </div>
+                  
+                  <ResponsiveContainer width="100%" height={240}>
+                    {(() => {
+                      const myStorePattern = currentStorePatterns?.주중주말패턴
+                      if (!myStorePattern) {
+                        return <div className="flex items-center justify-center h-full text-gray-500">데이터를 불러오는 중...</div>
+                      }
+
+                      const myStoreRatio = myStorePattern.my_store?.weekend_ratio / myStorePattern.my_store?.weekday_ratio || 0
+                      
+                      // 유사매장들의 평균 계산
+                      let sumRatio = 0
+                      let count = 0
+                      similarStoresPatterns.forEach(pattern => {
+                        const weekdayWeekend = pattern.주중주말패턴?.my_store
+                        if (weekdayWeekend && weekdayWeekend.weekday_ratio > 0) {
+                          const ratio = weekdayWeekend.weekend_ratio / weekdayWeekend.weekday_ratio
+                          sumRatio += ratio
+                          count++
+                        }
+                      })
+                      const avgRatio = count > 0 ? sumRatio / count : 0
+
+                      const chartData = [
+                        { name: '내 매장', value: myStoreRatio },
+                        { name: '유사 매장', value: avgRatio },
+                      ]
+
+                      const maxValue = Math.max(myStoreRatio, avgRatio, 1.3)
+                      const minValue = Math.min(myStoreRatio, avgRatio, 0.9)
+
+                      return (
+                        <BarChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#374151' }} />
+                          <YAxis tick={{ fontSize: 9, fill: '#6b7280' }} domain={[Math.max(0.8, minValue - 0.1), Math.min(1.5, maxValue + 0.1)]} />
+                          <Tooltip 
+                            formatter={(value: number) => value.toFixed(2)}
+                            contentStyle={{ fontSize: '11px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+                          />
+                          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                            <Cell fill="#16a34a" />
+                            <Cell fill="#fb923c" />
+                          </Bar>
+                        </BarChart>
+                      )
+                    })()}
+                  </ResponsiveContainer>
+                  <p className="text-xs text-gray-500 mt-2">*1.0 초과시, 주말 매출 비중 &gt; 주중 매출 비중</p>
+
+                  {/* 유사도 근거 */}
+                  {(() => {
+                    const myStorePattern = currentStorePatterns?.주중주말패턴
+                    if (!myStorePattern) return null
+
+                    const myWeekdayWeekend = myStorePattern.my_store
+                    if (!myWeekdayWeekend) return null
+
+                    const myWeekdayRatio = myWeekdayWeekend.weekday_ratio || 0
+                    const myWeekendRatio = myWeekdayWeekend.weekend_ratio || 0
+                    const myWeekendWeekdayRatio = myWeekendRatio / myWeekdayRatio || 0
+
+                    // 유사매장 평균 계산
+                    let sumRatio = 0
+                    let count = 0
+                    similarStoresPatterns.forEach(pattern => {
+                      const weekdayWeekend = pattern.주중주말패턴?.my_store
+                      if (weekdayWeekend && weekdayWeekend.weekday_ratio > 0) {
+                        const ratio = weekdayWeekend.weekend_ratio / weekdayWeekend.weekday_ratio
+                        sumRatio += ratio
+                        count++
+                      }
+                    })
+                    const avgRatio = count > 0 ? sumRatio / count : 0
+
+                    const ratioDiff = Math.abs(myWeekendWeekdayRatio - avgRatio)
+                    const weekendPercentDiff = myWeekendWeekdayRatio > 0 ? ((myWeekendWeekdayRatio - 1) * 100) : 0
+
+                    return (
+                      <div className="mt-6 pt-6 border-t-2 border-gray-100">
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
+                          <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <div className="w-1 h-4 bg-green-600 rounded-full"></div>
+                            유사도 근거
+                          </h5>
+                          <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed">
+                            {weekendPercentDiff > 0 && (
+                              <div className="flex items-start gap-2.5">
+                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                <p className="flex-1">
+                                  <span className="font-semibold text-gray-900">주말 매출이 주중 대비 {weekendPercentDiff.toFixed(1)}% 높게 집중</span>되어 주말 중심형 상권 특성을 공유합니다.
+                                </p>
+                              </div>
+                            )}
+                            {ratioDiff < 0.1 && (
+                              <div className="flex items-start gap-2.5">
+                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                <p className="flex-1">
+                                  주말/주중 매출 비율이 거의 동일하여 (차이 {ratioDiff.toFixed(2)}) <span className="font-semibold text-gray-900">주중/주말 매출 패턴이 매우 유사</span>합니다.
+                                </p>
+                              </div>
+                            )}
+                            {(myWeekendWeekdayRatio > 1.1 && avgRatio > 1.1) && (
+                              <div className="flex items-start gap-2.5">
+                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                <p className="flex-1">
+                                  두 매장 모두 주말 매출이 주중보다 높아 <span className="font-semibold text-gray-900">주말 중심형 상권 특성</span>을 공유합니다.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
             </div>
