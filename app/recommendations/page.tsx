@@ -1736,10 +1736,10 @@ export default function RecommendationsPage() {
                               <div className="space-y-4">
                                 <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100">
                                   <p className="text-sm text-slate-900 leading-relaxed mb-4">
-                                    <span className="font-semibold">{itemName}</span>은(는) 내 매장과 유사한 매장에서 판매 성과가 우수한 상품입니다.
+                                    <span className="font-semibold">{itemName}</span>은 딥러닝 기반 분석을 통해 판매 추세·판매량·매출액 등 주요 지표를 종합적으로 고려하고, 우리 매장의 판매 흐름과 유사 매장의 실제 판매 성과를 함께 반영하여 추천된 상품입니다.
                                   </p>
                                   <p className="text-sm text-slate-900 leading-relaxed">
-                                    최근 4주 기준으로 보면, 같은 기간 동안 총 <span className="font-semibold text-emerald-600">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-emerald-600">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원입니다.
+                                    해당 상품은 유사매장들에서 평균적으로 약 <span className="font-semibold text-emerald-600">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>회, 누적 매출은 <span className="font-semibold text-emerald-600">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원을 기록했습니다.
                                   </p>
                                 </div>
                                 
@@ -1921,31 +1921,6 @@ export default function RecommendationsPage() {
                         {/* 구분선 */}
                         <div className="border-t border-dashed border-gray-300 mb-6"></div>
                         
-                        {/* 상품 설명 */}
-                        <div className="mb-6">
-                          <div className="text-base text-slate-600 mb-3">상품 설명</div>
-                          <div className="text-base text-slate-900 leading-relaxed">
-                            {selectedProduct.item_mddv_nm && (
-                              <div className="mb-2">
-                                <span className="font-medium">중분류:</span> {selectedProduct.item_mddv_nm}
-                              </div>
-                            )}
-                            {selectedProduct.item_smdv_nm && (
-                              <div className="mb-2">
-                                <span className="font-medium">소분류:</span> {selectedProduct.item_smdv_nm}
-                              </div>
-                            )}
-                            {selectedProduct.item_lrdv_nm && (
-                              <div className="mb-2">
-                                <span className="font-medium">대분류:</span> {selectedProduct.item_lrdv_nm}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {/* 구분선 */}
-                        <div className="border-t border-dashed border-gray-300 mb-6"></div>
-                        
                         {/* 태그 */}
                         <div>
                           <div className="text-base text-slate-600 mb-3">태그</div>
@@ -1996,10 +1971,10 @@ export default function RecommendationsPage() {
                                     <div className="space-y-4">
                                       <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100">
                                         <p className="text-sm text-slate-900 leading-relaxed mb-4">
-                                          <span className="font-semibold">{itemName}</span>은(는) 내 매장과 유사한 매장에서 판매 성과가 우수한 상품입니다.
+                                          <span className="font-semibold">{itemName}</span>은 딥러닝 기반 분석을 통해 판매 추세·판매량·매출액 등 주요 지표를 종합적으로 고려하고, 우리 매장의 판매 흐름과 유사 매장의 실제 판매 성과를 함께 반영하여 추천된 상품입니다.
                                         </p>
                                         <p className="text-sm text-slate-900 leading-relaxed">
-                                          최근 4주 기준으로 보면, 같은 기간 동안 총 <span className="font-semibold text-emerald-600">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-emerald-600">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원입니다.
+                                          해당 상품은 유사매장들에서 평균적으로 약 <span className="font-semibold text-emerald-600">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>회, 누적 매출은 <span className="font-semibold text-emerald-600">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원을 기록했습니다.
                                         </p>
                                       </div>
                                       
@@ -2028,10 +2003,10 @@ export default function RecommendationsPage() {
                                     <>
                                       <div className="p-6 bg-emerald-50 rounded-lg border border-emerald-100">
                                         <p className="text-base text-slate-900 leading-relaxed mb-5">
-                                          <span className="font-semibold text-lg">{itemName}</span>은(는) 내 매장과 유사한 매장에서 판매 성과가 우수한 상품입니다.
+                                          <span className="font-semibold text-lg">{itemName}</span>은 딥러닝 기반 분석을 통해 판매 추세·판매량·매출액 등 주요 지표를 종합적으로 고려하고, 우리 매장의 판매 흐름과 유사 매장의 실제 판매 성과를 함께 반영하여 추천된 상품입니다.
                                         </p>
                                         <p className="text-base text-slate-900 leading-relaxed">
-                                          최근 4주 기준으로 보면, 같은 기간 동안 총 <span className="font-semibold text-emerald-600 text-lg">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-emerald-600 text-lg">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원입니다.
+                                          해당 상품은 유사매장들에서 평균적으로 약 <span className="font-semibold text-emerald-600 text-lg">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>회, 누적 매출은 <span className="font-semibold text-emerald-600 text-lg">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원을 기록했습니다.
                                         </p>
                                       </div>
                                       
