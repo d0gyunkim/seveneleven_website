@@ -638,25 +638,20 @@ export default function SimilarStoresPage() {
       <div className="min-h-screen bg-white">
         <div className="max-w-[98%] mx-auto px-4 md:px-6 py-4 md:py-6">
           {/* 헤더 */}
-          <div className="mb-10">
-            <div className="flex items-start justify-between mb-8 border-b border-gray-200 pb-6">
+          <div className="mb-8">
+            <div className="flex items-start justify-between mb-6">
               <div className="flex-1">
-                <div className="flex items-baseline gap-4 mb-3">
-                  <div className="w-1 h-10 bg-green-600"></div>
-                  <div>
-                    <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
-                      우리 매장과 유사 매장 찾기
-                    </h2>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 leading-relaxed max-w-2xl ml-6">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight mb-2">
+                  우리 매장과 유사 매장 찾기
+                </h2>
+                <p className="text-sm text-gray-600 leading-relaxed">
                   한달 동안, 우리 매장과 가장 유사한 매장들을 알려드립니다
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowInfoModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 border border-green-600 hover:bg-green-50 rounded transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 rounded transition-colors"
                   title="유사 매장 분석 방법 알아보기"
                 >
                   <svg
@@ -672,7 +667,7 @@ export default function SimilarStoresPage() {
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <span className="hidden md:inline">분석 방법</span>
+                  <span>분석 방법</span>
                 </button>
               </div>
             </div>
@@ -680,15 +675,15 @@ export default function SimilarStoresPage() {
             {/* 월별 탭 */}
             {currentStoreAvailableMonths.length > 0 && (
               <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">분석 기간</span>
+                <span className="text-sm font-semibold text-gray-700">분석 기간</span>
                 {currentStoreAvailableMonths.map((month) => (
                   <button
                     key={month}
                     onClick={() => handleCurrentMonthChange(month)}
-                    className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border ${
+                    className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap rounded ${
                       currentSelectedMonth === month
-                        ? 'bg-green-600 text-white border-green-600'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-green-400 hover:text-green-600'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                     }`}
                   >
                     {month}
@@ -716,9 +711,9 @@ export default function SimilarStoresPage() {
                 {/* 유사매장 목록 */}
                 <div className="bg-white border border-gray-300 overflow-hidden">
                   {/* 목록 헤더 */}
-                  <div className="bg-gray-50 border-b border-gray-300 px-4 py-3 md:px-5 md:py-4">
-                    <h3 className="text-sm md:text-sm font-bold text-gray-900 uppercase tracking-wide">유사 매장 순위</h3>
-                    <p className="text-xs text-gray-500 mt-1 hidden md:block">클릭하여 상세 분석 리포트 확인</p>
+                  <div className="bg-white border-b border-gray-300 px-4 py-3 md:px-5 md:py-4">
+                    <h3 className="text-base font-bold text-gray-900 mb-1">유사 매장 순위</h3>
+                    <p className="text-xs text-gray-500">클릭하여 상세 분석 리포트 확인</p>
                   </div>
                   
                   {/* 스크롤 가능한 목록 */}
@@ -754,19 +749,15 @@ export default function SimilarStoresPage() {
                                 </p>
                               )}
                               {(store.영업시간 || store.매장면적) && (
-                                <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2" style={{ lineHeight: '2.0' }}>
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
                                   {store.영업시간 && (
-                                    <span className="text-sm text-gray-600">
-                                      영업시간: {store.영업시간}
-                                    </span>
+                                    <span>영업시간: {store.영업시간}</span>
                                   )}
                                   {store.영업시간 && store.매장면적 && (
-                                    <span className="text-sm text-gray-400 hidden md:inline">•</span>
+                                    <span className="text-gray-400">·</span>
                                   )}
                                   {store.매장면적 && (
-                                    <span className="text-sm text-gray-600">
-                                      매장면적 {store.매장면적}m²
-                                    </span>
+                                    <span>매장면적 {store.매장면적}m²</span>
                                   )}
                                 </div>
                               )}
@@ -799,17 +790,10 @@ export default function SimilarStoresPage() {
               <div className="lg:order-2">
                 <div className="bg-white border border-gray-300 overflow-hidden h-full">
                   {/* 지도 헤더 */}
-                  <div className="bg-gray-50 border-b border-gray-300 px-4 py-3 md:px-5 md:py-4 flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">유사 매장 위치</h3>
-                      {currentSelectedMonth && (
-                        <p className="text-xs text-gray-500 mt-1 hidden md:block">기준 월: {currentSelectedMonth}</p>
-                      )}
-                    </div>
+                  <div className="bg-white border-b border-gray-300 px-4 py-3 md:px-5 md:py-4">
+                    <h3 className="text-base font-bold text-gray-900 mb-1">유사 매장 위치</h3>
                     {currentSelectedMonth && (
-                      <div className="flex items-center gap-2 px-3 py-1.5 md:py-1 bg-green-600 text-white text-xs font-semibold">
-                        {currentSelectedMonth}
-                      </div>
+                      <p className="text-xs text-gray-500">기준 월: {currentSelectedMonth}</p>
                     )}
                   </div>
                   

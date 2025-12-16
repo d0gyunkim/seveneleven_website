@@ -34,6 +34,7 @@ export default function OverviewPage() {
   const [showCriteriaModal, setShowCriteriaModal] = useState(false) // 유사 매장 선정 기준 모달
   const [showRollingWindowModal, setShowRollingWindowModal] = useState(false) // Rolling Window 알고리즘 모달
   const [showDynamicAreaModal, setShowDynamicAreaModal] = useState(false) // 동적 상권 포착 모달
+  const [previewPage, setPreviewPage] = useState<'recommended' | 'excluded' | 'similar'>('recommended') // 모바일 프리뷰 페이지
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([])
   const buttonRefs = useRef<(HTMLDivElement | null)[]>([])
   const hasAppearedRef = useRef<Set<number>>(new Set())
@@ -522,24 +523,36 @@ export default function OverviewPage() {
                     className="flex flex-wrap justify-center gap-3 mt-8 will-change-transform"
                     style={{ opacity: 0, transform: 'translateY(30px)' }}
                   >
-                    <Link
-                      href={getSimilarStoresHref()}
-                      className="px-6 py-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg transition-all duration-300 hover:bg-gray-200"
+                    <button
+                      onClick={() => setPreviewPage('similar')}
+                      className={`px-6 py-3 text-sm font-medium rounded-lg transition-all duration-300 ${
+                        previewPage === 'similar'
+                          ? 'bg-gray-300 text-gray-900'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
                     >
                       유사 매장 페이지
-                    </Link>
-                    <Link
-                      href={getRecommendationsHref()}
-                      className="px-6 py-3 text-sm font-medium text-white bg-gray-900 rounded-lg transition-all duration-300 hover:bg-gray-800"
+                    </button>
+                    <button
+                      onClick={() => setPreviewPage('recommended')}
+                      className={`px-6 py-3 text-sm font-medium rounded-lg transition-all duration-300 ${
+                        previewPage === 'recommended'
+                          ? 'bg-gray-300 text-gray-900'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
                     >
                       추천 상품 페이지
-                    </Link>
-                    <Link
-                      href={getUnderperformingHref()}
-                      className="px-6 py-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg transition-all duration-300 hover:bg-gray-200"
+                    </button>
+                    <button
+                      onClick={() => setPreviewPage('excluded')}
+                      className={`px-6 py-3 text-sm font-medium rounded-lg transition-all duration-300 ${
+                        previewPage === 'excluded'
+                          ? 'bg-gray-300 text-gray-900'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
                     >
                       부진 상품 페이지
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </section>
@@ -1079,14 +1092,47 @@ export default function OverviewPage() {
                         {/* 네비게이션 탭 */}
                         <div className="bg-white border-b">
                           <div className="flex">
-                            <div className="px-4 py-3 text-sm text-gray-600">서비스 개요</div>
-                            <div className="px-4 py-3 text-sm font-semibold bg-green-600 text-white">추천 상품</div>
-                            <div className="px-4 py-3 text-sm text-gray-600">부진 상품</div>
-                            <div className="px-4 py-3 text-sm text-gray-600">유사 매장 리포팅</div>
+                            <div 
+                              className="px-4 py-3 text-sm text-gray-600 cursor-pointer"
+                              onClick={() => setPreviewPage('recommended')}
+                            >
+                              서비스 개요
+                            </div>
+                            <div 
+                              className={`px-4 py-3 text-sm cursor-pointer ${
+                                previewPage === 'recommended' 
+                                  ? 'font-semibold bg-green-600 text-white' 
+                                  : 'text-gray-600'
+                              }`}
+                              onClick={() => setPreviewPage('recommended')}
+                            >
+                              추천 상품
+                            </div>
+                            <div 
+                              className={`px-4 py-3 text-sm cursor-pointer ${
+                                previewPage === 'excluded' 
+                                  ? 'font-semibold bg-green-600 text-white' 
+                                  : 'text-gray-600'
+                              }`}
+                              onClick={() => setPreviewPage('excluded')}
+                            >
+                              부진 상품
+                            </div>
+                            <div 
+                              className={`px-4 py-3 text-sm cursor-pointer ${
+                                previewPage === 'similar' 
+                                  ? 'font-semibold bg-green-600 text-white' 
+                                  : 'text-gray-600'
+                              }`}
+                              onClick={() => setPreviewPage('similar')}
+                            >
+                              유사 매장 리포팅
+                            </div>
                           </div>
                         </div>
 
                         {/* 메인 콘텐츠 */}
+                        {previewPage === 'recommended' && (
                         <div className="p-4">
                           <div className="mb-4">
                             <div className="text-sm font-semibold mb-2">대분류 카테고리</div>
@@ -1108,56 +1154,217 @@ export default function OverviewPage() {
                             {/* 필터 */}
                             <div className="w-32">
                               <div className="text-sm font-semibold mb-2">필터</div>
+                              <button className="text-xs text-gray-600 mb-2 hover:text-gray-900">초기화</button>
                               <div className="space-y-1 text-xs">
                                 <div className="flex items-center gap-2">
                                   <input type="radio" className="w-3 h-3" defaultChecked />
                                   <span>전체(35)</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <input type="radio" className="w-3 h-3" defaultChecked />
-                                  <span>비스킷류</span>
+                                  <input type="radio" className="w-3 h-3" />
+                                  <span>껌(5)</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <input type="radio" className="w-3 h-3" />
-                                  <span>스낵류</span>
+                                  <span>비스킷류(5)</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <input type="radio" className="w-3 h-3" />
-                                  <span>젤리류</span>
+                                  <span>스낵류(5)</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <input type="radio" className="w-3 h-3" />
-                                  <span>초콜릿</span>
+                                  <span>젤리류(5)</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <input type="radio" className="w-3 h-3" />
-                                  <span>캔디류</span>
+                                  <span>초콜릿(5)</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <input type="radio" className="w-3 h-3" />
-                                  <span>프로틴/시리얼</span>
+                                  <span>캔디류(5)</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <input type="radio" className="w-3 h-3" />
+                                  <span>프로틴/시리얼(5)</span>
                                 </div>
                               </div>
                             </div>
 
                             {/* 상품 목록 */}
-                            <div className="flex-1">
+                            <div className="flex-1 overflow-y-auto max-h-[500px]">
+                              {/* 껌 섹션 */}
+                              <div className="mb-6">
+                                <h4 className="text-sm font-semibold mb-3">껌</h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                  {[
+                                    { name: '롯데)자일리톨알파오리지날용기 86g', price: '6,000' },
+                                    { name: '투데이)미니베어풍선껌(델리스)', price: '1,000' },
+                                    { name: '롯데)자일리톨오리지날리필115g', price: '6,000' },
+                                    { name: '롯데)왓따판박이(티니핑)13.7g', price: '600' },
+                                    { name: '롯데)이브로즈껌26g', price: '1,200' }
+                                  ].map((product, idx) => (
+                                    <div key={idx} className="bg-gray-50 rounded-lg p-2">
+                                      <div className="bg-gray-200 rounded h-24 mb-2 flex items-center justify-center text-xs text-gray-400">
+                                        이미지 없음
+                                      </div>
+                                      <div className="text-xs font-medium mb-1 line-clamp-2">
+                                        {product.name}
+                                      </div>
+                                      <div className="text-xs text-gray-600">{product.price}원</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* 비스킷류 섹션 */}
+                              <div>
+                                <h4 className="text-sm font-semibold mb-3">비스킷류</h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                  {[
+                                    { name: '롯데)크런키빼빼로39g', price: '2,000' },
+                                    { name: '오리온)비쵸비5P', price: '3,600' },
+                                    { name: '크라운)쿠크다스(커피)128g', price: '3,000' },
+                                    { name: '크라운)화이트하임49g', price: '1,400' },
+                                    { name: '크라운)뽀또치즈타르트92g', price: '1,500' }
+                                  ].map((product, idx) => (
+                                    <div key={idx} className="bg-gray-50 rounded-lg p-2">
+                                      <div className="bg-gray-200 rounded h-24 mb-2 flex items-center justify-center text-xs text-gray-400">
+                                        이미지 없음
+                                      </div>
+                                      <div className="text-xs font-medium mb-1 line-clamp-2">
+                                        {product.name}
+                                      </div>
+                                      <div className="text-xs text-gray-600">{product.price}원</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        )}
+
+                        {/* 부진 상품 페이지 */}
+                        {previewPage === 'excluded' && (
+                        <div className="p-4">
+                          <div className="mb-4">
+                            <div className="text-sm font-semibold mb-2">대분류 카테고리</div>
+                            <div className="flex flex-wrap gap-2">
+                              {['과자', '냉장', '맥주', '면', '미반', '빵', '양주와인', '유음료', '음료'].map((cat, idx) => (
+                                <button
+                                  key={cat}
+                                  className={`px-3 py-1 text-xs rounded-full ${
+                                    idx === 0 ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'
+                                  }`}
+                                >
+                                  {cat}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex gap-4">
+                            {/* 필터 */}
+                            <div className="w-32">
+                              <div className="text-sm font-semibold mb-2">필터</div>
+                              <button className="text-xs text-gray-600 mb-2 hover:text-gray-900">초기화</button>
+                              <div className="space-y-1 text-xs">
+                                <div className="flex items-center gap-2">
+                                  <input type="radio" className="w-3 h-3" defaultChecked />
+                                  <span>전체(20)</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <input type="radio" className="w-3 h-3" />
+                                  <span>과자류(5)</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <input type="radio" className="w-3 h-3" />
+                                  <span>음료류(5)</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <input type="radio" className="w-3 h-3" />
+                                  <span>냉장류(5)</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <input type="radio" className="w-3 h-3" />
+                                  <span>기타(5)</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 상품 목록 */}
+                            <div className="flex-1 overflow-y-auto max-h-[500px]">
                               <div className="grid grid-cols-2 gap-3">
-                                {[1, 2, 3, 4].map((i) => (
-                                  <div key={i} className="bg-gray-50 rounded-lg p-2">
+                                {[1, 2, 3, 4, 5].map((i) => (
+                                  <div key={i} className="bg-gray-50 rounded-lg p-2 border border-red-200">
                                     <div className="bg-gray-200 rounded h-24 mb-2 flex items-center justify-center text-xs text-gray-400">
                                       이미지 없음
                                     </div>
-                                    <div className="text-xs font-medium mb-1 line-clamp-2">
-                                      롯데)자일리톨알파오리지날용기86g
+                                    <div className="text-xs font-medium mb-1 line-clamp-2 text-gray-700">
+                                      부진 상품 {i}
                                     </div>
-                                    <div className="text-xs text-gray-600">6,000원</div>
+                                    <div className="text-xs text-gray-600">5,000원</div>
                                   </div>
                                 ))}
                               </div>
                             </div>
                           </div>
                         </div>
+                        )}
+
+                        {/* 유사 매장 페이지 */}
+                        {previewPage === 'similar' && (
+                        <div className="p-4">
+                          <div className="mb-4">
+                            <h3 className="text-base font-bold text-gray-900 mb-2">우리 매장과 유사 매장 찾기</h3>
+                            <p className="text-xs text-gray-600 mb-3">한달 동안, 우리 매장과 가장 유사한 매장들을 알려드립니다</p>
+                            
+                            {/* 분석 기간 */}
+                            <div className="flex items-center gap-2 mb-4">
+                              <span className="text-xs font-semibold text-gray-700">분석 기간</span>
+                              <button className="px-3 py-1 text-xs bg-green-600 text-white rounded">9월</button>
+                              <button className="px-3 py-1 text-xs bg-white text-gray-700 border border-gray-300 rounded">8월</button>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-4">
+                            {/* 왼쪽: 유사 매장 순위 */}
+                            <div className="w-40 flex-shrink-0">
+                              <h4 className="text-sm font-bold text-gray-900 mb-2">유사 매장 순위</h4>
+                              <p className="text-xs text-gray-500 mb-3">클릭하여 상세 분석 리포트 확인</p>
+                              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                                {[
+                                  { rank: 1, name: '대치은마사거리점', address: '서울시 서대문구 회기로 24길' },
+                                  { rank: 2, name: '잠실새내역점', address: '서울시 남대문구 회기로 24길' },
+                                  { rank: 3, name: '삼성역트레이드센터점', address: '서울시 동대문구 이문로 24길' },
+                                  { rank: 4, name: '역삼타운점', address: '서울시 한남대로 24길' }
+                                ].map((store) => (
+                                  <div key={store.rank} className="bg-gray-50 rounded p-2 border border-gray-200 cursor-pointer hover:bg-gray-100">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="w-6 h-6 bg-green-600 text-white text-xs font-bold rounded flex items-center justify-center">
+                                        {store.rank}
+                                      </span>
+                                      <span className="text-xs font-semibold text-gray-900">세븐일레븐 {store.name}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-600 ml-8">{store.address}</p>
+                                    <p className="text-xs text-gray-500 ml-8">영업시간: 24시간 · 매장면적 23m²</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* 오른쪽: 지도 */}
+                            <div className="flex-1">
+                              <h4 className="text-sm font-bold text-gray-900 mb-2">유사 매장 위치</h4>
+                              <p className="text-xs text-gray-500 mb-3">기준 월: 9월</p>
+                              <div className="bg-gray-200 rounded-lg h-[400px] flex items-center justify-center">
+                                <span className="text-xs text-gray-400">지도 영역</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1190,24 +1397,36 @@ export default function OverviewPage() {
                 className="flex flex-wrap justify-center gap-4 mt-16 will-change-transform"
                 style={{ opacity: 0, transform: 'translateY(30px)' }}
               >
-                <Link
-                  href={getSimilarStoresHref()}
-                  className="px-8 py-4 text-lg font-medium text-gray-700 bg-gray-100 rounded-lg transition-all duration-300 hover:bg-gray-200 hover:scale-105"
+                <button
+                  onClick={() => setPreviewPage('similar')}
+                  className={`px-8 py-4 text-lg font-medium rounded-lg transition-all duration-300 hover:scale-105 ${
+                    previewPage === 'similar'
+                      ? 'bg-gray-300 text-gray-900'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
                   유사 매장 페이지
-                </Link>
-                <Link
-                  href={getRecommendationsHref()}
-                  className="px-8 py-4 text-lg font-medium text-white bg-gray-900 rounded-lg transition-all duration-300 hover:bg-gray-800 hover:scale-105"
+                </button>
+                <button
+                  onClick={() => setPreviewPage('recommended')}
+                  className={`px-8 py-4 text-lg font-medium rounded-lg transition-all duration-300 hover:scale-105 ${
+                    previewPage === 'recommended'
+                      ? 'bg-gray-300 text-gray-900'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
                   추천 상품 페이지
-                </Link>
-                <Link
-                  href={getUnderperformingHref()}
-                  className="px-8 py-4 text-lg font-medium text-gray-700 bg-gray-100 rounded-lg transition-all duration-300 hover:bg-gray-200 hover:scale-105"
+                </button>
+                <button
+                  onClick={() => setPreviewPage('excluded')}
+                  className={`px-8 py-4 text-lg font-medium rounded-lg transition-all duration-300 hover:scale-105 ${
+                    previewPage === 'excluded'
+                      ? 'bg-gray-300 text-gray-900'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
                   부진 상품 페이지
-                </Link>
+                </button>
               </div>
             </div>
           </div>
@@ -1600,11 +1819,6 @@ export default function OverviewPage() {
                   <p className="text-sm text-gray-700 mb-3 leading-relaxed">
                     대분류 카테고리별 판매량 비중 분석을 통한 소비자 구매 패턴 파악
                   </p>
-                  <div className="bg-white border-l-4 border-green-600 p-3">
-                    <p className="text-xs text-gray-700 leading-relaxed">
-                      <span className="font-semibold text-gray-900">분석 결과:</span> 주요 카테고리가 전체 매출의 60% 이상을 차지하여 매장별 고객층의 구매 선호도를 명확히 반영
-                    </p>
-                  </div>
                 </div>
                 
                 <div className="bg-gray-50 border border-gray-300 p-5">
@@ -1617,11 +1831,6 @@ export default function OverviewPage() {
                   <p className="text-sm text-gray-700 mb-3 leading-relaxed">
                     주중/주말 × 시간대별 매출 비중 분석을 통한 고객 유입 패턴 추적
                   </p>
-                  <div className="bg-white border-l-4 border-green-600 p-3">
-                    <p className="text-xs text-gray-700 leading-relaxed">
-                      <span className="font-semibold text-gray-900">분석 결과:</span> 상권 특성(근무형/야간형/주거형) 구분 및 타겟 고객층(직장인/학생/주부) 정확한 파악
-                    </p>
-                  </div>
                 </div>
                 
                 <div className="bg-gray-50 border border-gray-300 p-5">
@@ -1634,11 +1843,6 @@ export default function OverviewPage() {
                   <p className="text-sm text-gray-700 mb-3 leading-relaxed">
                     주중 대비 주말 매출 비율 계산을 통한 상권 성격(오피스/주거/관광) 분석
                   </p>
-                  <div className="bg-white border-l-4 border-green-600 p-3">
-                    <p className="text-xs text-gray-700 leading-relaxed">
-                      <span className="font-semibold text-gray-900">분석 결과:</span> 주중 중심형/주말 중심형 매장 분류를 통한 발주 전략 차별화 가능
-                    </p>
-                  </div>
                 </div>
                 
                 <div className="bg-gray-50 border-2 border-green-600 p-5">
@@ -1652,11 +1856,6 @@ export default function OverviewPage() {
                   <p className="text-sm text-gray-700 mb-3 leading-relaxed">
                     실시간 유동인구 정보와 방문객 패턴 분석을 통한 상권 특성 정확한 반영
                   </p>
-                  <div className="bg-white border-l-4 border-green-600 p-3">
-                    <p className="text-xs text-gray-700 leading-relaxed">
-                      <span className="font-semibold text-gray-900">분석 결과:</span> 유동인구 데이터 결합을 통한 정밀한 유사도 분석 및 높은 신뢰도 확보
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -1687,7 +1886,7 @@ export default function OverviewPage() {
               {/* 설명 */}
               <div className="mb-6 pb-4 border-b-2 border-gray-300">
                 <p className="text-sm text-gray-700 leading-relaxed">
-                  상권 변화를 실시간으로 반영하기 위해 최근 4주 데이터를 유지하며 매주 자동 갱신하는 Rolling Window 알고리즘을 적용합니다.
+                  상권 변화를 실시간으로 반영하기 위해 최근 4주 데이터를 유지하며 2주마다 자동 갱신하는 Rolling Window 알고리즘을 적용합니다.
                 </p>
               </div>
 
@@ -1705,7 +1904,7 @@ export default function OverviewPage() {
                     <div className="w-1 h-6 bg-green-600"></div>
                     <h4 className="text-lg font-bold text-gray-900">갱신 주기</h4>
                   </div>
-                  <p className="text-sm text-gray-700">매주 자동 업데이트</p>
+                  <p className="text-sm text-gray-700">2주마다 자동 업데이트</p>
                 </div>
               </div>
 
@@ -1714,7 +1913,7 @@ export default function OverviewPage() {
                 <h4 className="text-lg font-bold text-gray-900 mb-4">작동 원리</h4>
                 <ol className="space-y-3 list-decimal list-inside">
                   <li className="text-sm text-gray-700 leading-relaxed">
-                    매주 새로운 주차 데이터를 추가하고 가장 오래된 주차 데이터를 제거
+                    2주마다 새로운 주차 데이터를 추가하고 가장 오래된 주차 데이터를 제거
                   </li>
                   <li className="text-sm text-gray-700 leading-relaxed">
                     최신 4주 데이터 기반으로 유사도 알고리즘 자동 재계산
@@ -1811,19 +2010,6 @@ export default function OverviewPage() {
                     </div>
                   </div>
                 </div>
-
-                {/* 결과 */}
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-green-600 p-5 rounded-r-lg">
-                  <div className="flex items-start gap-3">
-                    <div className="w-1 h-6 bg-green-600 mt-1"></div>
-                    <div>
-                      <h5 className="text-sm font-bold text-gray-900 mb-2">결과</h5>
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        유사매장 Top 10의 교집합이 <span className="font-bold text-gray-900">0개</span> → 상권 특성이 완전히 달라짐
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* 사례 2: 역삼만남점 */}
@@ -1875,19 +2061,6 @@ export default function OverviewPage() {
                         <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                         <p className="text-sm font-semibold text-gray-900">주중 낮 시간대 활성</p>
                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 결과 */}
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-green-600 p-5 rounded-r-lg">
-                  <div className="flex items-start gap-3">
-                    <div className="w-1 h-6 bg-green-600 mt-1"></div>
-                    <div>
-                      <h5 className="text-sm font-bold text-gray-900 mb-2">결과</h5>
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        유사매장 Top 10의 교집합이 <span className="font-bold text-gray-900">0개</span> → 상권 특성이 완전히 달라짐
-                      </p>
                     </div>
                   </div>
                 </div>

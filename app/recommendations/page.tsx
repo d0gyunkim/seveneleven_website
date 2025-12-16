@@ -850,34 +850,17 @@ export default function RecommendationsPage() {
                         })
                       }
                       
-                      const isAllSelected = selectedMiddleCategories.length === 0 || selectedMiddleCategories.length === middleCategories.length
+                      const isAllSelected = selectedMiddleCategories.length === 0
                       
                       return (
-                        <button
-                          onClick={() => {
-                            if (isAllSelected) {
-                              setSelectedMiddleCategories([])
-                            } else {
-                              setSelectedMiddleCategories([...middleCategories])
-                            }
-                          }}
-                          className={`w-full flex items-center gap-3 px-2 py-2 text-left transition-colors ${
-                            isAllSelected
-                              ? activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
-                              : 'text-gray-700 hover:text-gray-900'
-                          }`}
-                        >
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                            isAllSelected
-                              ? activeTab === 'recommended' ? 'border-emerald-600 bg-emerald-600' : 'border-amber-600 bg-amber-600'
-                              : 'border-gray-300'
-                          }`}>
-                            {isAllSelected && (
-                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
+                        <label className="w-full flex items-center gap-3 px-2 py-2 text-left transition-colors cursor-pointer">
+                          <input
+                            type="radio"
+                            name="filter-category"
+                            checked={isAllSelected}
+                            onChange={() => setSelectedMiddleCategories([])}
+                            className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 focus:ring-2"
+                          />
                           <span className={`text-sm font-medium ${
                             isAllSelected
                               ? activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
@@ -885,7 +868,7 @@ export default function RecommendationsPage() {
                           }`}>
                             전체({totalCount})
                           </span>
-                        </button>
+                        </label>
                       )
                     })()}
                     {middleCategories.map((category) => {
@@ -939,35 +922,20 @@ export default function RecommendationsPage() {
                         }
                       }
                       
-                      const isSelected = selectedMiddleCategories.includes(category)
+                      const isSelected = selectedMiddleCategories.length === 1 && selectedMiddleCategories.includes(category)
                       
                       return (
-                        <button
+                        <label
                           key={category}
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedMiddleCategories(selectedMiddleCategories.filter(c => c !== category))
-                            } else {
-                              setSelectedMiddleCategories([...selectedMiddleCategories, category])
-                            }
-                          }}
-                          className={`w-full flex items-center gap-3 px-2 py-2 text-left transition-colors ${
-                            isSelected
-                              ? activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
-                              : 'text-gray-700 hover:text-gray-900'
-                          }`}
+                          className="w-full flex items-center gap-3 px-2 py-2 text-left transition-colors cursor-pointer"
                         >
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                            isSelected
-                              ? activeTab === 'recommended' ? 'border-emerald-600 bg-emerald-600' : 'border-amber-600 bg-amber-600'
-                              : 'border-gray-300'
-                          }`}>
-                            {isSelected && (
-                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
+                          <input
+                            type="radio"
+                            name="filter-category"
+                            checked={isSelected}
+                            onChange={() => setSelectedMiddleCategories([category])}
+                            className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 focus:ring-2"
+                          />
                           <span className={`text-sm font-medium flex-1 ${
                             isSelected
                               ? activeTab === 'recommended' ? 'text-emerald-600' : 'text-amber-600'
@@ -975,8 +943,8 @@ export default function RecommendationsPage() {
                           }`}>
                             {category}
                           </span>
-                          <span className="text-xs text-gray-500">{categoryCount}</span>
-                        </button>
+                          <span className="text-xs text-gray-500">({categoryCount})</span>
+                        </label>
                       )
                     })}
                   </div>
