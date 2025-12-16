@@ -13,6 +13,7 @@ interface StoreLocation {
   store_nm: string
   rank: number
   address?: string
+  전화번호?: string
   latitude?: number
   longitude?: number
 }
@@ -29,10 +30,11 @@ interface KakaoMapProps {
   className?: string
   selectedStore?: SelectedStoreInfo | null
   onStoreDetailClick?: (storeCode: string) => void
-  openStoreCode?: string | null // 특정 매장의 InfoWindow를 열기 위한 prop
+  openStoreCode?: string | null // 특정 매장으로 지도 이동을 위한 prop
+  selectedStoreCode?: string | null // 선택된 매장 코드 (다른 매장 숨기기용)
 }
 
-export default function KakaoMap({ stores, currentStoreName, className = '', selectedStore, onStoreDetailClick, openStoreCode }: KakaoMapProps) {
+export default function KakaoMap({ stores, currentStoreName, className = '', selectedStore, onStoreDetailClick, openStoreCode, selectedStoreCode }: KakaoMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<any>(null)
   const [markers, setMarkers] = useState<any[]>([])
@@ -40,7 +42,7 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
   const [isSearching, setIsSearching] = useState(false)
   const overlayRef = useRef<any>(null)
   const markerOverlaysRef = useRef<any[]>([])
-  const infoWindowsRef = useRef<Map<string, { infoWindow: any, marker: any }>>(new Map())
+  // InfoWindow 제거됨 - 더 이상 사용하지 않음
 
   // 카카오맵 스크립트 로드
   useEffect(() => {
@@ -78,7 +80,9 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
     // 기존 마커 및 오버레이 제거
     markers.forEach((marker) => marker.setMap(null))
     markerOverlaysRef.current.forEach((overlay) => {
-      if (overlay) overlay.setMap(null)
+      if (overlay && overlay.customOverlay) {
+        overlay.customOverlay.setMap(null)
+      }
     })
     markerOverlaysRef.current = []
 
@@ -98,16 +102,16 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
       if (completedSearches >= totalStores) {
         setIsSearching(false)
         // 모든 마커가 추가되면 지도 범위 조정
-        if (newMarkers.length > 0) {
+        if (markerOverlaysRef.current.length > 0) {
           try {
             // bounds 객체가 제대로 초기화되었고, isEmpty() 메서드를 사용하여 확인
             if (typeof bounds.isEmpty === 'function' && !bounds.isEmpty()) {
-              kakaoMap.setBounds(bounds)
-            } else if (newMarkers.length > 0) {
+              kakaoMap.setBounds(bounds, 50) // 패딩 추가
+            } else if (markerOverlaysRef.current.length > 0) {
               // bounds가 비어있으면 첫 번째 마커로 이동
-              const firstMarker = newMarkers[0]
-              if (firstMarker && typeof firstMarker.getPosition === 'function') {
-                const position = firstMarker.getPosition()
+              const firstOverlay = markerOverlaysRef.current[0]
+              if (firstOverlay && firstOverlay.getPosition) {
+                const position = firstOverlay.getPosition()
                 if (position) {
                   kakaoMap.setCenter(position)
                   kakaoMap.setLevel(8)
@@ -117,11 +121,11 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
           } catch (error) {
             console.warn('지도 범위 설정 실패:', error)
             // 범위 설정 실패 시 첫 번째 마커로 이동
-            if (newMarkers.length > 0) {
+            if (markerOverlaysRef.current.length > 0) {
               try {
-                const firstMarker = newMarkers[0]
-                if (firstMarker && typeof firstMarker.getPosition === 'function') {
-                  const position = firstMarker.getPosition()
+                const firstOverlay = markerOverlaysRef.current[0]
+                if (firstOverlay && firstOverlay.getPosition) {
+                  const position = firstOverlay.getPosition()
                   if (position) {
                     kakaoMap.setCenter(position)
                     kakaoMap.setLevel(8)
@@ -141,126 +145,141 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
         const position = new window.kakao.maps.LatLng(lat, lng)
         bounds.extend(position)
 
-        // 현재 매장과 유사 매장을 구분하여 색상 설정
-        const isCurrentStore = currentStoreInfo && storeInfo.store_nm === currentStoreInfo.store_nm
-        const markerColor = isCurrentStore ? '#DC2626' : '#10B981' // 빨간색: 현재 매장, 초록색: 유사 매장
+        // 모든 마커를 초록색으로 설정
+        const markerColor = '#10B981' // 초록색
 
-        // 투명한 마커 생성 (위치 참조용, 화면에는 표시 안 함)
-        const invisibleMarker = new window.kakao.maps.Marker({
-          position: position,
-          map: null, // 지도에 표시하지 않음
-        })
+        // 선택된 매장인지 확인
+        const isSelected = selectedStoreCode && String(storeInfo.store_code) === String(selectedStoreCode)
+        // selectedStoreCode가 있을 때만 다른 마커를 작게 표시
+        const isSmall = selectedStoreCode ? (!isSelected) : false
 
-        // 마커에 store_code 저장 (오버레이 표시용, 문자열로 정규화)
-        invisibleMarker.store_code = String(storeInfo.store_code || '')
-        invisibleMarker.store_nm = storeInfo.store_nm || ''
-
-        // 인포윈도우 생성 (자세히 보기 버튼 포함)
+        // InfoWindow 제거 - 더 이상 사용하지 않음
         const storeCodeForClick = String(storeInfo.store_code || '')
-        const infoWindowContent = `
-          <div style="padding: 12px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-            <div style="font-weight: bold; font-size: 14px; margin-bottom: 6px; color: ${markerColor};">
-              ${isCurrentStore ? '현재 매장' : `#${storeInfo.rank} 유사 매장`}
-            </div>
-            <div style="font-size: 13px; color: #333; margin-bottom: 8px;">
-              세븐일레븐 ${storeInfo.store_nm}
-            </div>
-            <button 
-              id="detail-btn-${storeCodeForClick}"
-              style="
-                width: 100%;
-                padding: 8px 12px;
-                background: linear-gradient(135deg, ${markerColor} 0%, ${isCurrentStore ? '#B91C1C' : '#059669'} 100%);
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-size: 12px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: opacity 0.2s;
-              "
-              onmouseover="this.style.opacity='0.9'"
-              onmouseout="this.style.opacity='1'"
-            >
-              자세히 보기
-            </button>
-          </div>
-        `
         
-        const infoWindow = new window.kakao.maps.InfoWindow({
-          content: infoWindowContent,
-        })
+        // 마커 크기 결정
+        const markerHeight = isSmall ? 32 : isSelected ? 48 : 40
+        const markerWidth = isSmall ? 120 : isSelected ? 180 : 150
         
-        // InfoWindow가 열릴 때 버튼 이벤트 리스너 추가
-        const originalOpen = infoWindow.open.bind(infoWindow)
-        infoWindow.open = function(map: any, marker: any) {
-          originalOpen(map, marker)
-          // DOM이 렌더링된 후 이벤트 리스너 추가
-          setTimeout(() => {
-            const button = document.getElementById(`detail-btn-${storeCodeForClick}`)
-            if (button && onStoreDetailClick) {
-              button.addEventListener('click', (e) => {
-                e.stopPropagation()
-                onStoreDetailClick(storeCodeForClick)
-              })
-            }
-          }, 100)
-        }
-        
-        // InfoWindow와 마커를 Map에 저장 (나중에 열기 위해)
-        infoWindowsRef.current.set(storeCodeForClick, { infoWindow, marker: invisibleMarker })
-
-        // DOM 요소로 직접 생성하여 클릭 이벤트 추가
+        // 커스텀 오버레이로 마커 생성 (둥근 사각형 레이블)
         const overlayDiv = document.createElement('div')
         overlayDiv.style.cssText = `
-          background: white;
-          border: 2px solid ${markerColor};
-          border-radius: 6px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-          min-width: 120px;
-          max-width: 180px;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          overflow: hidden;
+          background: ${markerColor} !important;
+          border-radius: 20px;
+          padding: 6px 12px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
           cursor: pointer;
+          min-width: ${markerWidth}px;
+          height: ${markerHeight}px;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          opacity: ${isSmall ? '0.8' : '1'};
+          transform: ${isSmall ? 'scale(0.85)' : 'scale(1)'};
+          transition: all 0.2s;
+          z-index: ${isSelected ? '1000' : isSmall ? '1' : '100'};
+          position: relative;
         `
         
-        const headerDiv = document.createElement('div')
-        headerDiv.style.cssText = `
-          background: linear-gradient(135deg, ${markerColor} 0%, ${isCurrentStore ? '#B91C1C' : '#059669'} 100%);
-          padding: 4px 8px;
+        // 왼쪽: 세븐일레븐 로고 영역
+        const logoContainer = document.createElement('div')
+        logoContainer.style.cssText = `
+          width: ${markerHeight - 12}px;
+          height: ${markerHeight - 12}px;
+          background: white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        `
+        
+        // 오른쪽: 매장명
+        const nameDiv = document.createElement('div')
+        nameDiv.style.cssText = `
           color: white;
-        `
-        
-        const textDiv = document.createElement('div')
-        textDiv.style.cssText = `
           font-weight: bold;
-          font-size: 11px;
+          font-size: ${isSmall ? '12px' : isSelected ? '16px' : '14px'};
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          max-width: ${markerWidth - markerHeight - 20}px;
         `
-        textDiv.textContent = storeInfo.store_nm
+        nameDiv.textContent = storeInfo.store_nm || ''
         
-        headerDiv.appendChild(textDiv)
-        overlayDiv.appendChild(headerDiv)
+        overlayDiv.appendChild(logoContainer)
+        overlayDiv.appendChild(nameDiv)
         
-        // 클릭 이벤트 추가
+        // 클릭 이벤트 추가 - 매장 상세 모달 열기
         overlayDiv.addEventListener('click', () => {
-          infoWindow.open(kakaoMap, invisibleMarker)
+          if (onStoreDetailClick) {
+            onStoreDetailClick(storeCodeForClick)
+          }
         })
-
-        const markerOverlay = new window.kakao.maps.CustomOverlay({
+        
+        // 커스텀 오버레이 생성
+        const customOverlay = new window.kakao.maps.CustomOverlay({
           position: position,
           content: overlayDiv,
-          yAnchor: 0.5, // 위치 중앙에 표시
+          yAnchor: 1,
           xAnchor: 0.5,
+          zIndex: isSelected ? 1000 : isSmall ? 1 : 100,
         })
+        
+        // 지도에 마커 표시
+        if (kakaoMap) {
+          customOverlay.setMap(kakaoMap)
+        }
+        
+        // 로고 이미지 (모든 매장에 표시)
+        const logoImg = document.createElement('img')
+        logoImg.style.cssText = `
+          width: ${markerHeight - 16}px;
+          height: ${markerHeight - 16}px;
+          object-fit: contain;
+          border-radius: 50%;
+        `
+        logoImg.crossOrigin = 'anonymous'
+        logoImg.src = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSP183RdOwZQBayUC0G_6lbwxwQ2LgWvBJktw&s'
+        logoImg.onerror = () => {
+          // 이미지 로드 실패 시 빈 원으로 표시
+          logoContainer.style.background = 'white'
+        }
+        logoContainer.appendChild(logoImg)
+        
+        // 투명한 마커 생성 (참조용)
+        const invisibleMarker = new window.kakao.maps.Marker({
+          position: position,
+          map: null,
+        })
+        
+        const marker = invisibleMarker
+        
+        // 마커에 정보 저장
+        invisibleMarker.store_code = String(storeInfo.store_code || '')
+        invisibleMarker.store_nm = storeInfo.store_nm || ''
 
-        markerOverlay.setMap(kakaoMap)
-        markerOverlay.marker = invisibleMarker // 마커 참조 저장
-        markerOverlay.storeInfo = storeInfo // 매장 정보 저장
+        const markerOverlay = {
+          marker: invisibleMarker,
+          customOverlay: customOverlay,
+          storeInfo: storeInfo,
+          isSelected: isSelected,
+          isSmall: isSmall,
+          markerWidth: markerWidth,
+          markerHeight: markerHeight,
+          markerColor: markerColor,
+          setMap: (map: any) => {
+            if (map) {
+              customOverlay.setMap(map)
+            } else {
+              customOverlay.setMap(null)
+            }
+          },
+          setContent: () => {},
+          getPosition: () => position
+        }
+
         markerOverlaysRef.current.push(markerOverlay)
-
         newMarkers.push(invisibleMarker)
       }
 
@@ -299,7 +318,7 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
     })
 
     setMarkers(newMarkers)
-  }, [isLoaded, stores, currentStoreName, onStoreDetailClick])
+  }, [isLoaded, stores, currentStoreName, onStoreDetailClick, selectedStoreCode])
 
     // 선택된 매장의 오버레이 강조 표시
   useEffect(() => {
@@ -324,8 +343,7 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
         
         if (!isSelected) {
           // 선택되지 않은 오버레이는 기본 스타일로 복원
-          const isCurrentStore = currentStoreName && markerStoreNm === currentStoreName
-          const markerColor = isCurrentStore ? '#DC2626' : '#10B981'
+          const markerColor = '#10B981' // 초록색
           const storeInfo = overlay.storeInfo || { store_nm: markerStoreNm }
           
           // 기본 스타일 DOM 요소 생성
@@ -344,7 +362,7 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
           
           const headerDiv = document.createElement('div')
           headerDiv.style.cssText = `
-            background: linear-gradient(135deg, ${markerColor} 0%, ${isCurrentStore ? '#B91C1C' : '#059669'} 100%);
+            background: linear-gradient(135deg, ${markerColor} 0%, #059669 100%);
             padding: 4px 8px;
             color: white;
           `
@@ -364,30 +382,42 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
           
           // 클릭 이벤트 추가 (자세히 보기 버튼 포함)
           const storeCodeForClick = String(storeInfo.store_code || '')
+          const storeAddress = (storeInfo as any).address || ''
+          const storePhone = (storeInfo as any).전화번호 || ''
           const infoWindowContent = `
-            <div style="padding: 12px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-              <div style="font-weight: bold; font-size: 14px; margin-bottom: 6px; color: ${markerColor};">
-                ${isCurrentStore ? '현재 매장' : `#${storeInfo.rank || ''} 유사 매장`}
+            <div style="padding: 24px; min-width: 320px; max-width: 380px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              <div style="font-weight: bold; font-size: 22px; margin-bottom: 20px; color: #000; line-height: 1.6;">
+                ${storeInfo.store_nm}
+                </div>
+              ${storeAddress ? `
+              <div style="font-size: 15px; color: #333; margin-bottom: 16px; line-height: 1.8;">
+                ${storeAddress}
+                </div>
+              ` : ''}
+              ${storePhone ? `
+              <div style="font-size: 15px; color: #333; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; line-height: 1.6;">
+                <span style="color: #999; font-size: 16px;">📞</span>
+                <span>${storePhone}</span>
               </div>
-              <div style="font-size: 13px; color: #333; margin-bottom: 8px;">
-                세븐일레븐 ${storeInfo.store_nm}
-              </div>
+              ` : ''}
               <button 
                 id="detail-btn-default-${storeCodeForClick}"
                 style="
                   width: 100%;
-                  padding: 8px 12px;
-                  background: linear-gradient(135deg, ${markerColor} 0%, ${isCurrentStore ? '#B91C1C' : '#059669'} 100%);
+                  padding: 14px 20px;
+                  background: linear-gradient(135deg, ${markerColor} 0%, #059669 100%);
                   color: white;
                   border: none;
-                  border-radius: 4px;
-                  font-size: 12px;
-                  font-weight: 600;
+                  border-radius: 8px;
+                  font-size: 15px;
+                  font-weight: 700;
                   cursor: pointer;
                   transition: opacity 0.2s;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                  margin-top: 4px;
                 "
-                onmouseover="this.style.opacity='0.9'"
-                onmouseout="this.style.opacity='1'"
+                onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.2)'"
+                onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)'"
               >
                 자세히 보기
               </button>
@@ -420,8 +450,7 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
           overlay.setContent(defaultDiv)
         } else if (isSelected) {
           // 선택된 매장의 오버레이를 더 크게 강조
-          const isCurrentStore = currentStoreName && markerStoreNm === currentStoreName
-          const markerColor = isCurrentStore ? '#DC2626' : '#10B981'
+          const markerColor = '#10B981' // 초록색
           
           // 오버레이를 제거하고 다시 추가하여 가장 앞으로 가져오기
           overlay.setMap(null)
@@ -443,7 +472,7 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
           
           const headerDiv = document.createElement('div')
           headerDiv.style.cssText = `
-            background: linear-gradient(135deg, ${markerColor} 0%, ${isCurrentStore ? '#B91C1C' : '#059669'} 100%);
+            background: linear-gradient(135deg, ${markerColor} 0%, #059669 100%);
             padding: 8px 12px;
             color: white;
           `
@@ -464,7 +493,7 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
             font-size: 10px;
             opacity: 0.95;
           `
-          typeDiv.textContent = isCurrentStore ? '현재 매장' : '유사 매장'
+          typeDiv.textContent = '유사 매장'
           
           headerDiv.appendChild(titleDiv)
           headerDiv.appendChild(typeDiv)
@@ -472,30 +501,42 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
           
           // 클릭 이벤트 추가 (자세히 보기 버튼 포함)
           const storeCodeForClick = String(overlay.storeInfo?.store_code || selectedStore.store_code || '')
+          const storeAddress = (overlay.storeInfo as any)?.address || ''
+          const storePhone = (overlay.storeInfo as any)?.전화번호 || ''
           const infoWindowContent = `
-            <div style="padding: 12px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-              <div style="font-weight: bold; font-size: 14px; margin-bottom: 6px; color: ${markerColor};">
-                ${isCurrentStore ? '현재 매장' : `#${overlay.storeInfo?.rank || ''} 유사 매장`}
+            <div style="padding: 24px; min-width: 320px; max-width: 380px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              <div style="font-weight: bold; font-size: 22px; margin-bottom: 20px; color: #000; line-height: 1.6;">
+                ${selectedStore.store_nm}
+                </div>
+              ${storeAddress ? `
+              <div style="font-size: 15px; color: #333; margin-bottom: 16px; line-height: 1.8;">
+                ${storeAddress}
+                </div>
+              ` : ''}
+              ${storePhone ? `
+              <div style="font-size: 15px; color: #333; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; line-height: 1.6;">
+                <span style="color: #999; font-size: 16px;">📞</span>
+                <span>${storePhone}</span>
               </div>
-              <div style="font-size: 13px; color: #333; margin-bottom: 8px;">
-                세븐일레븐 ${selectedStore.store_nm}
-              </div>
+              ` : ''}
               <button 
                 id="detail-btn-selected-${storeCodeForClick}"
                 style="
                   width: 100%;
-                  padding: 8px 12px;
-                  background: linear-gradient(135deg, ${markerColor} 0%, ${isCurrentStore ? '#B91C1C' : '#059669'} 100%);
+                  padding: 14px 20px;
+                  background: linear-gradient(135deg, ${markerColor} 0%, #059669 100%);
                   color: white;
                   border: none;
-                  border-radius: 4px;
-                  font-size: 12px;
-                  font-weight: 600;
+                  border-radius: 8px;
+                  font-size: 15px;
+                  font-weight: 700;
                   cursor: pointer;
                   transition: opacity 0.2s;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                  margin-top: 4px;
                 "
-                onmouseover="this.style.opacity='0.9'"
-                onmouseout="this.style.opacity='1'"
+                onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.2)'"
+                onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)'"
               >
                 자세히 보기
               </button>
@@ -540,28 +581,143 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
     })
   }, [map, selectedStore, currentStoreName, onStoreDetailClick])
 
-  // openStoreCode가 변경되면 해당 매장의 InfoWindow 열기
+  // openStoreCode가 변경되면 해당 매장으로 지도 이동
   useEffect(() => {
-    if (!map || !openStoreCode || infoWindowsRef.current.size === 0) {
+    if (!map || !openStoreCode || markerOverlaysRef.current.length === 0) {
       return
     }
 
-    const storeInfo = infoWindowsRef.current.get(String(openStoreCode))
-    if (storeInfo) {
-      // 기존에 열려있는 InfoWindow 닫기
-      infoWindowsRef.current.forEach(({ infoWindow }) => {
-        infoWindow.close()
-      })
-      
-      // 해당 매장의 InfoWindow 열기
-      storeInfo.infoWindow.open(map, storeInfo.marker)
-      
-      // 지도 중심을 해당 마커로 이동
-      const position = storeInfo.marker.getPosition()
-      map.setCenter(position)
-      map.setLevel(Math.max(map.getLevel(), 5))
+    const targetOverlay = markerOverlaysRef.current.find((overlay) => {
+      if (overlay && overlay.storeInfo) {
+        return String(overlay.storeInfo.store_code) === String(openStoreCode)
+      }
+      return false
+    })
+
+    if (targetOverlay && targetOverlay.getPosition) {
+      const position = targetOverlay.getPosition()
+      if (position) {
+        map.setCenter(position)
+        map.setLevel(Math.max(map.getLevel(), 5))
+      }
     }
   }, [map, openStoreCode])
+
+  // selectedStoreCode가 변경되면 다른 매장 마커 작게 표시
+  useEffect(() => {
+    if (!map || markerOverlaysRef.current.length === 0) {
+      return
+    }
+
+    markerOverlaysRef.current.forEach((overlay) => {
+      if (overlay && overlay.customOverlay && overlay.storeInfo) {
+        const markerStoreCode = String(overlay.storeInfo.store_code || '')
+        const isSelected = selectedStoreCode && markerStoreCode === String(selectedStoreCode)
+        const isSmall = selectedStoreCode && !isSelected
+        
+        // 마커 크기 결정
+        const newMarkerHeight = isSmall ? 32 : isSelected ? 48 : 40
+        const newMarkerWidth = isSmall ? 120 : isSelected ? 180 : 150
+        const markerColor = '#10B981' // 초록색
+        
+        // 기존 마커 크기와 다르면 새로 생성
+        if (overlay.markerHeight !== newMarkerHeight || overlay.markerWidth !== newMarkerWidth || overlay.isSelected !== isSelected) {
+          // 기존 오버레이 제거
+          overlay.customOverlay.setMap(null)
+          
+          // 새로운 오버레이 생성
+          const overlayDiv = document.createElement('div')
+          overlayDiv.style.cssText = `
+            background: ${markerColor};
+            border-radius: 20px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            min-width: ${newMarkerWidth}px;
+            height: ${newMarkerHeight}px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            opacity: ${isSmall ? '0.8' : '1'};
+            transform: ${isSmall ? 'scale(0.85)' : 'scale(1)'};
+            transition: all 0.2s;
+          `
+          
+          // 왼쪽: 세븐일레븐 로고 영역
+          const logoContainer = document.createElement('div')
+          logoContainer.id = `logo-container-update-${markerStoreCode}`
+          logoContainer.style.cssText = `
+            width: ${newMarkerHeight - 12}px;
+            height: ${newMarkerHeight - 12}px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+          `
+          
+          // 로고 이미지 (모든 매장에 표시)
+          const logoImg = document.createElement('img')
+          logoImg.style.cssText = `
+            width: ${newMarkerHeight - 16}px;
+            height: ${newMarkerHeight - 16}px;
+            object-fit: contain;
+            border-radius: 50%;
+          `
+          logoImg.crossOrigin = 'anonymous'
+          logoImg.src = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSP183RdOwZQBayUC0G_6lbwxwQ2LgWvBJktw&s'
+          logoImg.onerror = () => {
+            // 이미지 로드 실패 시 빈 원으로 표시
+            logoContainer.style.background = 'white'
+          }
+          logoContainer.appendChild(logoImg)
+          
+          // 오른쪽: 매장명
+          const nameDiv = document.createElement('div')
+          nameDiv.style.cssText = `
+            color: white;
+            font-weight: bold;
+            font-size: ${isSmall ? '12px' : isSelected ? '16px' : '14px'};
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: ${newMarkerWidth - newMarkerHeight - 20}px;
+          `
+          nameDiv.textContent = overlay.storeInfo.store_nm || ''
+          
+          overlayDiv.appendChild(logoContainer)
+          overlayDiv.appendChild(nameDiv)
+          
+          // 클릭 이벤트 추가 - 매장 상세 모달 열기
+          overlayDiv.addEventListener('click', () => {
+            if (onStoreDetailClick) {
+              onStoreDetailClick(markerStoreCode)
+            }
+          })
+          
+          // 새로운 커스텀 오버레이 생성
+          const newCustomOverlay = new window.kakao.maps.CustomOverlay({
+            position: overlay.getPosition(),
+            content: overlayDiv,
+            yAnchor: 0.5,
+            xAnchor: 0,
+          })
+          
+          newCustomOverlay.setMap(map)
+          
+          // 오버레이 정보 업데이트
+          overlay.customOverlay = newCustomOverlay
+          overlay.markerHeight = newMarkerHeight
+          overlay.markerWidth = newMarkerWidth
+          overlay.markerColor = markerColor
+          overlay.isSelected = isSelected
+          overlay.isSmall = isSmall
+        }
+      }
+    })
+  }, [map, selectedStoreCode, currentStoreName])
 
   if (!isLoaded) {
     return (

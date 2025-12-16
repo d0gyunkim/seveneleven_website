@@ -12,6 +12,9 @@ interface SimilarStore {
   store_nm: string
   rank: number
   address?: string
+  영업시간?: string
+  매장면적?: string
+  전화번호?: string
   latitude?: number
   longitude?: number
   similarity_score?: number // 유사도 점수 (0-100)
@@ -59,6 +62,7 @@ export default function SimilarStoresPage() {
   const [currentStoreAvailableMonths, setCurrentStoreAvailableMonths] = useState<string[]>([])
   const [currentSelectedMonth, setCurrentSelectedMonth] = useState<string>('')
   const [openStoreCode, setOpenStoreCode] = useState<string | null>(null) // 지도에서 열 매장 코드
+  const [selectedStoreCode, setSelectedStoreCode] = useState<string | null>(null) // 선택된 매장 코드
 
   useEffect(() => {
     // URL에서 storeCode 가져오기, 없으면 sessionStorage에서 가져오기
@@ -179,6 +183,9 @@ export default function SimilarStoresPage() {
         store_nm: storeName,
         rank: 0, // 현재 매장은 순위 0으로 표시
         address: foundStoreData['주소'] || foundStoreData.address || undefined,
+        영업시간: foundStoreData['영업시간'] || foundStoreData.영업시간 || undefined,
+        매장면적: foundStoreData['매장면적'] || foundStoreData.매장면적 || undefined,
+        전화번호: foundStoreData['전화번호'] || foundStoreData.전화번호 || undefined,
         latitude,
         longitude,
       })
@@ -277,6 +284,9 @@ export default function SimilarStoresPage() {
           store_nm: similarStoreNm,
           rank: i + 1, // 순위는 1부터 시작
           address: similarStore['주소'] || similarStore.address || undefined,
+          영업시간: similarStore['영업시간'] || similarStore.영업시간 || undefined,
+          매장면적: similarStore['매장면적'] || similarStore.매장면적 || undefined,
+          전화번호: similarStore['전화번호'] || similarStore.전화번호 || undefined,
           latitude,
           longitude,
           similarity_score: similarityScore,
@@ -369,8 +379,9 @@ export default function SimilarStoresPage() {
   }
 
   const handleStoreDetailClick = (storeCode: string) => {
-    // 지도에서 해당 매장의 InfoWindow 열기
-    setOpenStoreCode(storeCode)
+    // 매장 상세 모달 바로 열기
+    setSelectedStoreCode(storeCode)
+    handleStoreDetailModalOpen(storeCode)
   }
 
   const handleStoreDetailModalOpen = (storeCode: string) => {
@@ -498,7 +509,7 @@ export default function SimilarStoresPage() {
               <p className="text-gray-600 text-sm">해당 기간의 유사 매장 분석 데이터가 준비되지 않았습니다.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-4 md:gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[500px_1fr] gap-4 md:gap-6">
               {/* 왼쪽: 유사매장 목록 + 매장 정보 */}
               <div className="lg:order-1 space-y-4 md:space-y-6">
                 {/* 유사매장 목록 */}
@@ -510,33 +521,58 @@ export default function SimilarStoresPage() {
                   </div>
                   
                   {/* 스크롤 가능한 목록 */}
-                  <div className="overflow-y-auto" style={{ height: '500px', minHeight: '400px' }}>
+                  <div className="overflow-y-auto" style={{ height: 'calc(100vh - 200px)', minHeight: '600px' }}>
                     <div className="divide-y divide-gray-100">
-                      {similarStores.map((store) => (
-                        <div
+                      {similarStores.map((store) => {
+                        const isSelected = selectedStoreCode === store.store_code
+                        return (
+                          <div
                           key={store.store_code}
-                          className="px-5 py-3 transition-colors border-b border-gray-100 cursor-pointer hover:bg-gray-50"
+                          className={`px-6 py-5 transition-colors border-b border-gray-100 cursor-pointer ${
+                            isSelected ? 'bg-green-50 border-l-4 border-l-green-600' : 'hover:bg-gray-50'
+                          }`}
                           onClick={() => handleStoreDetailClick(store.store_code)}
                         >
-                          <div className="flex items-start gap-3">
-                            <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center text-xs font-bold bg-gray-200 text-gray-600">
+                          <div className="flex items-start gap-4">
+                            <span className={`flex-shrink-0 w-8 h-8 flex items-center justify-center text-sm font-bold ${
+                              isSelected ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
+                            }`}>
                               {store.rank}
                             </span>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <p className="text-sm font-semibold text-gray-900">
+                              <div className="flex items-center gap-2 mb-2">
+                                <p className={`text-lg font-bold leading-relaxed ${
+                                  isSelected ? 'text-green-700' : 'text-gray-900'
+                                }`}>
                                   세븐일레븐 {store.store_nm}
                                 </p>
                               </div>
+                              {(store.영업시간 || store.매장면적) && (
+                                <div className="flex items-center gap-2 mb-2">
+                                  {store.영업시간 && (
+                                    <span className="text-sm text-gray-600 leading-relaxed">
+                                      영업시간: {store.영업시간}
+                                    </span>
+                                  )}
+                                  {store.영업시간 && store.매장면적 && (
+                                    <span className="text-sm text-gray-400">•</span>
+                                  )}
+                                  {store.매장면적 && (
+                                    <span className="text-sm text-gray-600 leading-relaxed">
+                                      면적: {store.매장면적}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                               {store.address && (
-                                <p className="text-xs text-gray-500 line-clamp-1 mb-1">
+                                <p className="text-sm text-gray-500 line-clamp-1 leading-relaxed">
                                   {store.address}
                                 </p>
                               )}
                             </div>
-                            <div className="flex-shrink-0">
+                            <div className="flex-shrink-0 mt-1">
                               <svg
-                                className="w-4 h-4 text-gray-400"
+                                className="w-5 h-5 text-gray-400"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -551,7 +587,8 @@ export default function SimilarStoresPage() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
@@ -588,6 +625,7 @@ export default function SimilarStoresPage() {
                       } : null}
                       onStoreDetailClick={handleStoreDetailModalOpen}
                       openStoreCode={openStoreCode}
+                      selectedStoreCode={selectedStoreCode}
                     />
                   </div>
                 </div>
@@ -919,27 +957,23 @@ export default function SimilarStoresPage() {
           onClick={() => setShowStoreDetailModal(false)}
         >
           <div
-            className="bg-white rounded-lg max-w-7xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-lg max-w-[95vw] w-full max-h-[95vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 모달 헤더 */}
-            <div className="sticky top-0 bg-white border-b-2 border-gray-300 px-8 py-6 z-10">
+            <div className="sticky top-0 bg-white px-8 py-6 z-10">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-baseline gap-4 mb-2">
                     <div className="w-1 h-10 bg-green-600"></div>
                     <div>
                       <h3 className="text-2xl font-bold text-gray-900">
-                        {selectedMonth || ''} {selectedStore.store_nm || ''}
+                        {selectedStore.store_nm || ''}
                       </h3>
-                      <p className="text-xs text-gray-500 mt-1 font-medium uppercase tracking-wide">유사도 분석 리포트</p>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="px-3 py-1.5 bg-green-600 text-white text-xs font-bold">
-                    높은 신뢰도
-                  </div>
                   <button
                     onClick={() => setShowStoreDetailModal(false)}
                     className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
@@ -950,35 +984,11 @@ export default function SimilarStoresPage() {
                   </button>
                 </div>
               </div>
-              {/* 월별 탭 */}
-              {availableMonths.length > 0 && (
-                <div className="flex items-center gap-2 mb-4">
-                  {availableMonths.map((month) => (
-                    <button
-                      key={month}
-                      onClick={() => {
-                        console.log('월 변경:', month, '데이터:', storeDetailsByMonth[month])
-                        setSelectedMonth(month)
-                        setSelectedStore(storeDetailsByMonth[month])
-                        setSelectedCategory('과자')
-                      }}
-                      className={`px-4 py-2 text-xs font-medium transition-colors whitespace-nowrap border ${
-                        selectedMonth === month
-                          ? 'bg-green-600 text-white border-green-600'
-                          : 'bg-white text-gray-600 border-gray-300 hover:border-green-400 hover:text-green-600'
-                      }`}
-                    >
-                      {month}
-                    </button>
-                  ))}
-                </div>
-              )}
-              
               {/* 탭 버튼 */}
               <div className="flex items-center gap-2 border-b-2 border-gray-300">
                 <button
                   onClick={() => setStoreDetailTab('근거')}
-                  className={`px-6 py-3 text-sm font-semibold transition-colors border-b-2 ${
+                  className={`px-8 py-4 text-base font-semibold transition-colors border-b-2 ${
                     storeDetailTab === '근거'
                       ? 'border-green-600 text-green-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -988,7 +998,7 @@ export default function SimilarStoresPage() {
                 </button>
                 <button
                   onClick={() => setStoreDetailTab('인기상품')}
-                  className={`px-6 py-3 text-sm font-semibold transition-colors border-b-2 ${
+                  className={`px-8 py-4 text-base font-semibold transition-colors border-b-2 ${
                     storeDetailTab === '인기상품'
                       ? 'border-green-600 text-green-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -1000,54 +1010,23 @@ export default function SimilarStoresPage() {
             </div>
 
             {/* 모달 내용 */}
-            <div className="px-8 py-8">
+            <div className="px-8 py-4">
               {/* 유사매장 근거 탭 */}
               {storeDetailTab === '근거' && (
                 <>
                   {/* 유사도 분석 섹션 - 세 개의 패널 나란히 */}
-                  <div className="mb-10 pb-10 border-b border-gray-200">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                  <div className="mb-10 pb-10">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                   {/* 판매 패턴 유사도 */}
-                  <div className="bg-white border border-gray-300 p-6 flex flex-col">
-                    <div className="mb-6 flex items-start justify-between border-b border-gray-200 pb-4">
-                      <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide">판매 패턴</h4>
-                      <div className="text-right">
-                        <span className="text-2xl font-bold text-green-600">
-                          {(() => {
-                            const currentStore = similarStores.find(s => s.store_code === selectedStore.store_code)
-                            return currentStore?.similarity_score?.toFixed(1) || '92.1'
-                          })()}%
-                        </span>
-                        <div className="text-xs text-gray-500">개별 비교</div>
-                      </div>
+                  <div className="bg-white border border-gray-300 p-8 flex flex-col">
+                    <div className="mb-4 pb-2">
+                      <h4 className="text-lg font-bold text-gray-900 uppercase tracking-wide">판매 패턴</h4>
                     </div>
                     <div className="space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-gray-600">카테고리 비중 일치도</span>
-                          <span className="text-xs font-semibold text-gray-700">
-                            {(() => {
-                              const currentStore = similarStores.find(s => s.store_code === selectedStore.store_code)
-                              return currentStore?.similarity_score?.toFixed(1) || '92.1'
-                            })()}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-100 h-2 rounded overflow-hidden">
-                          <div 
-                            className="bg-green-600 h-2 transition-all" 
-                            style={{ 
-                              width: `${(() => {
-                                const currentStore = similarStores.find(s => s.store_code === selectedStore.store_code)
-                                return currentStore?.similarity_score || 92.1
-                              })()}%` 
-                            }}
-                          ></div>
-                        </div>
-                      </div>
                       <div className="pt-4 border-t border-gray-100">
                         <p className="text-xs font-semibold text-gray-700 mb-1">카테고리별 판매 비율</p>
                         <p className="text-[10px] text-gray-500 mb-3">9개 주요 카테고리 비교 분석</p>
-                        <ResponsiveContainer width="100%" height={240}>
+                        <ResponsiveContainer width="100%" height={320}>
                           <RadarChart data={[
                             { category: '미반', 내매장: 8.5, 유사매장: 7.0 },
                             { category: '조리빵', 내매장: 12.3, 유사매장: 14.5 },
@@ -1072,23 +1051,16 @@ export default function SimilarStoresPage() {
                   </div>
 
                   {/* 시간대 패턴 유사도 */}
-                  <div className="bg-white border border-gray-300 p-6 flex flex-col">
-                    <div className="mb-6 flex items-start justify-between border-b border-gray-200 pb-4">
-                      <div>
-                        <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide">시간대 패턴</h4>
-                        <p className="text-xs text-gray-500 mt-1">고객 유입 시간</p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-2xl font-bold text-green-600">88.5%</span>
-                        <div className="text-xs text-gray-500">매우 유사</div>
-                      </div>
+                  <div className="bg-white border border-gray-300 p-8 flex flex-col">
+                    <div className="mb-4 pb-2">
+                      <h4 className="text-lg font-bold text-gray-900 uppercase tracking-wide">시간대 패턴</h4>
                     </div>
                     
                     {/* 주중/주말 탭 */}
                     <div className="flex gap-2 mb-4">
                       <button
                         onClick={() => setTimePatternTab('주중')}
-                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                        className={`flex-1 px-4 py-3 rounded-lg text-base font-semibold transition-colors ${
                           timePatternTab === '주중'
                             ? 'bg-green-500 text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -1098,7 +1070,7 @@ export default function SimilarStoresPage() {
                       </button>
                       <button
                         onClick={() => setTimePatternTab('주말')}
-                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                        className={`flex-1 px-4 py-3 rounded-lg text-base font-semibold transition-colors ${
                           timePatternTab === '주말'
                             ? 'bg-green-500 text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -1109,21 +1081,9 @@ export default function SimilarStoresPage() {
                     </div>
 
                     <div className="space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-gray-600">{timePatternTab} 시간대별 분포 일치도</span>
-                          <span className="text-xs font-semibold text-gray-700">88.5%</span>
-                        </div>
-                        <div className="w-full bg-gray-100 h-2 rounded overflow-hidden">
-                          <div className="bg-green-600 h-2 transition-all" style={{ width: '88.5%' }}></div>
-                        </div>
-                      </div>
                       <div className="pt-4 border-t border-gray-100">
                         <p className="text-xs font-semibold text-gray-700 mb-1">{timePatternTab} 시간대별 판매 비율</p>
-                        <p className="text-[10px] text-gray-500 mb-3">
-                          {timePatternTab === '주중' ? '요일별 고객 유입 패턴 분석' : '주말 고객 유입 패턴 분석'}
-                        </p>
-                        <ResponsiveContainer width="100%" height={220}>
+                        <ResponsiveContainer width="100%" height={300}>
                           <LineChart data={timePatternTab === '주중' ? [
                             { time: '심야\n(0-6시)', 내매장: 5.2, 유사매장: 7.5 },
                             { time: '오전\n(6-12시)', 내매장: 18.5, 유사매장: 22.5 },
@@ -1176,31 +1136,15 @@ export default function SimilarStoresPage() {
                   </div>
 
                   {/* 주중/주말 패턴 유사도 */}
-                  <div className="bg-white border border-gray-300 p-6 flex flex-col">
-                    <div className="mb-6 flex items-start justify-between border-b border-gray-200 pb-4">
-                      <div>
-                        <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide">주중/주말 패턴</h4>
-                        <p className="text-xs text-gray-500 mt-1">요일별 판매 패턴</p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-2xl font-bold text-green-600">85.2%</span>
-                        <div className="text-xs text-gray-500">유사</div>
-                      </div>
+                  <div className="bg-white border border-gray-300 p-8 flex flex-col">
+                    <div className="mb-4 pb-2">
+                      <h4 className="text-lg font-bold text-gray-900 uppercase tracking-wide">주중/주말 패턴</h4>
                     </div>
                     <div className="space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-gray-600">주중/주말 비율 일치도</span>
-                          <span className="text-xs font-semibold text-gray-700">85.2%</span>
-                        </div>
-                        <div className="w-full bg-gray-100 h-2 rounded overflow-hidden">
-                          <div className="bg-green-600 h-2 transition-all" style={{ width: '85.2%' }}></div>
-                        </div>
-                      </div>
                       <div className="pt-4 border-t border-gray-100">
                         <p className="text-xs font-semibold text-gray-700 mb-3">주말/주중 매출 집중도</p>
                         <p className="text-[10px] text-gray-500 mb-2">주말 매출 비중 / 주중 매출 비중으로 계산</p>
-                        <ResponsiveContainer width="100%" height={180}>
+                        <ResponsiveContainer width="100%" height={240}>
                           <BarChart data={[
                             { name: '내 매장', value: 1.18 },
                             { name: '유사 매장', value: 1.10 },
@@ -1226,44 +1170,37 @@ export default function SimilarStoresPage() {
               </div>
 
               {/* 유사 매장 선정 근거 */}
-              <div className="mt-10 pt-10 border-t-2 border-gray-300">
-                <div className="bg-white border-2 border-gray-300 p-8">
-                  <div className="mb-6 border-b-2 border-gray-300 pb-4">
+              <div className="mt-10 pt-10">
+                <div className="bg-white p-8">
+                  <div className="mb-6 pb-4">
                     <div className="flex items-baseline gap-4 mb-3">
                       <div className="w-1 h-8 bg-green-600"></div>
-                      <h4 className="text-lg font-bold text-gray-900 uppercase tracking-wide">유사 매장 선정 근거</h4>
+                      <h4 className="text-xl font-bold text-gray-900 uppercase tracking-wide">유사 매장 선정 근거</h4>
                     </div>
                   </div>
-                  <div className="space-y-5 text-sm text-gray-700 leading-relaxed">
+                  <div className="space-y-5 text-base text-gray-700 leading-relaxed">
                     <div className="flex items-start gap-3">
                       <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                       <p>
-                        본 매장과 유사 매장들은 <span className="font-bold text-green-600">고객 방문 패턴의 유사도가 90% 이상</span>으로 
-                        매우 높은 수준의 일치를 보이며, 이는 상권 특성과 고객층 구성이 유사함을 의미합니다.
+                        고객 방문 패턴 유사도 <span className="font-bold text-green-600">90% 이상</span>으로 상권 특성과 고객층 구성이 유사합니다.
                       </p>
                     </div>
                     <div className="flex items-start gap-3">
                       <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                       <p>
-                        주요 카테고리별 판매 비중 분석 결과, <span className="font-semibold">조리빵</span>, <span className="font-semibold">유음료</span>, 
-                        <span className="font-semibold">과자</span> 등 핵심 상품군의 매출 구성이 거의 동일하여 
-                        <span className="font-semibold">고객 니즈와 구매 패턴이 유사</span>함을 확인했습니다.
+                        주요 카테고리별 판매 비중이 거의 동일하여 <span className="font-semibold">고객 니즈와 구매 패턴이 유사</span>합니다.
                       </p>
                     </div>
                     <div className="flex items-start gap-3">
                       <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                       <p>
-                        주말/주중 매출 집중도 분석 결과, 유사 매장들은 평균적으로 
-                        <span className="font-semibold">주말 매출이 주중 대비 12-15% 높게 집중</span>되어 있어 
-                        주말 중심형 상권 특성을 공유합니다.
+                        <span className="font-semibold">주말 매출이 주중 대비 12-15% 높게 집중</span>되어 주말 중심형 상권 특성을 공유합니다.
                       </p>
                     </div>
                     <div className="flex items-start gap-3">
                       <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                       <p>
-                        시간대별 고객 유입 패턴 분석 결과, <span className="font-semibold">주중 오후 12-18시</span>와 
-                        <span className="font-semibold">주말 저녁 18-24시</span>에 매출이 집중되는 패턴이 
-                        유사 매장들과 <span className="font-semibold">높은 일치도</span>를 보입니다.
+                        <span className="font-semibold">주중 오후 12-18시</span>와 <span className="font-semibold">주말 저녁 18-24시</span>에 매출이 집중되는 패턴이 유사합니다.
                       </p>
                     </div>
                     {(() => {
@@ -1271,13 +1208,13 @@ export default function SimilarStoresPage() {
                       const reasons = currentStore?.similarity_reasons || []
                       if (reasons.length > 0) {
                         return (
-                          <div className="mt-6 pt-6 border-t border-gray-200">
-                            <h5 className="text-sm font-bold text-gray-900 mb-3">주요 유사도 근거</h5>
+                          <div className="mt-6 pt-6">
+                            <h5 className="text-base font-bold text-gray-900 mb-4">주요 유사도 근거</h5>
                             <div className="space-y-3">
                               {reasons.map((reason, index) => (
                                 <div key={index} className="flex items-start gap-3">
                                   <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                  <p className="text-sm text-gray-700">{reason}</p>
+                                  <p className="text-base text-gray-700">{reason}</p>
                                 </div>
                               ))}
                             </div>
