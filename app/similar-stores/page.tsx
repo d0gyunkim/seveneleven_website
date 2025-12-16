@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Layout from '@/components/Layout'
 import KakaoMap from '@/components/KakaoMap'
@@ -36,6 +36,16 @@ interface StoreDetail {
 
 type CategoryType = '과자' | '냉장' | '맥주' | '면' | '미반' | '빵' | '음료'
 
+interface ProductInfo {
+  item_nm: string
+  item_img: string | null
+  item_lrdv_nm: string | null
+  item_mddv_nm: string | null
+  item_smdv_nm: string | null
+  cpm_amt: number | null // 원가
+  slem_amt: number | null // 판매가
+}
+
 export default function SimilarStoresPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -63,6 +73,8 @@ export default function SimilarStoresPage() {
   const [currentSelectedMonth, setCurrentSelectedMonth] = useState<string>('')
   const [openStoreCode, setOpenStoreCode] = useState<string | null>(null) // 지도에서 열 매장 코드
   const [selectedStoreCode, setSelectedStoreCode] = useState<string | null>(null) // 선택된 매장 코드
+  const [selectedProduct, setSelectedProduct] = useState<ProductInfo | null>(null) // 선택된 상품 정보
+  const [productInfoMap, setProductInfoMap] = useState<Map<string, ProductInfo>>(new Map()) // 상품 정보 캐시
 
   useEffect(() => {
     // URL에서 storeCode 가져오기, 없으면 sessionStorage에서 가져오기
@@ -390,6 +402,126 @@ export default function SimilarStoresPage() {
     setShowStoreDetailModal(true)
   }
 
+  // 상품마스터에서 상품 정보 조회
+  const fetchProductInfo = async (itemNm: string): Promise<ProductInfo | null> => {
+    // 캐시 확인
+    if (productInfoMap.has(itemNm)) {
+      return productInfoMap.get(itemNm) || null
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('상품마스터')
+        .select('ITEM_NM, item_img, ITEM_LRDV_NM, ITEM_MDDV_NM, ITEM_SMDV_NM, CPM_AMT, SLEM_AMT')
+        .eq('ITEM_NM', itemNm)
+        .limit(1)
+        .single()
+
+      if (error) {
+        console.warn(`상품 정보 조회 실패: ${itemNm}`, error)
+        return null
+      }
+
+      if (data) {
+        const productInfo: ProductInfo = {
+          item_nm: data.ITEM_NM || itemNm,
+          item_img: data.item_img || null,
+          item_lrdv_nm: data.ITEM_LRDV_NM || null,
+          item_mddv_nm: data.ITEM_MDDV_NM || null,
+          item_smdv_nm: data.ITEM_SMDV_NM || null,
+          cpm_amt: data.CPM_AMT || null,
+          slem_amt: data.SLEM_AMT || null,
+        }
+        
+        // 캐시에 저장
+        setProductInfoMap(prev => new Map(prev).set(itemNm, productInfo))
+        return productInfo
+      }
+
+      return null
+    } catch (err) {
+      console.error('상품 정보 조회 중 오류:', err)
+      return null
+    }
+  }
+
+  // 여러 상품 정보 일괄 조회
+  const fetchMultipleProductInfo = useCallback(async (itemNms: string[]) => {
+    const uniqueItemNms = Array.from(new Set(itemNms))
+    
+    setProductInfoMap(prev => {
+      const uncachedItems = uniqueItemNms.filter(nm => !prev.has(nm))
+      return prev
+    })
+
+    const currentMap = productInfoMap
+    const uncachedItems = uniqueItemNms.filter(nm => !currentMap.has(nm))
+    
+    if (uncachedItems.length === 0) {
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('상품마스터')
+        .select('ITEM_NM, item_img, ITEM_LRDV_NM, ITEM_MDDV_NM, ITEM_SMDV_NM, CPM_AMT, SLEM_AMT')
+        .in('ITEM_NM', uncachedItems)
+
+      if (error) {
+        console.warn('상품 정보 일괄 조회 실패:', error)
+        return
+      }
+
+      if (data && data.length > 0) {
+        setProductInfoMap(prev => {
+          const newMap = new Map(prev)
+          data.forEach((item: any) => {
+            const productInfo: ProductInfo = {
+              item_nm: item.ITEM_NM || '',
+              item_img: item.item_img || null,
+              item_lrdv_nm: item.ITEM_LRDV_NM || null,
+              item_mddv_nm: item.ITEM_MDDV_NM || null,
+              item_smdv_nm: item.ITEM_SMDV_NM || null,
+              cpm_amt: item.CPM_AMT || null,
+              slem_amt: item.SLEM_AMT || null,
+            }
+            newMap.set(item.ITEM_NM, productInfo)
+          })
+          return newMap
+        })
+      }
+    } catch (err) {
+      console.error('상품 정보 일괄 조회 중 오류:', err)
+    }
+  }, [productInfoMap])
+
+  // 상품 클릭 핸들러
+  const handleProductClick = async (itemNm: string) => {
+    let productInfo: ProductInfo | null | undefined = productInfoMap.get(itemNm)
+    
+    if (!productInfo) {
+      productInfo = await fetchProductInfo(itemNm)
+    }
+    
+    if (productInfo) {
+      setSelectedProduct(productInfo)
+    }
+  }
+
+  // 선택된 카테고리의 상품 정보 미리 로드
+  useEffect(() => {
+    if (selectedStore && selectedStore[selectedCategory]) {
+      const categoryData = selectedStore[selectedCategory] as Record<string, string[]>
+      const allProducts: string[] = []
+      Object.values(categoryData).forEach(products => {
+        allProducts.push(...products)
+      })
+      if (allProducts.length > 0) {
+        fetchMultipleProductInfo(allProducts)
+      }
+    }
+  }, [selectedStore, selectedCategory, fetchMultipleProductInfo])
+
   const categories: CategoryType[] = ['과자', '냉장', '맥주', '면', '미반', '빵', '음료']
 
   const formatSales = (sales: number) => {
@@ -540,17 +672,17 @@ export default function SimilarStoresPage() {
                               {store.rank}
                             </span>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
-                                <p className={`text-lg font-bold leading-relaxed ${
+                              <div className="flex items-center gap-2 mb-4">
+                                <p className={`text-lg font-bold ${
                                   isSelected ? 'text-green-700' : 'text-gray-900'
-                                }`}>
+                                }`} style={{ lineHeight: '1.8' }}>
                                   세븐일레븐 {store.store_nm}
                                 </p>
                               </div>
                               {(store.영업시간 || store.매장면적) && (
-                                <div className="flex items-center gap-2 mb-2">
+                                <div className="flex items-center gap-2 mb-4" style={{ lineHeight: '2.0' }}>
                                   {store.영업시간 && (
-                                    <span className="text-sm text-gray-600 leading-relaxed">
+                                    <span className="text-sm text-gray-600">
                                       영업시간: {store.영업시간}
                                     </span>
                                   )}
@@ -558,8 +690,8 @@ export default function SimilarStoresPage() {
                                     <span className="text-sm text-gray-400">•</span>
                                   )}
                                   {store.매장면적 && (
-                                    <span className="text-sm text-gray-600 leading-relaxed">
-                                      면적: {store.매장면적}
+                                    <span className="text-sm text-gray-600">
+                                      매장면적 {store.매장면적}m²
                                     </span>
                                   )}
                                 </div>
@@ -1010,7 +1142,7 @@ export default function SimilarStoresPage() {
             </div>
 
             {/* 모달 내용 */}
-            <div className="px-8 py-4">
+            <div className="px-8 py-2">
               {/* 유사매장 근거 탭 */}
               {storeDetailTab === '근거' && (
                 <>
@@ -1233,21 +1365,20 @@ export default function SimilarStoresPage() {
               {storeDetailTab === '인기상품' && (
                 <>
               {/* 유사 매장 인기 상품 순위 제목 */}
-              <div className="border-t-2 border-gray-300 pt-8 mt-10">
-                <div className="mb-6">
+              <div className="pt-2">
+                <div className="mb-4">
                   <div className="flex items-baseline gap-4">
                     <div className="w-1 h-8 bg-green-600"></div>
                     <div>
                       <h3 className="text-xl font-bold text-gray-900 uppercase tracking-wide">
                         인기 상품 순위
                       </h3>
-                      <p className="text-xs text-gray-500 mt-1">유사 매장 판매량 기준</p>
                     </div>
                   </div>
                 </div>
 
                 {/* 대분류 탭 */}
-                <div className="flex flex-wrap gap-2 mb-8">
+                <div className="flex flex-wrap gap-2 mb-6">
                   {categories.map((category) => (
                     <button
                       key={category}
@@ -1280,7 +1411,7 @@ export default function SimilarStoresPage() {
                             key={subCategory}
                             className="bg-white border border-gray-300 p-4"
                           >
-                            <div className="flex items-center justify-between mb-4 border-b border-gray-200 pb-2">
+                            <div className="flex items-center justify-between mb-3 pb-1">
                               <h3 className="text-sm font-bold text-gray-900">
                                 {subCategory}
                               </h3>
@@ -1289,17 +1420,72 @@ export default function SimilarStoresPage() {
                               </span>
                             </div>
                             <div className="space-y-2">
-                              {products.map((product, index) => (
-                                <div
-                                  key={index}
-                                  className="flex items-start gap-3 text-sm text-gray-700"
-                                >
-                                  <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-gray-100 text-gray-600 font-semibold text-xs">
-                                    {index + 1}
-                                  </span>
-                                  <span className="flex-1 leading-tight">{product}</span>
-                                </div>
-                              ))}
+                              {products.map((product, index) => {
+                                const productInfo = productInfoMap.get(product)
+                                return (
+                                  <div
+                                    key={index}
+                                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                                    onClick={() => handleProductClick(product)}
+                                  >
+                                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-gray-100 text-gray-600 font-semibold text-xs">
+                                      {index + 1}
+                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-start gap-3">
+                                        {productInfo?.item_img && (
+                                          <img
+                                            src={productInfo.item_img}
+                                            alt={product}
+                                            className="w-16 h-16 object-contain flex-shrink-0 border border-gray-200 rounded"
+                                            onError={(e) => {
+                                              e.currentTarget.style.display = 'none'
+                                            }}
+                                          />
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-medium text-gray-900 leading-tight mb-1">
+                                            {product}
+                                          </p>
+                                          {(productInfo?.item_lrdv_nm || productInfo?.item_mddv_nm || productInfo?.item_smdv_nm) && (
+                                            <div className="flex flex-wrap gap-1 mb-2">
+                                              {productInfo.item_lrdv_nm && (
+                                                <span className="px-2 py-0.5 text-xs bg-gray-200 text-gray-700 rounded">
+                                                  {productInfo.item_lrdv_nm}
+                                                </span>
+                                              )}
+                                              {productInfo.item_mddv_nm && (
+                                                <span className="px-2 py-0.5 text-xs bg-gray-200 text-gray-700 rounded">
+                                                  {productInfo.item_mddv_nm}
+                                                </span>
+                                              )}
+                                              {productInfo.item_smdv_nm && (
+                                                <span className="px-2 py-0.5 text-xs bg-gray-200 text-gray-700 rounded">
+                                                  {productInfo.item_smdv_nm}
+                                                </span>
+                                              )}
+                                            </div>
+                                          )}
+                                          {(productInfo?.slem_amt || productInfo?.cpm_amt) && (
+                                            <div className="flex items-center gap-2 text-xs">
+                                              {productInfo.slem_amt && (
+                                                <span className="font-semibold text-green-600">
+                                                  {productInfo.slem_amt.toLocaleString()}원
+                                                </span>
+                                              )}
+                                              {productInfo.cpm_amt && (
+                                                <span className="text-gray-500">
+                                                  원가: {productInfo.cpm_amt.toLocaleString()}원
+                                                </span>
+                                              )}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )
+                              })}
                             </div>
                           </div>
                         )
@@ -1321,6 +1507,141 @@ export default function SimilarStoresPage() {
               <button
                 onClick={() => setShowStoreDetailModal(false)}
                 className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 상품 상세 모달 */}
+      {selectedProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* 헤더 */}
+            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+              <h3 className="text-lg font-bold text-gray-900">상품 정보</h3>
+              <button
+                onClick={() => setSelectedProduct(null)}
+                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors rounded-lg"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* 내용 */}
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              <div className="flex flex-col md:flex-row gap-8">
+                {/* 이미지 영역 */}
+                {selectedProduct.item_img && (
+                  <div className="flex-shrink-0 w-full md:w-80">
+                    <div className="relative w-full aspect-square bg-white rounded-xl border border-gray-200 overflow-hidden flex items-center justify-center">
+                      <img
+                        src={selectedProduct.item_img}
+                        alt={selectedProduct.item_nm}
+                        className="w-full h-full object-contain p-6"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                          const parent = e.currentTarget.parentElement
+                          if (parent && !parent.querySelector('.image-placeholder')) {
+                            const placeholder = document.createElement('div')
+                            placeholder.className = 'image-placeholder w-full h-full flex flex-col items-center justify-center text-gray-300'
+                            placeholder.innerHTML = `
+                              <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <span class="text-xs text-gray-400">이미지 없음</span>
+                            `
+                            parent.appendChild(placeholder)
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* 상품 정보 영역 */}
+                <div className="flex-1">
+                  {/* 상품명 */}
+                  <h3 className="text-2xl font-bold text-gray-900 mb-6 leading-tight">
+                    {selectedProduct.item_nm}
+                  </h3>
+
+                  {/* 가격 정보 */}
+                  {(selectedProduct.slem_amt || selectedProduct.cpm_amt) && (
+                    <div className="mb-6 pb-6 border-b border-gray-200">
+                      {selectedProduct.slem_amt && (
+                        <div className="mb-2">
+                          <span className="text-3xl font-bold text-green-600">
+                            {selectedProduct.slem_amt.toLocaleString()}원
+                          </span>
+                        </div>
+                      )}
+                      {selectedProduct.cpm_amt && (
+                        <div>
+                          <span className="text-sm text-gray-500">원가: {selectedProduct.cpm_amt.toLocaleString()}원</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 태그 */}
+                  {(selectedProduct.item_lrdv_nm || selectedProduct.item_mddv_nm || selectedProduct.item_smdv_nm) && (
+                    <div className="mb-6">
+                      <h4 className="text-sm font-semibold text-gray-500 mb-3">상품 분류</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedProduct.item_lrdv_nm && (
+                          <span className="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg font-medium">
+                            {selectedProduct.item_lrdv_nm}
+                          </span>
+                        )}
+                        {selectedProduct.item_mddv_nm && (
+                          <span className="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg font-medium">
+                            {selectedProduct.item_mddv_nm}
+                          </span>
+                        )}
+                        {selectedProduct.item_smdv_nm && (
+                          <span className="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg font-medium">
+                            {selectedProduct.item_smdv_nm}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 상세 정보 */}
+                  <div className="space-y-4">
+                    {selectedProduct.item_lrdv_nm && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-gray-500 mb-1">대분류</h4>
+                        <p className="text-sm text-gray-900">{selectedProduct.item_lrdv_nm}</p>
+                      </div>
+                    )}
+                    {selectedProduct.item_mddv_nm && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-gray-500 mb-1">중분류</h4>
+                        <p className="text-sm text-gray-900">{selectedProduct.item_mddv_nm}</p>
+                      </div>
+                    )}
+                    {selectedProduct.item_smdv_nm && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-gray-500 mb-1">소분류</h4>
+                        <p className="text-sm text-gray-900">{selectedProduct.item_smdv_nm}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 푸터 */}
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
+              <button
+                onClick={() => setSelectedProduct(null)}
+                className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium transition-colors rounded-lg"
               >
                 확인
               </button>
