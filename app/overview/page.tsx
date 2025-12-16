@@ -31,6 +31,9 @@ export default function OverviewPage() {
   const [topRecommendedProducts, setTopRecommendedProducts] = useState<Product[]>([])
   const [topUnderperformingProducts, setTopUnderperformingProducts] = useState<Product[]>([])
   const [loadingProducts, setLoadingProducts] = useState(false)
+  const [showCriteriaModal, setShowCriteriaModal] = useState(false) // 유사 매장 선정 기준 모달
+  const [showRollingWindowModal, setShowRollingWindowModal] = useState(false) // Rolling Window 알고리즘 모달
+  const [showDynamicAreaModal, setShowDynamicAreaModal] = useState(false) // 동적 상권 포착 모달
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([])
   const buttonRefs = useRef<(HTMLDivElement | null)[]>([])
   const hasAppearedRef = useRef<Set<number>>(new Set())
@@ -598,7 +601,7 @@ export default function OverviewPage() {
                           </svg>
                         </div>
                         <div className="flex-1">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-1">유동 인구 3분위</h4>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-1">동적 상권 포착</h4>
                           <p className="text-xs text-gray-500">상권 유동인구 데이터 반영</p>
                         </div>
                       </div>
@@ -1245,7 +1248,10 @@ export default function OverviewPage() {
 
               {/* 선택 기준 카드들 */}
               <div className="grid md:grid-cols-3 gap-6 mb-12">
-                <div className="bg-white rounded-xl p-6 border border-green-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-green-300">
+                <div 
+                  className="bg-white rounded-xl p-6 border border-green-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-green-300 cursor-pointer"
+                  onClick={() => setShowCriteriaModal(true)}
+                >
                   <div className="flex flex-col items-start">
                     <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
                       <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1257,7 +1263,10 @@ export default function OverviewPage() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl p-6 border border-green-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-green-300">
+                <div 
+                  className="bg-white rounded-xl p-6 border border-green-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-green-300 cursor-pointer"
+                  onClick={() => setShowDynamicAreaModal(true)}
+                >
                   <div className="flex flex-col items-start">
                     <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
                       <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1265,12 +1274,15 @@ export default function OverviewPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     </div>
-                    <h4 className="text-lg font-semibold text-gray-900 mb-2">유동 인구 3분위</h4>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">동적 상권 포착</h4>
                     <p className="text-sm text-gray-500 leading-relaxed">상권의 유동인구 데이터를 반영하여 더욱 정확한 상권 특성을 파악합니다.</p>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl p-6 border border-green-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-green-300">
+                <div 
+                  className="bg-white rounded-xl p-6 border border-green-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-green-300 cursor-pointer"
+                  onClick={() => setShowRollingWindowModal(true)}
+                >
                   <div className="flex flex-col items-start">
                     <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
                       <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1547,6 +1559,343 @@ export default function OverviewPage() {
           animation: fadeIn 1s ease-out forwards;
         }
       `}</style>
+
+      {/* 유사 매장 선정 기준 모달 */}
+      {showCriteriaModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => setShowCriteriaModal(false)}>
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b-2 border-gray-300 px-6 py-4 flex items-center justify-between z-10">
+              <div className="flex items-baseline gap-4">
+                <div className="w-1 h-8 bg-green-600"></div>
+                <h3 className="text-xl font-bold text-gray-900 uppercase tracking-wide">유사 매장 선정 기준</h3>
+                <span className="ml-auto px-3 py-1 bg-green-600 text-white text-xs font-bold">4가지 핵심 지표</span>
+              </div>
+              <button
+                onClick={() => setShowCriteriaModal(false)}
+                className="ml-4 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6 md:p-8">
+              <div className="mb-6 pb-4 border-b-2 border-gray-300">
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  머신러닝 알고리즘을 통해 <span className="font-semibold">판매 패턴 분석</span>과 
+                  <span className="font-semibold">유동인구 데이터</span>를 종합 분석하여 
+                  최적의 유사 매장을 선정합니다.
+                </p>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-gray-50 border border-gray-300 p-5">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
+                    <div className="w-2 h-2 bg-green-600"></div>
+                    <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                      판매 상품 패턴
+                    </h5>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                    대분류 카테고리별 판매량 비중 분석을 통한 소비자 구매 패턴 파악
+                  </p>
+                  <div className="bg-white border-l-4 border-green-600 p-3">
+                    <p className="text-xs text-gray-700 leading-relaxed">
+                      <span className="font-semibold text-gray-900">분석 결과:</span> 주요 카테고리가 전체 매출의 60% 이상을 차지하여 매장별 고객층의 구매 선호도를 명확히 반영
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 border border-gray-300 p-5">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
+                    <div className="w-2 h-2 bg-green-600"></div>
+                    <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                      시간대별 패턴
+                    </h5>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                    주중/주말 × 시간대별 매출 비중 분석을 통한 고객 유입 패턴 추적
+                  </p>
+                  <div className="bg-white border-l-4 border-green-600 p-3">
+                    <p className="text-xs text-gray-700 leading-relaxed">
+                      <span className="font-semibold text-gray-900">분석 결과:</span> 상권 특성(근무형/야간형/주거형) 구분 및 타겟 고객층(직장인/학생/주부) 정확한 파악
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 border border-gray-300 p-5">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
+                    <div className="w-2 h-2 bg-green-600"></div>
+                    <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                      주중/주말 편중도
+                    </h5>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                    주중 대비 주말 매출 비율 계산을 통한 상권 성격(오피스/주거/관광) 분석
+                  </p>
+                  <div className="bg-white border-l-4 border-green-600 p-3">
+                    <p className="text-xs text-gray-700 leading-relaxed">
+                      <span className="font-semibold text-gray-900">분석 결과:</span> 주중 중심형/주말 중심형 매장 분류를 통한 발주 전략 차별화 가능
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 border-2 border-green-600 p-5">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
+                    <div className="w-2 h-2 bg-green-600"></div>
+                    <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                      유동인구 데이터
+                    </h5>
+                    <span className="ml-auto px-2 py-0.5 bg-green-600 text-white text-[10px] font-bold">핵심</span>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                    실시간 유동인구 정보와 방문객 패턴 분석을 통한 상권 특성 정확한 반영
+                  </p>
+                  <div className="bg-white border-l-4 border-green-600 p-3">
+                    <p className="text-xs text-gray-700 leading-relaxed">
+                      <span className="font-semibold text-gray-900">분석 결과:</span> 유동인구 데이터 결합을 통한 정밀한 유사도 분석 및 높은 신뢰도 확보
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rolling Window 알고리즘 모달 */}
+      {showRollingWindowModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => setShowRollingWindowModal(false)}>
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b-2 border-gray-300 px-6 py-4 flex items-center justify-between z-10">
+              <div className="flex items-baseline gap-4 flex-1">
+                <h3 className="text-2xl font-bold text-gray-900">ROLLING WINDOW 알고리즘</h3>
+                <span className="ml-auto px-3 py-1 bg-green-600 text-white text-xs font-bold">자동 갱신</span>
+              </div>
+              <button
+                onClick={() => setShowRollingWindowModal(false)}
+                className="ml-4 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6 md:p-8">
+              {/* 설명 */}
+              <div className="mb-6 pb-4 border-b-2 border-gray-300">
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  상권 변화를 실시간으로 반영하기 위해 최근 4주 데이터를 유지하며 매주 자동 갱신하는 Rolling Window 알고리즘을 적용합니다.
+                </p>
+              </div>
+
+              {/* 분석 구간 & 갱신 주기 */}
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1 h-6 bg-green-600"></div>
+                    <h4 className="text-lg font-bold text-gray-900">분석 구간</h4>
+                  </div>
+                  <p className="text-sm text-gray-700">최근 4주 데이터 (Rolling 4 Weeks)</p>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1 h-6 bg-green-600"></div>
+                    <h4 className="text-lg font-bold text-gray-900">갱신 주기</h4>
+                  </div>
+                  <p className="text-sm text-gray-700">매주 자동 업데이트</p>
+                </div>
+              </div>
+
+              {/* 작동 원리 */}
+              <div className="mb-8">
+                <h4 className="text-lg font-bold text-gray-900 mb-4">작동 원리</h4>
+                <ol className="space-y-3 list-decimal list-inside">
+                  <li className="text-sm text-gray-700 leading-relaxed">
+                    매주 새로운 주차 데이터를 추가하고 가장 오래된 주차 데이터를 제거
+                  </li>
+                  <li className="text-sm text-gray-700 leading-relaxed">
+                    최신 4주 데이터 기반으로 유사도 알고리즘 자동 재계산
+                  </li>
+                  <li className="text-sm text-gray-700 leading-relaxed">
+                    시기별 판매 패턴 변화를 즉시 반영하여 정확한 유사 매장 추천
+                  </li>
+                </ol>
+              </div>
+
+              {/* 최신성 보장 */}
+              <div className="bg-gray-50 border-l-4 border-green-600 p-5 rounded-r-lg">
+                <div className="flex items-start gap-3">
+                  <div className="w-1 h-6 bg-green-600 mt-1"></div>
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-900 mb-2">최신성 보장:</h4>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      Rolling Window 알고리즘을 통해 상권의 점진적이고 유동적인 변화를 실시간으로 포착하여 항상 최신 데이터 기반의 정확한 분석 결과를 제공합니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 동적 상권 포착 모달 - 실제 사례 */}
+      {showDynamicAreaModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => setShowDynamicAreaModal(false)}>
+          <div className="bg-white rounded-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b-2 border-gray-300 px-6 py-4 flex items-center justify-between z-10">
+              <h3 className="text-2xl font-bold text-gray-900">실제 사례</h3>
+              <button
+                onClick={() => setShowDynamicAreaModal(false)}
+                className="ml-4 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6 md:p-8 space-y-12">
+              {/* 사례 1: 석촌동호수점 */}
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="text-xl font-bold text-green-600">1</span>
+                  <h4 className="text-xl font-bold text-gray-900">실제 사례 석촌동호수점</h4>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  {/* 1월 (비수기) */}
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-1 h-6 bg-green-600"></div>
+                      <h5 className="text-lg font-bold text-gray-900">1월 (비수기)</h5>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-300 rounded-lg p-5 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-sm font-semibold text-gray-900">대로변 상권</p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-sm font-semibold text-gray-900">상업형/생활형</p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-sm font-semibold text-gray-900">식당가 중심</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4월 (성수기) */}
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-1 h-6 bg-green-600"></div>
+                      <h5 className="text-lg font-bold text-gray-900">4월 (성수기)</h5>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-300 rounded-lg p-5 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-sm font-semibold text-gray-900">한강 주변 상권</p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-sm font-semibold text-gray-900">관광 수요 중심</p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-sm font-semibold text-gray-900">공원가 특성</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 결과 */}
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-green-600 p-5 rounded-r-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="w-1 h-6 bg-green-600 mt-1"></div>
+                    <div>
+                      <h5 className="text-sm font-bold text-gray-900 mb-2">결과</h5>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        유사매장 Top 10의 교집합이 <span className="font-bold text-gray-900">0개</span> → 상권 특성이 완전히 달라짐
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 사례 2: 역삼만남점 */}
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="text-xl font-bold text-green-600">2</span>
+                  <h4 className="text-xl font-bold text-gray-900">실제 사례 역삼만남점</h4>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  {/* 12월 (입시 종료) */}
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-1 h-6 bg-green-600"></div>
+                      <h5 className="text-lg font-bold text-gray-900">12월 (입시 종료)</h5>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-300 rounded-lg p-5 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-sm font-semibold text-gray-900">유흥가 상권</p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-sm font-semibold text-gray-900">역삼역 환승 중심</p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-sm font-semibold text-gray-900">야간 고객 중심</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 7월 (재수생 유입) */}
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-1 h-6 bg-green-600"></div>
+                      <h5 className="text-lg font-bold text-gray-900">7월 (재수생 유입)</h5>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-300 rounded-lg p-5 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-sm font-semibold text-gray-900">대학 정문 상권</p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-sm font-semibold text-gray-900">학생 중심</p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-sm font-semibold text-gray-900">주중 낮 시간대 활성</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 결과 */}
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-green-600 p-5 rounded-r-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="w-1 h-6 bg-green-600 mt-1"></div>
+                    <div>
+                      <h5 className="text-sm font-bold text-gray-900 mb-2">결과</h5>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        유사매장 Top 10의 교집합이 <span className="font-bold text-gray-900">0개</span> → 상권 특성이 완전히 달라짐
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }

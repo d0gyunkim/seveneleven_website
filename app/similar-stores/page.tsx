@@ -90,6 +90,7 @@ export default function SimilarStoresPage() {
     주중주말패턴?: any
   }>>([]) // 유사매장들의 패턴 데이터
   const [averageComparisonTab, setAverageComparisonTab] = useState<'주중' | '주말'>('주중') // 평균 비교 섹션의 시간대 탭
+  const [showCriteriaModal, setShowCriteriaModal] = useState(false) // 유사 매장 선정 기준 모달
 
   useEffect(() => {
     // URL에서 storeCode 가져오기, 없으면 sessionStorage에서 가져오기
@@ -839,9 +840,15 @@ export default function SimilarStoresPage() {
               <div className="mb-6 pb-4 border-b-2 border-gray-300">
                 <div className="flex items-baseline gap-4">
                   <div className="w-1 h-10 bg-green-600"></div>
-                  <div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
+                  <div className="flex-1">
+                    <h2 
+                      className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight cursor-pointer hover:text-green-600 transition-colors inline-flex items-center gap-2"
+                      onClick={() => setShowCriteriaModal(true)}
+                    >
                       판매 패턴 분석
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
                     </h2>
                     <p className="text-sm text-gray-600 mt-1">유사매장들의 평균과 우리매장 비교</p>
                   </div>
@@ -2470,6 +2477,110 @@ export default function SimilarStoresPage() {
               >
                 확인
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 유사 매장 선정 기준 모달 */}
+      {showCriteriaModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => setShowCriteriaModal(false)}>
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b-2 border-gray-300 px-6 py-4 flex items-center justify-between z-10">
+              <div className="flex items-baseline gap-4">
+                <div className="w-1 h-8 bg-green-600"></div>
+                <h3 className="text-xl font-bold text-gray-900 uppercase tracking-wide">유사 매장 선정 기준</h3>
+                <span className="ml-auto px-3 py-1 bg-green-600 text-white text-xs font-bold">4가지 핵심 지표</span>
+              </div>
+              <button
+                onClick={() => setShowCriteriaModal(false)}
+                className="ml-4 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6 md:p-8">
+              <div className="mb-6 pb-4 border-b-2 border-gray-300">
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  머신러닝 알고리즘을 통해 <span className="font-semibold">판매 패턴 분석</span>과 
+                  <span className="font-semibold">유동인구 데이터</span>를 종합 분석하여 
+                  최적의 유사 매장을 선정합니다.
+                </p>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-gray-50 border border-gray-300 p-5">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
+                    <div className="w-2 h-2 bg-green-600"></div>
+                    <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                      판매 상품 패턴
+                    </h5>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                    대분류 카테고리별 판매량 비중 분석을 통한 소비자 구매 패턴 파악
+                  </p>
+                  <div className="bg-white border-l-4 border-green-600 p-3">
+                    <p className="text-xs text-gray-700 leading-relaxed">
+                      <span className="font-semibold text-gray-900">분석 결과:</span> 주요 카테고리가 전체 매출의 60% 이상을 차지하여 매장별 고객층의 구매 선호도를 명확히 반영
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 border border-gray-300 p-5">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
+                    <div className="w-2 h-2 bg-green-600"></div>
+                    <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                      시간대별 패턴
+                    </h5>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                    주중/주말 × 시간대별 매출 비중 분석을 통한 고객 유입 패턴 추적
+                  </p>
+                  <div className="bg-white border-l-4 border-green-600 p-3">
+                    <p className="text-xs text-gray-700 leading-relaxed">
+                      <span className="font-semibold text-gray-900">분석 결과:</span> 상권 특성(근무형/야간형/주거형) 구분 및 타겟 고객층(직장인/학생/주부) 정확한 파악
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 border border-gray-300 p-5">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
+                    <div className="w-2 h-2 bg-green-600"></div>
+                    <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                      주중/주말 편중도
+                    </h5>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                    주중 대비 주말 매출 비율 계산을 통한 상권 성격(오피스/주거/관광) 분석
+                  </p>
+                  <div className="bg-white border-l-4 border-green-600 p-3">
+                    <p className="text-xs text-gray-700 leading-relaxed">
+                      <span className="font-semibold text-gray-900">분석 결과:</span> 주중 중심형/주말 중심형 매장 분류를 통한 발주 전략 차별화 가능
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 border-2 border-green-600 p-5">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
+                    <div className="w-2 h-2 bg-green-600"></div>
+                    <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                      유동인구 데이터
+                    </h5>
+                    <span className="ml-auto px-2 py-0.5 bg-green-600 text-white text-[10px] font-bold">핵심</span>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                    실시간 유동인구 정보와 방문객 패턴 분석을 통한 상권 특성 정확한 반영
+                  </p>
+                  <div className="bg-white border-l-4 border-green-600 p-3">
+                    <p className="text-xs text-gray-700 leading-relaxed">
+                      <span className="font-semibold text-gray-900">분석 결과:</span> 유동인구 데이터 결합을 통한 정밀한 유사도 분석 및 높은 신뢰도 확보
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
