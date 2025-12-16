@@ -503,18 +503,51 @@ export default function OverviewPage() {
 
                   {/* 설명 텍스트 */}
                   <div className="space-y-3 text-gray-700 leading-relaxed">
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">
-                      발주 추천 상품 안내
-                    </h3>
-                    <p className="text-sm">
-                      내 매장과 비슷한 매장의 실제 판매 데이터를 학습하여 지금 필요한 상품을 추천합니다.
-                    </p>
-                    <p className="text-sm">
-                      확인하고 싶은 대분류 카테고리를 선택하여 내가 원하는 상품군의 추천 상품만 확인할 수 있습니다.
-                    </p>
-                    <p className="text-sm">
-                      추천 상품 클릭 시 해당 상품의 세부 정보 및 추천 근거를 확인할 수 있습니다.
-                    </p>
+                    {previewPage === 'recommended' && (
+                      <>
+                        <h3 className="text-xl font-bold text-gray-900 mb-3">
+                          발주 추천 상품 안내
+                        </h3>
+                        <p className="text-sm">
+                          내 매장과 비슷한 매장의 실제 판매 데이터를 학습하여 지금 필요한 상품을 추천합니다.
+                        </p>
+                        <p className="text-sm">
+                          확인하고 싶은 대분류 카테고리를 선택하여 내가 원하는 상품군의 추천 상품만 확인할 수 있습니다.
+                        </p>
+                        <p className="text-sm">
+                          추천 상품 클릭 시 해당 상품의 세부 정보 및 추천 근거를 확인할 수 있습니다.
+                        </p>
+                      </>
+                    )}
+                    {previewPage === 'excluded' && (
+                      <>
+                        <h3 className="text-xl font-bold text-gray-900 mb-3">
+                          부진 상품 안내
+                        </h3>
+                        <p className="text-sm">
+                          내 매장의 판매, 재고, 발주 데이터를 학습하여 현재 제외할 상품을 추천합니다.
+                        </p>
+                        <p className="text-sm">
+                          확인하고 싶은 대분류 카테고리를 선택하여 내가 원하는 상품군의 부진 상품만 확인할 수 있습니다.
+                        </p>
+                        <p className="text-sm">
+                          부진 상품 클릭 시 해당 상품의 세부 정보 및 부진 근거를 확인할 수 있습니다.
+                        </p>
+                      </>
+                    )}
+                    {previewPage === 'similar' && (
+                      <>
+                        <h3 className="text-xl font-bold text-gray-900 mb-3">
+                          유사 매장 리포팅
+                        </h3>
+                        <p className="text-sm">
+                          내 매장과 가장 비슷한 월별 Top5 유사 매장과 유사 매장 평균 데이터를 기반으로 판매 및 운영의 종합적 분석을 제공합니다.
+                        </p>
+                        <p className="text-sm">
+                          유사 매장의 인기 상품 순위를 확인할 수 있으며, LLM 기반의 점주 친화적 설명을 안내합니다.
+                        </p>
+                      </>
+                    )}
                   </div>
 
                   {/* 하단 버튼들 */}
@@ -1371,22 +1404,57 @@ export default function OverviewPage() {
 
                   {/* 오른쪽: 설명 텍스트 */}
                   <div className="space-y-6">
-                    <div>
-                      <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-                        발주 추천 상품 안내
-                      </h3>
-                      <div className="space-y-4 text-gray-700 leading-relaxed">
-                        <p className="text-lg">
-                          내 매장과 비슷한 매장의 실제 판매 데이터를 학습하여 지금 필요한 상품을 추천합니다.
-                        </p>
-                        <p className="text-lg">
-                          확인하고 싶은 대분류 카테고리를 선택하여 내가 원하는 상품군의 추천 상품만 확인할 수 있습니다.
-                        </p>
-                        <p className="text-lg">
-                          추천 상품 클릭 시 해당 상품의 세부 정보 및 추천 근거를 확인할 수 있습니다.
-                        </p>
+                    {previewPage === 'recommended' && (
+                      <div>
+                        <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+                          발주 추천 상품 안내
+                        </h3>
+                        <div className="space-y-4 text-gray-700 leading-relaxed">
+                          <p className="text-lg">
+                            내 매장과 비슷한 매장의 실제 판매 데이터를 학습하여 지금 필요한 상품을 추천합니다.
+                          </p>
+                          <p className="text-lg">
+                            확인하고 싶은 대분류 카테고리를 선택하여 내가 원하는 상품군의 추천 상품만 확인할 수 있습니다.
+                          </p>
+                          <p className="text-lg">
+                            추천 상품 클릭 시 해당 상품의 세부 정보 및 추천 근거를 확인할 수 있습니다.
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    )}
+                    {previewPage === 'excluded' && (
+                      <div>
+                        <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+                          부진 상품 안내
+                        </h3>
+                        <div className="space-y-4 text-gray-700 leading-relaxed">
+                          <p className="text-lg">
+                            내 매장의 판매, 재고, 발주 데이터를 학습하여 현재 제외할 상품을 추천합니다.
+                          </p>
+                          <p className="text-lg">
+                            확인하고 싶은 대분류 카테고리를 선택하여 내가 원하는 상품군의 부진 상품만 확인할 수 있습니다.
+                          </p>
+                          <p className="text-lg">
+                            부진 상품 클릭 시 해당 상품의 세부 정보 및 부진 근거를 확인할 수 있습니다.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {previewPage === 'similar' && (
+                      <div>
+                        <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+                          유사 매장 리포팅
+                        </h3>
+                        <div className="space-y-4 text-gray-700 leading-relaxed">
+                          <p className="text-lg">
+                            내 매장과 가장 비슷한 월별 Top5 유사 매장과 유사 매장 평균 데이터를 기반으로 판매 및 운영의 종합적 분석을 제공합니다.
+                          </p>
+                          <p className="text-lg">
+                            유사 매장의 인기 상품 순위를 확인할 수 있으며, LLM 기반의 점주 친화적 설명을 안내합니다.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
