@@ -216,7 +216,7 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
             onStoreDetailClick(storeCodeForClick)
           }
         })
-        
+
         // 커스텀 오버레이 생성
         const customOverlay = new window.kakao.maps.CustomOverlay({
           position: position,
