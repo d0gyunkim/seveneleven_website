@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Layout from '@/components/Layout'
 import KakaoMap from '@/components/KakaoMap'
@@ -61,6 +61,7 @@ export default function SimilarStoresPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedStore, setSelectedStore] = useState<StoreDetail | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>('과자')
+  const [selectedMiddleCategory, setSelectedMiddleCategory] = useState<string | null>(null) // 선택된 중분류
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [showStoreDetailModal, setShowStoreDetailModal] = useState(false)
   const [storeDetailsByMonth, setStoreDetailsByMonth] = useState<Record<string, StoreDetail>>({})
@@ -90,6 +91,22 @@ export default function SimilarStoresPage() {
   }>>([]) // 유사매장들의 패턴 데이터
   const [averageComparisonTab, setAverageComparisonTab] = useState<'주중' | '주말'>('주중') // 평균 비교 섹션의 시간대 탭
   const [showCriteriaModal, setShowCriteriaModal] = useState(false) // 유사 매장 선정 기준 모달
+  const [isMobile, setIsMobile] = useState(false) // 모바일 감지
+  const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set()) // 보이는 아이템 추적
+  const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map()) // 아이템 refs
+  const observerRef = useRef<IntersectionObserver | null>(null) // IntersectionObserver ref
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      setIsMobile(isMobileDevice)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     // URL에서 storeCode 가져오기, 없으면 sessionStorage에서 가져오기
@@ -564,6 +581,54 @@ export default function SimilarStoresPage() {
   }, [productInfoMap])
 
   // 상품 클릭 핸들러
+  // IntersectionObserver 로직
+  const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
+    entries.forEach((entry) => {
+      const itemId = entry.target.getAttribute('data-item-id')
+      if (!itemId) return
+
+      if (entry.isIntersecting) {
+        setVisibleItems((prev) => new Set(prev).add(itemId))
+      } else {
+        setVisibleItems((prev) => {
+          const next = new Set(prev)
+          next.delete(itemId)
+          return next
+        })
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    if (storeDetailTab !== '인기상품' || !selectedStore) return
+
+    observerRef.current = new IntersectionObserver(handleIntersection, {
+      rootMargin: '100px',
+      threshold: 0.01,
+    })
+
+    itemRefs.current.forEach((element) => {
+      if (element) {
+        observerRef.current?.observe(element)
+      }
+    })
+
+    return () => {
+      observerRef.current?.disconnect()
+    }
+  }, [handleIntersection, storeDetailTab, selectedStore, selectedCategory])
+
+  const setItemRef = useCallback((itemId: string, element: HTMLDivElement | null) => {
+    if (element) {
+      itemRefs.current.set(itemId, element)
+      if (observerRef.current) {
+        observerRef.current.observe(element)
+      }
+    } else {
+      itemRefs.current.delete(itemId)
+    }
+  }, [])
+
   const handleProductClick = async (itemNm: string) => {
     let productInfo: ProductInfo | null | undefined = productInfoMap.get(itemNm)
     
@@ -1392,7 +1457,7 @@ export default function SimilarStoresPage() {
                                 <PolarAngleAxis dataKey="category" tick={{ fontSize: 10, fill: '#374151' }} />
                                 <PolarRadiusAxis angle={90} domain={[0, 30]} tick={{ fontSize: 9, fill: '#6b7280' }} />
                                 <Radar name="내 매장" dataKey="내매장" stroke="#16a34a" fill="#16a34a" fillOpacity={0.7} strokeWidth={2} />
-                                <Radar name="유사 매장" dataKey="유사매장" stroke="#fb923c" fill="none" strokeWidth={2.5} />
+                                <Radar name={selectedStore?.store_nm || "유사 매장"} dataKey="유사매장" stroke="#fb923c" fill="none" strokeWidth={2.5} />
                                 <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} iconType="square" />
                               </RadarChart>
                             )
@@ -1590,7 +1655,7 @@ export default function SimilarStoresPage() {
                                   dataKey="유사매장" 
                                   stroke="#fb923c" 
                                   strokeWidth={2.5} 
-                                  name="유사 매장" 
+                                  name={selectedStore?.store_nm || "유사 매장"} 
                                   dot={{ fill: '#fb923c', r: 4, strokeWidth: 0 }}
                                   activeDot={{ r: 5 }}
                                 />
@@ -1728,7 +1793,7 @@ export default function SimilarStoresPage() {
                             
                             const chartData = [
                               { name: '내 매장', value: myStoreRatio },
-                              { name: '유사 매장', value: similarStoreRatio },
+                              { name: selectedStore?.store_nm || '유사 매장', value: similarStoreRatio },
                             ]
                             
                             // 도메인 계산 (값에 따라 동적으로 조정)
@@ -1852,21 +1917,24 @@ export default function SimilarStoresPage() {
                       <h3 className="text-lg md:text-xl font-bold text-gray-900 uppercase tracking-wide">
                         인기 상품 순위
                       </h3>
-                      <p className="text-sm text-gray-600 mt-1">판매량 상위 상품을 보여드립니다</p>
+                      <p className="text-sm text-gray-600 mt-1">매출 상위 상품을 보여드립니다</p>
                     </div>
                   </div>
                 </div>
 
                 {/* 대분류 탭 */}
-                <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
+                <div className="flex flex-wrap gap-2 mb-4 md:mb-6 border-b border-gray-200 pb-3">
                   {categories.map((category) => (
                     <button
                       key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`px-3 py-2.5 md:px-4 md:py-2 text-sm font-medium transition-colors whitespace-nowrap border active:bg-green-50 ${
+                      onClick={() => {
+                        setSelectedCategory(category)
+                        setSelectedMiddleCategory(null) // 대분류 변경 시 중분류 선택 초기화
+                      }}
+                      className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${
                         selectedCategory === category
-                          ? 'bg-green-600 text-white border-green-600'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-green-400 hover:text-green-600'
+                          ? 'border-green-600 text-green-600 font-semibold'
+                          : 'border-transparent text-gray-600 hover:text-green-600 hover:border-green-300'
                       }`}
                     >
                       {category}
@@ -1882,100 +1950,343 @@ export default function SimilarStoresPage() {
                   <p className="text-sm text-gray-600">데이터를 불러오는 중...</p>
                 </div>
               ) : (
-                <div>
-                  {selectedStore[selectedCategory] ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                      {Object.entries(selectedStore[selectedCategory] as Record<string, string[]>).map(
-                        ([subCategory, products]) => (
-                          <div
-                            key={subCategory}
-                            className="bg-white border border-gray-300 p-3 md:p-4"
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* 왼쪽 필터 사이드바 */}
+                  {selectedStore[selectedCategory] && (
+                    <div className="w-full md:w-64 flex-shrink-0">
+                      <div className="bg-white border border-gray-200 rounded-lg p-4 md:sticky md:top-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-sm font-bold text-gray-900">필터</h4>
+                          <button
+                            onClick={() => setSelectedMiddleCategory(null)}
+                            className="text-xs text-gray-500 hover:text-gray-700"
                           >
-                            <div className="flex items-center justify-between mb-3 pb-1">
-                              <h3 className="text-sm md:text-sm font-bold text-gray-900">
-                                {subCategory}
-                              </h3>
-                              <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1">
-                                판매순 상위
-                              </span>
-                            </div>
-                            <div className="space-y-2 md:space-y-2">
-                              {products.map((product, index) => {
-                                const productInfo = productInfoMap.get(product)
-                                return (
-                                <div
-                                  key={index}
-                                    className="flex items-start gap-2 md:gap-3 p-3 md:p-2 rounded-lg hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors"
-                                    onClick={() => handleProductClick(product)}
-                                >
-                                    <span className="flex-shrink-0 w-6 h-6 md:w-5 md:h-5 flex items-center justify-center bg-gray-100 text-gray-600 font-semibold text-xs">
-                                    {index + 1}
-                                  </span>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-start gap-2 md:gap-3">
-                                        {productInfo?.item_img && (
-                                          <img
-                                            src={productInfo.item_img}
-                                            alt={product}
-                                            className="w-20 h-20 md:w-16 md:h-16 object-contain flex-shrink-0 border border-gray-200 rounded"
-                                            onError={(e) => {
-                                              e.currentTarget.style.display = 'none'
-                                            }}
-                                          />
-                                        )}
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-sm md:text-sm font-medium text-gray-900 leading-tight mb-1">
-                                            {product}
-                                          </p>
-                                          {(productInfo?.item_lrdv_nm || productInfo?.item_mddv_nm || productInfo?.item_smdv_nm) && (
-                                            <div className="flex flex-wrap gap-1 mb-2">
-                                              {productInfo.item_lrdv_nm && (
-                                                <span className="px-2 py-0.5 text-xs bg-gray-200 text-gray-700 rounded">
-                                                  {productInfo.item_lrdv_nm}
-                                                </span>
-                                              )}
-                                              {productInfo.item_mddv_nm && (
-                                                <span className="px-2 py-0.5 text-xs bg-gray-200 text-gray-700 rounded">
-                                                  {productInfo.item_mddv_nm}
-                                                </span>
-                                              )}
-                                              {productInfo.item_smdv_nm && (
-                                                <span className="px-2 py-0.5 text-xs bg-gray-200 text-gray-700 rounded">
-                                                  {productInfo.item_smdv_nm}
-                                                </span>
-                                              )}
-                                </div>
-                                          )}
-                                          {(productInfo?.slem_amt || productInfo?.cpm_amt) && (
-                                            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 text-xs">
-                                              {productInfo.slem_amt && (
-                                                <span className="font-semibold text-green-600">
-                                                  {productInfo.slem_amt.toLocaleString()}원
-                                                </span>
-                                              )}
-                                              {productInfo.cpm_amt && (
-                                                <span className="text-gray-500">
-                                                  원가: {productInfo.cpm_amt.toLocaleString()}원
-                                                </span>
-                                              )}
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12 bg-gray-50 rounded-lg">
-                      <p className="text-gray-600">해당 대분류의 상품 정보가 없습니다.</p>
+                            초기화
+                          </button>
+                        </div>
+                        <div className="space-y-2">
+                          {(() => {
+                            const categoryData = selectedStore[selectedCategory] as Record<string, string[]>
+                            const allProducts = Object.values(categoryData).flat()
+                            const totalCount = allProducts.length
+                            
+                            return (
+                              <>
+                                <label className="flex items-center gap-2 cursor-pointer py-2 hover:bg-gray-50 rounded px-2 -mx-2">
+                                  <input
+                                    type="radio"
+                                    name="middleCategory"
+                                    checked={selectedMiddleCategory === null}
+                                    onChange={() => setSelectedMiddleCategory(null)}
+                                    className="w-4 h-4 text-green-600 focus:ring-green-500"
+                                  />
+                                  <span className="text-sm text-gray-700">전체({totalCount})</span>
+                                </label>
+                                {Object.entries(categoryData).map(([subCategory, products]) => (
+                                  <label key={subCategory} className="flex items-center gap-2 cursor-pointer py-2 hover:bg-gray-50 rounded px-2 -mx-2">
+                                    <input
+                                      type="radio"
+                                      name="middleCategory"
+                                      checked={selectedMiddleCategory === subCategory}
+                                      onChange={() => setSelectedMiddleCategory(subCategory)}
+                                      className="w-4 h-4 text-green-600 focus:ring-green-500"
+                                    />
+                                    <span className="text-sm text-gray-700">{subCategory}({products.length})</span>
+                                  </label>
+                                ))}
+                              </>
+                            )
+                          })()}
+                        </div>
+                      </div>
                     </div>
                   )}
+
+                  {/* 메인 컨텐츠 영역 */}
+                  <div className="flex-1">
+                    {selectedStore[selectedCategory] ? (
+                      <div className={`${isMobile ? 'space-y-6' : 'space-y-8 md:space-y-10'}`}>
+                        {Object.entries(selectedStore[selectedCategory] as Record<string, string[]>).map(
+                          ([subCategory, products]) => {
+                            // 중분류 필터 적용
+                            if (selectedMiddleCategory !== null && selectedMiddleCategory !== subCategory) {
+                              return null
+                            }
+                            
+                            return (
+                          <div key={subCategory} className={`${isMobile ? 'px-4' : 'space-y-4'}`}>
+                            {/* 모바일 앱 스타일: 카테고리 제목 */}
+                            {isMobile && (
+                              <div className="flex items-center gap-2.5 mb-4 mt-2">
+                                <div className="w-1 h-6 rounded-full bg-green-500"></div>
+                                <h3 className="text-lg font-bold text-slate-900">{subCategory}</h3>
+                              </div>
+                            )}
+                            
+                            {/* 웹 스타일: 카테고리 제목 */}
+                            {!isMobile && (
+                              <div className="flex items-center gap-2">
+                                <div className="w-1 h-6 rounded-full bg-green-500"></div>
+                                <h3 className="text-base md:text-lg font-bold text-slate-900">{subCategory}</h3>
+                              </div>
+                            )}
+                            
+                            {/* 모바일 앱 스타일: 가로 스크롤 가능한 상품 리스트 */}
+                            {isMobile ? (
+                              <div 
+                                className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide" 
+                                style={{ 
+                                  scrollbarWidth: 'none', 
+                                  msOverflowStyle: 'none',
+                                  WebkitOverflowScrolling: 'touch',
+                                  scrollSnapType: 'x mandatory',
+                                  scrollPaddingLeft: '16px'
+                                }}
+                              >
+                                {products.map((product, index) => {
+                                  const itemId = `${selectedStore.store_code}-${subCategory}-${index}`
+                                  const isVisible = visibleItems.has(itemId)
+                                  const displayRank = index + 1
+                                  const showBadge = displayRank <= 3
+                                  const productInfo = productInfoMap.get(product)
+                                  
+                                  // PB 상품 체크
+                                  const isPBProduct = product?.includes('PB)') || 
+                                                    product?.includes('7-SELECT') || 
+                                                    product?.includes('7SELECT') ||
+                                                    product?.includes('PB ')
+                                  
+                                  return (
+                                    <div
+                                      key={itemId}
+                                      ref={(el) => setItemRef(itemId, el)}
+                                      data-item-id={itemId}
+                                      onClick={() => handleProductClick(product)}
+                                      className={`group cursor-pointer flex flex-col relative transition-all duration-200 flex-shrink-0 active:scale-95`}
+                                      style={{ 
+                                        width: 'calc(50vw - 24px)', 
+                                        minWidth: 'calc(50vw - 24px)',
+                                        scrollSnapAlign: 'start'
+                                      }}
+                                    >
+                                      {isVisible ? (
+                                        <>
+                                          {/* 모바일 앱 스타일: 상품 이미지 */}
+                                          <div className="relative aspect-square bg-white rounded-xl border border-gray-200 overflow-hidden flex items-center justify-center mb-3 shadow-sm">
+                                            {/* 순위 배지 */}
+                                            {showBadge && (
+                                              <div className="absolute top-2 left-2 z-10">
+                                                <div className={`${
+                                                  displayRank === 1 ? 'bg-yellow-400 shadow-yellow-300' :
+                                                  displayRank === 2 ? 'bg-gray-400 shadow-gray-300' :
+                                                  'bg-orange-400 shadow-orange-300'
+                                                } w-7 h-7 rounded-lg flex items-center justify-center shadow-lg`}>
+                                                  <span className="text-white font-bold text-xs">
+                                                    {displayRank}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            )}
+                                            
+                                            {/* PB 상품 태그 */}
+                                            {isPBProduct && (
+                                              <div className="absolute top-2 right-2 z-10">
+                                                <div className="bg-emerald-500 text-white px-2 py-1 rounded-full text-[10px] font-bold shadow-md">
+                                                  seven only
+                                                </div>
+                                              </div>
+                                            )}
+                                            
+                                            {productInfo?.item_img ? (
+                                              <img
+                                                src={productInfo.item_img}
+                                                alt={product}
+                                                className="h-full w-auto object-contain p-3 transition-transform duration-300"
+                                                loading="lazy"
+                                                onError={(e) => {
+                                                  e.currentTarget.style.display = 'none'
+                                                  const parent = e.currentTarget.parentElement
+                                                  if (parent && !parent.querySelector('.image-placeholder')) {
+                                                    const placeholder = document.createElement('div')
+                                                    placeholder.className = 'image-placeholder w-full h-full flex flex-col items-center justify-center text-gray-300'
+                                                    placeholder.innerHTML = `
+                                                      <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                      </svg>
+                                                      <span class="text-xs text-gray-400">이미지 없음</span>
+                                                    `
+                                                    parent.appendChild(placeholder)
+                                                  }
+                                                }}
+                                              />
+                                            ) : (
+                                              <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
+                                                <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span className="text-xs text-gray-400">이미지 없음</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                          
+                                          {/* 모바일 앱 스타일: 상품 정보 */}
+                                          <div className="flex flex-col space-y-1.5 mt-0">
+                                            <h4 className="text-xs font-semibold text-slate-900 line-clamp-2 leading-tight">
+                                              {product}
+                                            </h4>
+                                            
+                                            {/* 가격 정보 */}
+                                            {productInfo?.slem_amt !== null && productInfo?.slem_amt !== undefined && (
+                                              <div className="pt-0.5">
+                                                <span className="text-base font-bold text-slate-900">
+                                                  {productInfo.slem_amt.toLocaleString()}원
+                                                </span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <div className="w-full aspect-square flex flex-col items-center justify-center bg-white">
+                                          <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg mb-2 animate-pulse"></div>
+                                          <div className="w-3/4 h-2.5 bg-gray-200 rounded-lg mb-1.5 animate-pulse"></div>
+                                          <div className="w-1/2 h-2.5 bg-gray-200 rounded-lg animate-pulse"></div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            ) : (
+                              /* 웹 스타일: 상품 그리드 */
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5">
+                                {products.map((product, index) => {
+                                  const itemId = `${selectedStore.store_code}-${subCategory}-${index}`
+                                  const isVisible = visibleItems.has(itemId)
+                                  const displayRank = index + 1
+                                  const showBadge = displayRank <= 3
+                                  const productInfo = productInfoMap.get(product)
+                                  
+                                  // PB 상품 체크
+                                  const isPBProduct = product?.includes('PB)') || 
+                                                    product?.includes('7-SELECT') || 
+                                                    product?.includes('7SELECT') ||
+                                                    product?.includes('PB ')
+                                  
+                                  return (
+                                    <div
+                                      key={itemId}
+                                      ref={(el) => setItemRef(itemId, el)}
+                                      data-item-id={itemId}
+                                      onClick={() => handleProductClick(product)}
+                                      className="group cursor-pointer flex flex-col relative transition-all duration-300"
+                                    >
+                                      {isVisible ? (
+                                        <>
+                                          {/* 웹 스타일: 상품 이미지 */}
+                                          <div className="relative aspect-square bg-white rounded-xl border border-gray-200 overflow-hidden flex items-center justify-center mb-3 shadow-sm">
+                                            {/* 순위 배지 */}
+                                            {showBadge && (
+                                              <div className="absolute top-2 left-2 z-10">
+                                                <div className={`relative ${
+                                                  displayRank === 1 ? 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600' :
+                                                  displayRank === 2 ? 'bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500' :
+                                                  'bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600'
+                                                } rounded-lg shadow-xl transform rotate-[-8deg] hover:rotate-0 transition-all duration-300 hover:scale-110`}
+                                                style={{
+                                                  padding: '6px 10px',
+                                                  boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3)',
+                                                }}>
+                                                  <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent rounded-lg"></div>
+                                                  <div className="absolute -inset-0.5 bg-black/10 rounded-lg blur-sm"></div>
+                                                  <span className="relative text-white font-black text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] tracking-tight">
+                                                    {displayRank}
+                                                  </span>
+                                                  {displayRank === 1 && (
+                                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-300 rounded-full animate-pulse shadow-md"></div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            )}
+                                            
+                                            {/* PB 상품 태그 */}
+                                            {isPBProduct && (
+                                              <div className="absolute top-2 right-2 z-10">
+                                                <div className="bg-emerald-500 text-white px-2 py-1 rounded-full text-[10px] font-bold shadow-md">
+                                                  seven only
+                                                </div>
+                                              </div>
+                                            )}
+                                            
+                                            {productInfo?.item_img ? (
+                                              <img
+                                                src={productInfo.item_img}
+                                                alt={product}
+                                                className="h-full w-auto object-contain p-4 md:p-6 transition-transform duration-300 group-hover:scale-105"
+                                                loading="lazy"
+                                                onError={(e) => {
+                                                  e.currentTarget.style.display = 'none'
+                                                  const parent = e.currentTarget.parentElement
+                                                  if (parent && !parent.querySelector('.image-placeholder')) {
+                                                    const placeholder = document.createElement('div')
+                                                    placeholder.className = 'image-placeholder w-full h-full flex flex-col items-center justify-center text-gray-300'
+                                                    placeholder.innerHTML = `
+                                                      <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                      </svg>
+                                                      <span class="text-xs text-gray-400">이미지 없음</span>
+                                                    `
+                                                    parent.appendChild(placeholder)
+                                                  }
+                                                }}
+                                              />
+                                            ) : (
+                                              <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
+                                                <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span className="text-xs text-gray-400">이미지 없음</span>
+                                              </div>
+                                            )}
+                                          </div>
+
+                                          {/* 웹 스타일: 상품 정보 */}
+                                          <div className="flex flex-col space-y-2 mt-0">
+                                            <h4 className="text-sm font-medium text-slate-900 line-clamp-2 leading-snug">
+                                              {product}
+                                            </h4>
+                                            
+                                            {/* 가격 정보 */}
+                                            {productInfo?.slem_amt !== null && productInfo?.slem_amt !== undefined && (
+                                              <div className="pt-1">
+                                                <span className="text-lg font-bold text-slate-900">
+                                                  {productInfo.slem_amt.toLocaleString()} 원
+                                                </span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <div className="w-full aspect-square flex flex-col items-center justify-center bg-white">
+                                          <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg mb-2 animate-pulse"></div>
+                                          <div className="w-3/4 h-2.5 bg-gray-200 rounded-lg mb-1.5 animate-pulse"></div>
+                                          <div className="w-1/2 h-2.5 bg-gray-200 rounded-lg animate-pulse"></div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 bg-gray-50 rounded-lg">
+                        <p className="text-gray-600">해당 대분류의 상품 정보가 없습니다.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
                 </>

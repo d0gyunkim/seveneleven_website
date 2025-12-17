@@ -63,9 +63,9 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
     }
   }, [])
 
-  // 지도 초기화 및 마커 생성
+  // 지도 초기화 (한 번만)
   useEffect(() => {
-    if (!isLoaded || !mapRef.current || stores.length === 0) return
+    if (!isLoaded || !mapRef.current || map) return
 
     // 지도 초기화 (기본 위치: 서울 시청)
     const defaultPosition = new window.kakao.maps.LatLng(37.5665, 126.9780)
@@ -76,6 +76,11 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
 
     const kakaoMap = new window.kakao.maps.Map(mapRef.current, mapOption)
     setMap(kakaoMap)
+  }, [isLoaded, map])
+
+  // 마커 생성 및 업데이트
+  useEffect(() => {
+    if (!map || !isLoaded || stores.length === 0) return
 
     // 기존 마커 및 오버레이 제거
     markers.forEach((marker) => marker.setMap(null))
@@ -96,6 +101,8 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
     const currentStoreInfo = currentStoreName ? { store_nm: currentStoreName } : null
 
     setIsSearching(true)
+    
+    console.log(`마커 생성 시작: ${totalStores}개 매장`)
 
     const checkCompletion = () => {
       completedSearches++
@@ -106,15 +113,15 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
           try {
             // bounds 객체가 제대로 초기화되었고, isEmpty() 메서드를 사용하여 확인
             if (typeof bounds.isEmpty === 'function' && !bounds.isEmpty()) {
-              kakaoMap.setBounds(bounds, 50) // 패딩 추가
+              map.setBounds(bounds, 50) // 패딩 추가
             } else if (markerOverlaysRef.current.length > 0) {
               // bounds가 비어있으면 첫 번째 마커로 이동
               const firstOverlay = markerOverlaysRef.current[0]
               if (firstOverlay && firstOverlay.getPosition) {
                 const position = firstOverlay.getPosition()
                 if (position) {
-                  kakaoMap.setCenter(position)
-                  kakaoMap.setLevel(8)
+                  map.setCenter(position)
+                  map.setLevel(8)
                 }
               }
             }
@@ -127,8 +134,8 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
                 if (firstOverlay && firstOverlay.getPosition) {
                   const position = firstOverlay.getPosition()
                   if (position) {
-                    kakaoMap.setCenter(position)
-                    kakaoMap.setLevel(8)
+                    map.setCenter(position)
+                    map.setLevel(8)
                   }
                 }
               } catch (e) {
@@ -150,15 +157,15 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
 
         // 선택된 매장인지 확인
         const isSelected = selectedStoreCode && String(storeInfo.store_code) === String(selectedStoreCode)
-        // selectedStoreCode가 있을 때만 다른 마커를 작게 표시
-        const isSmall = selectedStoreCode ? (!isSelected) : false
+        // 모든 마커를 정상 크기로 표시 (선택된 마커만 크게)
+        const isSmall = false
 
         // InfoWindow 제거 - 더 이상 사용하지 않음
         const storeCodeForClick = String(storeInfo.store_code || '')
         
         // 마커 크기 결정
-        const markerHeight = isSmall ? 32 : isSelected ? 48 : 40
-        const markerWidth = isSmall ? 120 : isSelected ? 180 : 150
+        const markerHeight = isSmall ? 36 : isSelected ? 48 : 40
+        const markerWidth = isSmall ? 130 : isSelected ? 180 : 150
         
         // 커스텀 오버레이로 마커 생성 (둥근 사각형 레이블)
         const overlayDiv = document.createElement('div')
@@ -174,10 +181,10 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
           min-width: ${markerWidth}px;
           height: ${markerHeight}px;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          opacity: ${isSmall ? '0.8' : '1'};
-          transform: ${isSmall ? 'scale(0.85)' : 'scale(1)'};
+          opacity: ${isSmall ? '0.9' : '1'};
+          transform: ${isSmall ? 'scale(0.9)' : 'scale(1)'};
           transition: all 0.2s;
-          z-index: ${isSelected ? '1000' : isSmall ? '1' : '100'};
+          z-index: ${isSelected ? '1000' : isSmall ? '50' : '100'};
           position: relative;
         `
         
@@ -223,12 +230,12 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
           content: overlayDiv,
           yAnchor: 1,
           xAnchor: 0.5,
-          zIndex: isSelected ? 1000 : isSmall ? 1 : 100,
+          zIndex: isSelected ? 1000 : isSmall ? 50 : 100,
         })
         
         // 지도에 마커 표시
-        if (kakaoMap) {
-          customOverlay.setMap(kakaoMap)
+        if (map) {
+          customOverlay.setMap(map)
         }
         
         // 로고 이미지 (모든 매장에 표시)
@@ -281,6 +288,15 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
 
         markerOverlaysRef.current.push(markerOverlay)
         newMarkers.push(invisibleMarker)
+        
+        console.log(`마커 생성: ${storeInfo.store_nm} (${lat}, ${lng})`, {
+          store_code: storeInfo.store_code,
+          position: { lat, lng },
+          markerHeight,
+          markerWidth,
+          isSelected,
+          isSmall
+        })
       }
 
       // 위도/경도가 있으면 바로 사용
@@ -318,7 +334,8 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
     })
 
     setMarkers(newMarkers)
-  }, [isLoaded, stores, currentStoreName, onStoreDetailClick, selectedStoreCode])
+    console.log(`총 ${stores.length}개 매장 중 ${markerOverlaysRef.current.length}개 마커 생성됨`)
+  }, [map, isLoaded, stores, currentStoreName, onStoreDetailClick, selectedStoreCode])
 
     // 선택된 매장의 오버레이 강조 표시
   useEffect(() => {
@@ -609,19 +626,25 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
       return
     }
 
+    // selectedStoreCode가 없으면 업데이트하지 않음 (초기 상태 유지)
+    if (!selectedStoreCode) {
+      return
+    }
+
     markerOverlaysRef.current.forEach((overlay) => {
       if (overlay && overlay.customOverlay && overlay.storeInfo) {
         const markerStoreCode = String(overlay.storeInfo.store_code || '')
         const isSelected = selectedStoreCode && markerStoreCode === String(selectedStoreCode)
-        const isSmall = selectedStoreCode && !isSelected
+        // 모든 마커를 정상 크기로 표시 (선택된 마커만 크게)
+        const isSmall = false
         
         // 마커 크기 결정
-        const newMarkerHeight = isSmall ? 32 : isSelected ? 48 : 40
-        const newMarkerWidth = isSmall ? 120 : isSelected ? 180 : 150
+        const newMarkerHeight = isSmall ? 36 : isSelected ? 48 : 40
+        const newMarkerWidth = isSmall ? 130 : isSelected ? 180 : 150
         const markerColor = '#10B981' // 초록색
         
         // 기존 마커 크기와 다르면 새로 생성
-        if (overlay.markerHeight !== newMarkerHeight || overlay.markerWidth !== newMarkerWidth || overlay.isSelected !== isSelected) {
+        if (overlay.markerHeight !== newMarkerHeight || overlay.markerWidth !== newMarkerWidth || overlay.isSelected !== isSelected || overlay.isSmall !== isSmall) {
           // 기존 오버레이 제거
           overlay.customOverlay.setMap(null)
           
@@ -639,8 +662,8 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
             min-width: ${newMarkerWidth}px;
             height: ${newMarkerHeight}px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            opacity: ${isSmall ? '0.8' : '1'};
-            transform: ${isSmall ? 'scale(0.85)' : 'scale(1)'};
+            opacity: ${isSmall ? '0.9' : '1'};
+            transform: ${isSmall ? 'scale(0.9)' : 'scale(1)'};
             transition: all 0.2s;
           `
           
@@ -701,8 +724,9 @@ export default function KakaoMap({ stores, currentStoreName, className = '', sel
           const newCustomOverlay = new window.kakao.maps.CustomOverlay({
             position: overlay.getPosition(),
             content: overlayDiv,
-            yAnchor: 0.5,
-            xAnchor: 0,
+            yAnchor: 1,
+            xAnchor: 0.5,
+            zIndex: isSelected ? 1000 : isSmall ? 50 : 100,
           })
           
           newCustomOverlay.setMap(map)
