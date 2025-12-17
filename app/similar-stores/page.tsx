@@ -1210,8 +1210,7 @@ export default function SimilarStoresPage() {
                 <div className="bg-white border-2 border-gray-300 rounded-xl p-6">
                   <div className="mb-4">
                     <h3 className="text-lg font-bold text-gray-900 mb-1">주중/주말 패턴</h3>
-                    <p className="text-xs text-gray-500">주말/주중 매출 집중도</p>
-                    <p className="text-xs text-gray-500">주말 매출 비중 ÷ 주중 매출 비중으로 계산</p>
+                    <p className="text-xs text-gray-500">주말 매출 비중 (주중은 1.0으로 고정)</p>
                   </div>
                   
                   <ResponsiveContainer width="100%" height={240}>
@@ -1221,15 +1220,15 @@ export default function SimilarStoresPage() {
                         return <div className="flex items-center justify-center h-full text-gray-500">데이터를 불러오는 중...</div>
                       }
 
-                      const myStoreRatio = myStorePattern.my_store?.weekend_ratio / myStorePattern.my_store?.weekday_ratio || 0
+                      const myStoreRatio = myStorePattern.my_store?.weekend_ratio || 0
                       
                       // 유사매장들의 평균 계산
                       let sumRatio = 0
                       let count = 0
                       similarStoresPatterns.forEach(pattern => {
                         const weekdayWeekend = pattern.주중주말패턴?.my_store
-                        if (weekdayWeekend && weekdayWeekend.weekday_ratio > 0) {
-                          const ratio = weekdayWeekend.weekend_ratio / weekdayWeekend.weekday_ratio
+                        if (weekdayWeekend && weekdayWeekend.weekend_ratio !== undefined) {
+                          const ratio = weekdayWeekend.weekend_ratio
                           sumRatio += ratio
                           count++
                         }
@@ -1248,7 +1247,11 @@ export default function SimilarStoresPage() {
                         <BarChart data={chartData}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                           <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#374151' }} />
-                          <YAxis tick={{ fontSize: 9, fill: '#6b7280' }} domain={[Math.max(0.8, minValue - 0.1), Math.min(1.5, maxValue + 0.1)]} />
+                          <YAxis 
+                            tick={{ fontSize: 9, fill: '#6b7280' }} 
+                            domain={[Math.max(0.8, minValue - 0.1), Math.min(1.5, maxValue + 0.1)]}
+                            tickFormatter={(value: number) => value.toFixed(2)}
+                          />
                           <Tooltip 
                             formatter={(value: number) => value.toFixed(2)}
                             contentStyle={{ fontSize: '11px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
@@ -1271,17 +1274,16 @@ export default function SimilarStoresPage() {
                     const myWeekdayWeekend = myStorePattern.my_store
                     if (!myWeekdayWeekend) return null
 
-                    const myWeekdayRatio = myWeekdayWeekend.weekday_ratio || 0
                     const myWeekendRatio = myWeekdayWeekend.weekend_ratio || 0
-                    const myWeekendWeekdayRatio = myWeekendRatio / myWeekdayRatio || 0
+                    const myWeekendWeekdayRatio = myWeekendRatio || 0 // 주중은 1로 고정이므로 주말 값만 사용
 
                     // 유사매장 평균 계산
                     let sumRatio = 0
                     let count = 0
                     similarStoresPatterns.forEach(pattern => {
                       const weekdayWeekend = pattern.주중주말패턴?.my_store
-                      if (weekdayWeekend && weekdayWeekend.weekday_ratio > 0) {
-                        const ratio = weekdayWeekend.weekend_ratio / weekdayWeekend.weekday_ratio
+                      if (weekdayWeekend && weekdayWeekend.weekend_ratio !== undefined) {
+                        const ratio = weekdayWeekend.weekend_ratio
                         sumRatio += ratio
                         count++
                       }
@@ -1775,8 +1777,8 @@ export default function SimilarStoresPage() {
                     </div>
                     <div className="p-6 space-y-4">
                       <div className="pt-2">
-                        <p className="text-sm font-semibold text-gray-700 mb-1">주말/주중 매출 집중도</p>
-                        <p className="text-xs text-gray-500 mb-4">주말 매출 비중 ÷ 주중 매출 비중으로 계산</p>
+                        <p className="text-sm font-semibold text-gray-700 mb-1">주말 매출 비중</p>
+                        <p className="text-xs text-gray-500 mb-4">주말 매출 비중 (주중은 1.0으로 고정)</p>
                         <ResponsiveContainer width="100%" height={240}>
                           {(() => {
                             // 현재 매장과 유사매장의 주중주말패턴 데이터 가져오기
@@ -1788,8 +1790,8 @@ export default function SimilarStoresPage() {
                               return <div className="flex items-center justify-center h-full text-gray-500">데이터를 불러오는 중...</div>
                             }
                             
-                            const myStoreRatio = myStorePattern.my_store?.weekend_ratio / myStorePattern.my_store?.weekday_ratio || 0
-                            const similarStoreRatio = similarStorePattern.my_store?.weekend_ratio / similarStorePattern.my_store?.weekday_ratio || 0
+                            const myStoreRatio = myStorePattern.my_store?.weekend_ratio || 0
+                            const similarStoreRatio = similarStorePattern.my_store?.weekend_ratio || 0
                             
                             const chartData = [
                               { name: '내 매장', value: myStoreRatio },
@@ -1804,7 +1806,11 @@ export default function SimilarStoresPage() {
                               <BarChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                                 <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#374151' }} />
-                                <YAxis tick={{ fontSize: 9, fill: '#6b7280' }} domain={[Math.max(0.8, minValue - 0.1), Math.min(1.5, maxValue + 0.1)]} />
+                                <YAxis 
+                                  tick={{ fontSize: 9, fill: '#6b7280' }} 
+                                  domain={[Math.max(0.8, minValue - 0.1), Math.min(1.5, maxValue + 0.1)]}
+                                  tickFormatter={(value: number) => value.toFixed(2)}
+                                />
                                 <Tooltip 
                                   formatter={(value: number) => value.toFixed(2)}
                                   contentStyle={{ fontSize: '11px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
@@ -1831,20 +1837,17 @@ export default function SimilarStoresPage() {
                         
                         if (!myWeekdayWeekend || !similarWeekdayWeekend) return null
                         
-                        const myWeekdayRatio = myWeekdayWeekend.weekday_ratio || 0
                         const myWeekendRatio = myWeekdayWeekend.weekend_ratio || 0
-                        const similarWeekdayRatio = similarWeekdayWeekend.weekday_ratio || 0
                         const similarWeekendRatio = similarWeekdayWeekend.weekend_ratio || 0
                         
-                        const myWeekendWeekdayRatio = myWeekendRatio / myWeekdayRatio || 0
-                        const similarWeekendWeekdayRatio = similarWeekendRatio / similarWeekdayRatio || 0
+                        const myWeekendWeekdayRatio = myWeekendRatio || 0 // 주중은 1로 고정이므로 주말 값만 사용
+                        const similarWeekendWeekdayRatio = similarWeekendRatio || 0 // 주중은 1로 고정이므로 주말 값만 사용
                         
                         const ratioDiff = Math.abs(myWeekendWeekdayRatio - similarWeekendWeekdayRatio)
                         const weekendPercentDiff = myWeekendWeekdayRatio > 0 ? ((myWeekendWeekdayRatio - 1) * 100) : 0
                         const similarWeekendPercentDiff = similarWeekendWeekdayRatio > 0 ? ((similarWeekendWeekdayRatio - 1) * 100) : 0
                         
-                        // 주중/주말 비율 유사도 계산
-                        const weekdayRatioDiff = Math.abs(myWeekdayRatio - similarWeekdayRatio)
+                        // 주말 비율 유사도 계산
                         const weekendRatioDiff = Math.abs(myWeekendRatio - similarWeekendRatio)
                         
                         return (
@@ -1885,11 +1888,11 @@ export default function SimilarStoresPage() {
                                       두 매장 모두 주중 매출이 주말보다 높아 <span className="font-semibold text-gray-900">주중 중심형 상권 특성</span>을 공유합니다.
                                     </p>
                                   </div>
-                                ) : (weekdayRatioDiff < 0.05 || weekendRatioDiff < 0.05) ? (
+                                ) : (weekendRatioDiff < 0.05) ? (
                                   <div className="flex items-start gap-2.5">
                                     <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                                     <p className="flex-1">
-                                      {weekdayRatioDiff < 0.05 ? '주중' : '주말'} 매출 비중이 유사하여 (차이 {(weekdayRatioDiff < 0.05 ? weekdayRatioDiff : weekendRatioDiff).toFixed(2)}) 고객 유입 패턴이 일치합니다.
+                                      주말 매출 비중이 유사하여 (차이 {weekendRatioDiff.toFixed(2)}) 고객 유입 패턴이 일치합니다.
                                     </p>
                                   </div>
                                 ) : null}
