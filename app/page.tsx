@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
   const [storeCode, setStoreCode] = useState('')
@@ -31,6 +32,30 @@ export default function LoginPage() {
       
       if (!/^\d+$/.test(code)) {
         setError('점포 코드는 숫자만 입력 가능합니다.')
+        setLoading(false)
+        return
+      }
+      
+      // 매장 코드가 데이터베이스에 존재하는지 확인
+      const codeVariants = [code, code.toString(), parseInt(code).toString()]
+      let storeExists = false
+      
+      for (const codeVariant of codeVariants) {
+        const { data, error: storeError } = await supabase
+          .from('매장마스터')
+          .select('store_code')
+          .eq('store_code', String(codeVariant))
+          .limit(1)
+        
+        if (!storeError && data && data.length > 0) {
+          storeExists = true
+          break
+        }
+      }
+      
+      // 매장 코드가 존재하지 않으면 로그인 차단
+      if (!storeExists) {
+        setError('점주님 죄송합니다, 다시 입력해주세요')
         setLoading(false)
         return
       }
