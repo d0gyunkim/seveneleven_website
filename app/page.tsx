@@ -5,21 +5,54 @@ import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const [storeCode, setStoreCode] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const code = storeCode.trim()
-    if (code && code.length === 5 && /^\d+$/.test(code)) {
+    setError('')
+    setLoading(true)
+    
+    try {
+      const code = storeCode.trim()
+      
+      if (!code) {
+        setError('점포 코드를 입력해주세요.')
+        setLoading(false)
+        return
+      }
+      
+      if (code.length !== 5) {
+        setError('점포 코드는 5자리 숫자여야 합니다.')
+        setLoading(false)
+        return
+      }
+      
+      if (!/^\d+$/.test(code)) {
+        setError('점포 코드는 숫자만 입력 가능합니다.')
+        setLoading(false)
+        return
+      }
+      
       // sessionStorage에 storeCode 저장
-      sessionStorage.setItem('storeCode', code)
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('storeCode', code)
+      }
+      
+      // 페이지 이동
       router.push(`/overview?storeCode=${encodeURIComponent(code)}`)
+    } catch (err) {
+      console.error('Login error:', err)
+      setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.')
+      setLoading(false)
     }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 5)
     setStoreCode(value)
+    setError('') // 입력 시 에러 메시지 초기화
   }
 
   return (
@@ -53,18 +86,25 @@ export default function LoginPage() {
                 type="text"
                 value={storeCode}
                 onChange={handleInputChange}
-                placeholder="점포 코드를 입력하세요"
-                className="w-full px-4 py-3 md:py-3.5 bg-gray-100 border-0 rounded-lg text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all"
+                placeholder="점포 코드를 입력하세요 (5자리 숫자)"
+                className={`w-full px-4 py-3 md:py-3.5 bg-gray-100 border-0 rounded-lg text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all ${
+                  error ? 'focus:ring-red-400 ring-2 ring-red-400' : 'focus:ring-green-400'
+                }`}
                 required
                 maxLength={5}
+                disabled={loading}
               />
+              {error && (
+                <p className="mt-2 text-sm text-red-500">{error}</p>
+              )}
             </div>
 
             <button
               type="submit"
-              className="w-full px-6 py-3.5 md:py-4 bg-green-500 hover:bg-green-600 text-white font-semibold text-base rounded-lg transition-all shadow-md hover:shadow-lg active:scale-95"
+              disabled={loading}
+              className="w-full px-6 py-3.5 md:py-4 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold text-base rounded-lg transition-all shadow-md hover:shadow-lg active:scale-95"
             >
-              로그인 하기
+              {loading ? '로그인 중...' : '로그인 하기'}
             </button>
           </form>
         </div>

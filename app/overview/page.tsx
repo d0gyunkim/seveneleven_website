@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import Image from 'next/image'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Layout from '@/components/Layout'
 import { supabase } from '@/lib/supabase'
 
@@ -35,11 +36,52 @@ export default function OverviewPage() {
   const [showRollingWindowModal, setShowRollingWindowModal] = useState(false) // Rolling Window 알고리즘 모달
   const [showDynamicAreaModal, setShowDynamicAreaModal] = useState(false) // 동적 상권 포착 모달
   const [previewPage, setPreviewPage] = useState<'recommended' | 'excluded' | 'similar'>('recommended') // 모바일 프리뷰 페이지
+  const [recommendedIndex, setRecommendedIndex] = useState(0) // 추천 상품 캐러셀 인덱스
+  const [underperformingIndex, setUnderperformingIndex] = useState(0) // 부진 상품 캐러셀 인덱스
+
+  // 추천 상품 자동 캐러셀
+  useEffect(() => {
+    if (topRecommendedProducts.length < 3) return
+    
+    const visibleCount = 3 // 데스크톱과 모바일 모두 3개씩 보이도록
+    // 화면에 3개씩 보이므로, 15개 중 3개를 보여주려면 최대 인덱스는 15 - 3 = 12
+    const maxIndex = Math.max(0, topRecommendedProducts.length - visibleCount)
+    
+    const interval = setInterval(() => {
+      setRecommendedIndex((prev) => {
+        const next = prev + 1
+        // maxIndex를 넘으면 0으로 리셋하여 무한 루프
+        return next > maxIndex ? 0 : next
+      })
+    }, 3000) // 3초마다 이동
+
+    return () => clearInterval(interval)
+  }, [topRecommendedProducts.length])
+
+  // 부진 상품 자동 캐러셀
+  useEffect(() => {
+    if (topUnderperformingProducts.length < 3) return
+    
+    const visibleCount = 3 // 데스크톱과 모바일 모두 3개씩 보이도록
+    // 화면에 3개씩 보이므로, 15개 중 3개를 보여주려면 최대 인덱스는 15 - 3 = 12
+    const maxIndex = Math.max(0, topUnderperformingProducts.length - visibleCount)
+    
+    const interval = setInterval(() => {
+      setUnderperformingIndex((prev) => {
+        const next = prev + 1
+        // maxIndex를 넘으면 0으로 리셋하여 무한 루프
+        return next > maxIndex ? 0 : next
+      })
+    }, 3000) // 3초마다 이동
+
+    return () => clearInterval(interval)
+  }, [topUnderperformingProducts.length])
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([])
   const buttonRefs = useRef<(HTMLDivElement | null)[]>([])
   const hasAppearedRef = useRef<Set<number>>(new Set())
   const searchParams = useSearchParams()
-  const storeCode = searchParams.get('storeCode')
+  const router = useRouter()
+  const storeCode = searchParams.get('storeCode') || (typeof window !== 'undefined' ? sessionStorage.getItem('storeCode') : null)
 
   // 앱 환경 감지
   useEffect(() => {
@@ -63,6 +105,13 @@ export default function OverviewPage() {
     window.addEventListener('resize', checkAppEnvironment)
     return () => window.removeEventListener('resize', checkAppEnvironment)
   }, [])
+
+  // storeCode가 없으면 로그인 페이지로 리다이렉트
+  useEffect(() => {
+    if (!storeCode) {
+      router.push('/')
+    }
+  }, [storeCode, router])
 
   // 추천 상품 및 부진 상품 데이터 가져오기
   useEffect(() => {
@@ -107,13 +156,13 @@ export default function OverviewPage() {
           return
         }
 
-        // 추천 상품 상위 3개 가져오기
+        // 추천 상품 상위 15개 가져오기
         const { data: recommendedData, error: recommendedError } = await supabase
           .from(recommendedTable)
           .select('*')
           .eq('store_code', storeCode)
           .order('rank', { ascending: true, nullsFirst: false })
-          .limit(3)
+          .limit(15)
 
         if (recommendedError) {
           console.error('추천 상품 조회 오류:', recommendedError)
@@ -162,7 +211,7 @@ export default function OverviewPage() {
               .select('*')
               .eq('store_code', codeVariant)
               .order('rank', { ascending: true, nullsFirst: false })
-              .limit(3)
+              .limit(15)
 
             if (!errorWithRank && dataWithRank && dataWithRank.length > 0) {
               excludedData = dataWithRank
@@ -175,7 +224,7 @@ export default function OverviewPage() {
                 .from(excludedTable)
                 .select('*')
                 .eq('store_code', codeVariant)
-                .limit(3)
+                .limit(15)
 
               if (!errorWithoutRank && dataWithoutRank && dataWithoutRank.length > 0) {
                 excludedData = dataWithoutRank
@@ -726,9 +775,9 @@ export default function OverviewPage() {
                     AI 딥러닝 알고리즘을 통해 내 매장에서 잘 팔릴 상품을 추천해드립니다.
                   </p>
 
-                  {/* 상품 카드 그리드 */}
+                  {/* 상품 카드 캐러셀 */}
                   {loadingProducts ? (
-                    <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div className="grid grid-cols-3 gap-4 mb-8">
                       {[1, 2, 3].map((i) => (
                         <div key={i} className="bg-gray-100 border-2 border-gray-200 rounded-xl p-4 shadow-lg animate-pulse">
                           <div className="h-32 bg-gray-200 rounded-lg mb-3"></div>
@@ -737,37 +786,42 @@ export default function OverviewPage() {
                       ))}
                     </div>
                   ) : topRecommendedProducts.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-4 mb-8">
-                      {topRecommendedProducts.slice(0, 3).map((product, index) => (
-                        <div key={product.item_cd || index} className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-lg hover:shadow-xl transition-shadow">
-                          <div className="flex items-center justify-center h-32 mb-3 bg-gray-50 rounded-lg overflow-hidden">
-                            {product.item_img ? (
-                              <img 
-                                src={product.item_img} 
-                                alt={product.item_nm || '상품 이미지'} 
-                                className="w-full h-full object-contain"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none'
-                                  const parent = (e.target as HTMLImageElement).parentElement
-                                  if (parent) {
-                                    parent.innerHTML = '<div class="text-xs text-gray-400">이미지 없음</div>'
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <div className="text-xs text-gray-400">이미지 없음</div>
+                    <div className="relative mb-8 overflow-hidden">
+                      <div 
+                        className="flex transition-transform duration-500 ease-in-out gap-4"
+                        style={{ transform: `translateX(calc(-${recommendedIndex} * (33.333% + 0.67rem)))` }}
+                      >
+                        {topRecommendedProducts.map((product, index) => (
+                          <div key={product.item_cd || index} className="flex-shrink-0 w-[calc(33.333%-0.67rem)] bg-white border-2 border-gray-200 rounded-xl p-4 shadow-lg hover:shadow-xl transition-shadow">
+                            <div className="flex items-center justify-center h-32 mb-3 bg-gray-50 rounded-lg overflow-hidden">
+                              {product.item_img ? (
+                                <img 
+                                  src={product.item_img} 
+                                  alt={product.item_nm || '상품 이미지'} 
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none'
+                                    const parent = (e.target as HTMLImageElement).parentElement
+                                    if (parent) {
+                                      parent.innerHTML = '<div class="text-xs text-gray-400">이미지 없음</div>'
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <div className="text-xs text-gray-400">이미지 없음</div>
+                              )}
+                            </div>
+                            <div className="text-xs font-semibold text-gray-900 text-center line-clamp-2">
+                              {product.item_nm || '상품명 없음'}
+                            </div>
+                            {product.sale_price && (
+                              <div className="text-xs text-gray-600 text-center mt-1">
+                                {product.sale_price.toLocaleString()}원
+                              </div>
                             )}
                           </div>
-                          <div className="text-xs font-semibold text-gray-900 text-center line-clamp-2">
-                            {product.item_nm || '상품명 없음'}
-                          </div>
-                          {product.sale_price && (
-                            <div className="text-xs text-gray-600 text-center mt-1">
-                              {product.sale_price.toLocaleString()}원
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-4 mb-8">
@@ -833,9 +887,9 @@ export default function OverviewPage() {
                     실제 발주 및 판매 데이터 분석을 통해 내 매장의 상품군별 부진 상품 현황을 알려드립니다.
                   </p>
 
-                  {/* 부진 상품 카드 그리드 */}
+                  {/* 부진 상품 카드 캐러셀 */}
                   {loadingProducts ? (
-                    <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div className="grid grid-cols-3 gap-4 mb-8">
                       {[1, 2, 3].map((i) => (
                         <div key={i} className="bg-gray-100 border-2 border-gray-200 rounded-xl p-4 shadow-lg animate-pulse">
                           <div className="h-32 bg-gray-200 rounded-lg mb-3"></div>
@@ -844,37 +898,42 @@ export default function OverviewPage() {
                       ))}
                     </div>
                   ) : topUnderperformingProducts.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-4 mb-8">
-                      {topUnderperformingProducts.slice(0, 3).map((product, index) => (
-                        <div key={product.item_cd || index} className="bg-white border-2 border-red-200 rounded-xl p-4 shadow-lg hover:shadow-xl transition-shadow">
-                          <div className="flex items-center justify-center h-32 mb-3 bg-gray-50 rounded-lg overflow-hidden">
-                            {product.item_img ? (
-                              <img 
-                                src={product.item_img} 
-                                alt={product.item_nm || '상품 이미지'} 
-                                className="w-full h-full object-contain opacity-75"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none'
-                                  const parent = (e.target as HTMLImageElement).parentElement
-                                  if (parent) {
-                                    parent.innerHTML = '<div class="text-xs text-gray-400">이미지 없음</div>'
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <div className="text-xs text-gray-400">이미지 없음</div>
+                    <div className="relative mb-8 overflow-hidden">
+                      <div 
+                        className="flex transition-transform duration-500 ease-in-out gap-4"
+                        style={{ transform: `translateX(calc(-${underperformingIndex} * (33.333% + 0.67rem)))` }}
+                      >
+                        {topUnderperformingProducts.map((product, index) => (
+                          <div key={product.item_cd || index} className="flex-shrink-0 w-[calc(33.333%-0.67rem)] bg-white border-2 border-red-200 rounded-xl p-4 shadow-lg hover:shadow-xl transition-shadow">
+                            <div className="flex items-center justify-center h-32 mb-3 bg-gray-50 rounded-lg overflow-hidden">
+                              {product.item_img ? (
+                                <img 
+                                  src={product.item_img} 
+                                  alt={product.item_nm || '상품 이미지'} 
+                                  className="w-full h-full object-contain opacity-75"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none'
+                                    const parent = (e.target as HTMLImageElement).parentElement
+                                    if (parent) {
+                                      parent.innerHTML = '<div class="text-xs text-gray-400">이미지 없음</div>'
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <div className="text-xs text-gray-400">이미지 없음</div>
+                              )}
+                            </div>
+                            <div className="text-xs font-semibold text-gray-900 text-center line-clamp-2">
+                              {product.item_nm || '상품명 없음'}
+                            </div>
+                            {product.sale_price && (
+                              <div className="text-xs text-gray-600 text-center mt-1">
+                                {product.sale_price.toLocaleString()}원
+                              </div>
                             )}
                           </div>
-                          <div className="text-xs font-semibold text-gray-900 text-center line-clamp-2">
-                            {product.item_nm || '상품명 없음'}
-                          </div>
-                          {product.sale_price && (
-                            <div className="text-xs text-gray-600 text-center mt-1">
-                              {product.sale_price.toLocaleString()}원
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-4 mb-8">
@@ -1166,236 +1225,43 @@ export default function OverviewPage() {
 
                         {/* 메인 콘텐츠 */}
                         {previewPage === 'recommended' && (
-                        <div className="p-4">
-                          <div className="mb-4">
-                            <div className="text-sm font-semibold mb-2">대분류 카테고리</div>
-                            <div className="flex flex-wrap gap-2">
-                              {['과자', '냉장', '맥주', '면', '미반', '빵', '양주와인', '유음료', '음료'].map((cat, idx) => (
-                                <button
-                                  key={cat}
-                                  className={`px-3 py-1 text-xs rounded-full ${
-                                    idx === 0 ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'
-                                  }`}
-                                >
-                                  {cat}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="flex gap-4">
-                            {/* 필터 */}
-                            <div className="w-32">
-                              <div className="text-sm font-semibold mb-2">필터</div>
-                              <button className="text-xs text-gray-600 mb-2 hover:text-gray-900">초기화</button>
-                              <div className="space-y-1 text-xs">
-                                <div className="flex items-center gap-2">
-                                  <input type="radio" className="w-3 h-3" defaultChecked />
-                                  <span>전체(35)</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <input type="radio" className="w-3 h-3" />
-                                  <span>껌(5)</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <input type="radio" className="w-3 h-3" />
-                                  <span>비스킷류(5)</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <input type="radio" className="w-3 h-3" />
-                                  <span>스낵류(5)</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <input type="radio" className="w-3 h-3" />
-                                  <span>젤리류(5)</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <input type="radio" className="w-3 h-3" />
-                                  <span>초콜릿(5)</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <input type="radio" className="w-3 h-3" />
-                                  <span>캔디류(5)</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <input type="radio" className="w-3 h-3" />
-                                  <span>프로틴/시리얼(5)</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* 상품 목록 */}
-                            <div className="flex-1 overflow-y-auto max-h-[500px]">
-                              {/* 껌 섹션 */}
-                              <div className="mb-6">
-                                <h4 className="text-sm font-semibold mb-3">껌</h4>
-                                <div className="grid grid-cols-2 gap-3">
-                                  {[
-                                    { name: '롯데)자일리톨알파오리지날용기 86g', price: '6,000' },
-                                    { name: '투데이)미니베어풍선껌(델리스)', price: '1,000' },
-                                    { name: '롯데)자일리톨오리지날리필115g', price: '6,000' },
-                                    { name: '롯데)왓따판박이(티니핑)13.7g', price: '600' },
-                                    { name: '롯데)이브로즈껌26g', price: '1,200' }
-                                  ].map((product, idx) => (
-                                    <div key={idx} className="bg-gray-50 rounded-lg p-2">
-                                      <div className="bg-gray-200 rounded h-24 mb-2 flex items-center justify-center text-xs text-gray-400">
-                                        이미지 없음
-                                      </div>
-                                      <div className="text-xs font-medium mb-1 line-clamp-2">
-                                        {product.name}
-                                      </div>
-                                      <div className="text-xs text-gray-600">{product.price}원</div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* 비스킷류 섹션 */}
-                              <div>
-                                <h4 className="text-sm font-semibold mb-3">비스킷류</h4>
-                                <div className="grid grid-cols-2 gap-3">
-                                  {[
-                                    { name: '롯데)크런키빼빼로39g', price: '2,000' },
-                                    { name: '오리온)비쵸비5P', price: '3,600' },
-                                    { name: '크라운)쿠크다스(커피)128g', price: '3,000' },
-                                    { name: '크라운)화이트하임49g', price: '1,400' },
-                                    { name: '크라운)뽀또치즈타르트92g', price: '1,500' }
-                                  ].map((product, idx) => (
-                                    <div key={idx} className="bg-gray-50 rounded-lg p-2">
-                                      <div className="bg-gray-200 rounded h-24 mb-2 flex items-center justify-center text-xs text-gray-400">
-                                        이미지 없음
-                                      </div>
-                                      <div className="text-xs font-medium mb-1 line-clamp-2">
-                                        {product.name}
-                                      </div>
-                                      <div className="text-xs text-gray-600">{product.price}원</div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                        <div className="p-4 w-full h-full flex items-center justify-center">
+                          <Image
+                            src="/추천페이지.png"
+                            alt="추천 상품 페이지"
+                            width={800}
+                            height={600}
+                            className="w-full h-auto object-contain"
+                            unoptimized
+                          />
                         </div>
                         )}
 
                         {/* 부진 상품 페이지 */}
                         {previewPage === 'excluded' && (
-                        <div className="p-4">
-                          <div className="mb-4">
-                            <div className="text-sm font-semibold mb-2">대분류 카테고리</div>
-                            <div className="flex flex-wrap gap-2">
-                              {['과자', '냉장', '맥주', '면', '미반', '빵', '양주와인', '유음료', '음료'].map((cat, idx) => (
-                                <button
-                                  key={cat}
-                                  className={`px-3 py-1 text-xs rounded-full ${
-                                    idx === 0 ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'
-                                  }`}
-                                >
-                                  {cat}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="flex gap-4">
-                            {/* 필터 */}
-                            <div className="w-32">
-                              <div className="text-sm font-semibold mb-2">필터</div>
-                              <button className="text-xs text-gray-600 mb-2 hover:text-gray-900">초기화</button>
-                              <div className="space-y-1 text-xs">
-                                <div className="flex items-center gap-2">
-                                  <input type="radio" className="w-3 h-3" defaultChecked />
-                                  <span>전체(20)</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <input type="radio" className="w-3 h-3" />
-                                  <span>과자류(5)</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <input type="radio" className="w-3 h-3" />
-                                  <span>음료류(5)</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <input type="radio" className="w-3 h-3" />
-                                  <span>냉장류(5)</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <input type="radio" className="w-3 h-3" />
-                                  <span>기타(5)</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* 상품 목록 */}
-                            <div className="flex-1 overflow-y-auto max-h-[500px]">
-                              <div className="grid grid-cols-2 gap-3">
-                                {[1, 2, 3, 4, 5].map((i) => (
-                                  <div key={i} className="bg-gray-50 rounded-lg p-2 border border-red-200">
-                                    <div className="bg-gray-200 rounded h-24 mb-2 flex items-center justify-center text-xs text-gray-400">
-                                      이미지 없음
-                                    </div>
-                                    <div className="text-xs font-medium mb-1 line-clamp-2 text-gray-700">
-                                      부진 상품 {i}
-                                    </div>
-                                    <div className="text-xs text-gray-600">5,000원</div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
+                        <div className="p-4 w-full h-full flex items-center justify-center">
+                          <Image
+                            src="/부진페이지.png"
+                            alt="부진 상품 페이지"
+                            width={800}
+                            height={600}
+                            className="w-full h-auto object-contain"
+                            unoptimized
+                          />
                         </div>
                         )}
 
                         {/* 유사 매장 페이지 */}
                         {previewPage === 'similar' && (
-                        <div className="p-4">
-                          <div className="mb-4">
-                            <h3 className="text-base font-bold text-gray-900 mb-2">우리 매장과 유사 매장 찾기</h3>
-                            <p className="text-xs text-gray-600 mb-3">한달 동안, 우리 매장과 가장 유사한 매장들을 알려드립니다</p>
-                            
-                            {/* 분석 기간 */}
-                            <div className="flex items-center gap-2 mb-4">
-                              <span className="text-xs font-semibold text-gray-700">분석 기간</span>
-                              <button className="px-3 py-1 text-xs bg-green-600 text-white rounded">9월</button>
-                              <button className="px-3 py-1 text-xs bg-white text-gray-700 border border-gray-300 rounded">8월</button>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-4">
-                            {/* 왼쪽: 유사 매장 순위 */}
-                            <div className="w-40 flex-shrink-0">
-                              <h4 className="text-sm font-bold text-gray-900 mb-2">유사 매장 순위</h4>
-                              <p className="text-xs text-gray-500 mb-3">클릭하여 상세 분석 리포트 확인</p>
-                              <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                                {[
-                                  { rank: 1, name: '대치은마사거리점', address: '서울시 서대문구 회기로 24길' },
-                                  { rank: 2, name: '잠실새내역점', address: '서울시 남대문구 회기로 24길' },
-                                  { rank: 3, name: '삼성역트레이드센터점', address: '서울시 동대문구 이문로 24길' },
-                                  { rank: 4, name: '역삼타운점', address: '서울시 한남대로 24길' }
-                                ].map((store) => (
-                                  <div key={store.rank} className="bg-gray-50 rounded p-2 border border-gray-200 cursor-pointer hover:bg-gray-100">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="w-6 h-6 bg-green-600 text-white text-xs font-bold rounded flex items-center justify-center">
-                                        {store.rank}
-                                      </span>
-                                      <span className="text-xs font-semibold text-gray-900">세븐일레븐 {store.name}</span>
-                                    </div>
-                                    <p className="text-xs text-gray-600 ml-8">{store.address}</p>
-                                    <p className="text-xs text-gray-500 ml-8">영업시간: 24시간 · 매장면적 23m²</p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* 오른쪽: 지도 */}
-                            <div className="flex-1">
-                              <h4 className="text-sm font-bold text-gray-900 mb-2">유사 매장 위치</h4>
-                              <p className="text-xs text-gray-500 mb-3">기준 월: 9월</p>
-                              <div className="bg-gray-200 rounded-lg h-[400px] flex items-center justify-center">
-                                <span className="text-xs text-gray-400">지도 영역</span>
-                              </div>
-                            </div>
-                          </div>
+                        <div className="p-4 w-full h-full flex items-center justify-center">
+                          <Image
+                            src="/유사매장.png"
+                            alt="유사 매장 페이지"
+                            width={800}
+                            height={600}
+                            className="w-full h-auto object-contain"
+                            unoptimized
+                          />
                         </div>
                         )}
                       </div>
@@ -1642,7 +1508,7 @@ export default function OverviewPage() {
                 AI 딥러닝 알고리즘을 통해 내 매장에서 잘 팔릴 상품을 추천해드립니다.
               </p>
 
-              {/* 상품 카드 그리드 */}
+              {/* 상품 카드 캐러셀 */}
               {loadingProducts ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mb-16 max-w-4xl mx-auto">
                   {[1, 2, 3].map((i) => (
@@ -1653,37 +1519,42 @@ export default function OverviewPage() {
                   ))}
                 </div>
               ) : topRecommendedProducts.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mb-16 max-w-4xl mx-auto">
-                  {topRecommendedProducts.slice(0, 3).map((product, index) => (
-                    <div key={product.item_cd || index} className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
-                      <div className="flex items-center justify-center h-48 mb-4 bg-gray-50 rounded-lg overflow-hidden">
-                        {product.item_img ? (
-                          <img 
-                            src={product.item_img} 
-                            alt={product.item_nm || '상품 이미지'} 
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none'
-                              const parent = (e.target as HTMLImageElement).parentElement
-                              if (parent) {
-                                parent.innerHTML = '<div class="text-sm text-gray-400">이미지 없음</div>'
-                              }
-                            }}
-                          />
-                        ) : (
-                          <div className="text-sm text-gray-400">이미지 없음</div>
+                <div className="relative mb-16 max-w-4xl mx-auto overflow-hidden">
+                  <div 
+                    className="flex transition-transform duration-500 ease-in-out gap-6 md:gap-8"
+                    style={{ transform: `translateX(calc(-${recommendedIndex} * (33.333% + 0.67rem)))` }}
+                  >
+                    {topRecommendedProducts.map((product, index) => (
+                      <div key={product.item_cd || index} className="flex-shrink-0 w-full md:w-[calc(33.333%-1.33rem)] bg-white border-2 border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                        <div className="flex items-center justify-center h-48 mb-4 bg-gray-50 rounded-lg overflow-hidden">
+                          {product.item_img ? (
+                            <img 
+                              src={product.item_img} 
+                              alt={product.item_nm || '상품 이미지'} 
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none'
+                                const parent = (e.target as HTMLImageElement).parentElement
+                                if (parent) {
+                                  parent.innerHTML = '<div class="text-sm text-gray-400">이미지 없음</div>'
+                                }
+                              }}
+                            />
+                          ) : (
+                            <div className="text-sm text-gray-400">이미지 없음</div>
+                          )}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900 text-center line-clamp-2">
+                          {product.item_nm || '상품명 없음'}
+                        </div>
+                        {product.sale_price && (
+                          <div className="text-sm text-gray-600 text-center mt-2">
+                            {product.sale_price.toLocaleString()}원
+                          </div>
                         )}
                       </div>
-                      <div className="text-sm font-semibold text-gray-900 text-center line-clamp-2">
-                        {product.item_nm || '상품명 없음'}
-                      </div>
-                      {product.sale_price && (
-                        <div className="text-sm text-gray-600 text-center mt-2">
-                          {product.sale_price.toLocaleString()}원
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mb-16 max-w-4xl mx-auto">
@@ -1751,7 +1622,7 @@ export default function OverviewPage() {
                 실제 발주 및 판매 데이터 분석을 통해 내 매장의 상품군별 부진 상품 현황을 알려드립니다.
               </p>
 
-              {/* 부진 상품 카드 그리드 */}
+              {/* 부진 상품 카드 캐러셀 */}
               {loadingProducts ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mb-16 max-w-4xl mx-auto">
                   {[1, 2, 3].map((i) => (
@@ -1762,37 +1633,42 @@ export default function OverviewPage() {
                   ))}
                 </div>
               ) : topUnderperformingProducts.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mb-16 max-w-4xl mx-auto">
-                  {topUnderperformingProducts.slice(0, 3).map((product, index) => (
-                    <div key={product.item_cd || index} className="bg-white border-2 border-red-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
-                      <div className="flex items-center justify-center h-48 mb-4 bg-gray-50 rounded-lg overflow-hidden">
-                        {product.item_img ? (
-                          <img 
-                            src={product.item_img} 
-                            alt={product.item_nm || '상품 이미지'} 
-                            className="w-full h-full object-contain opacity-75"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none'
-                              const parent = (e.target as HTMLImageElement).parentElement
-                              if (parent) {
-                                parent.innerHTML = '<div class="text-sm text-gray-400">이미지 없음</div>'
-                              }
-                            }}
-                          />
-                        ) : (
-                          <div className="text-sm text-gray-400">이미지 없음</div>
+                <div className="relative mb-16 max-w-4xl mx-auto overflow-hidden">
+                  <div 
+                    className="flex transition-transform duration-500 ease-in-out gap-6 md:gap-8"
+                    style={{ transform: `translateX(calc(-${underperformingIndex} * (33.333% + 0.67rem)))` }}
+                  >
+                    {topUnderperformingProducts.map((product, index) => (
+                      <div key={product.item_cd || index} className="flex-shrink-0 w-full md:w-[calc(33.333%-1.33rem)] bg-white border-2 border-red-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                        <div className="flex items-center justify-center h-48 mb-4 bg-gray-50 rounded-lg overflow-hidden">
+                          {product.item_img ? (
+                            <img 
+                              src={product.item_img} 
+                              alt={product.item_nm || '상품 이미지'} 
+                              className="w-full h-full object-contain opacity-75"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none'
+                                const parent = (e.target as HTMLImageElement).parentElement
+                                if (parent) {
+                                  parent.innerHTML = '<div class="text-sm text-gray-400">이미지 없음</div>'
+                                }
+                              }}
+                            />
+                          ) : (
+                            <div className="text-sm text-gray-400">이미지 없음</div>
+                          )}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900 text-center line-clamp-2">
+                          {product.item_nm || '상품명 없음'}
+                        </div>
+                        {product.sale_price && (
+                          <div className="text-sm text-gray-600 text-center mt-2">
+                            {product.sale_price.toLocaleString()}원
+                          </div>
                         )}
                       </div>
-                      <div className="text-sm font-semibold text-gray-900 text-center line-clamp-2">
-                        {product.item_nm || '상품명 없음'}
-                      </div>
-                      {product.sale_price && (
-                        <div className="text-sm text-gray-600 text-center mt-2">
-                          {product.sale_price.toLocaleString()}원
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mb-16 max-w-4xl mx-auto">
@@ -1870,7 +1746,7 @@ export default function OverviewPage() {
             <div className="p-6 md:p-8">
               <div className="mb-6 pb-4 border-b-2 border-gray-300">
                 <p className="text-sm text-gray-700 leading-relaxed">
-                  머신러닝 알고리즘을 통해 <span className="font-semibold">판매 패턴 분석</span>과 
+                  딥러닝을 통해 <span className="font-semibold">판매 패턴 분석</span>과 
                   <span className="font-semibold">유동인구 데이터</span>를 종합 분석하여 
                   최적의 유사 매장을 선정합니다.
                 </p>
@@ -2025,55 +1901,91 @@ export default function OverviewPage() {
               </button>
             </div>
             
-            <div className="p-6 md:p-8 space-y-12">
+            <div className="p-6 md:p-8 space-y-16">
               {/* 사례 1: 석촌동호수점 */}
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="text-xl font-bold text-green-600">1</span>
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    1
+                  </div>
                   <h4 className="text-xl font-bold text-gray-900">실제 사례 석촌동호수점</h4>
+                  <span className="ml-auto px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                    계절별 변화 포착
+                  </span>
                 </div>
                 
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
-                  {/* 1월 (비수기) */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-1 h-6 bg-green-600"></div>
-                      <h5 className="text-lg font-bold text-gray-900">1월 (비수기)</h5>
-                    </div>
-                    <div className="bg-gray-50 border border-gray-300 rounded-lg p-5 space-y-3">
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-sm font-semibold text-gray-900">대로변 상권</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-sm font-semibold text-gray-900">상업형/생활형</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-sm font-semibold text-gray-900">식당가 중심</p>
-                      </div>
+                <div className="relative">
+                  {/* 연결 화살표 (데스크톱에서만 표시) */}
+                  <div className="hidden md:block absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-0">
+                    <div className="flex items-center gap-2">
+                      <div className="w-16 h-0.5 bg-green-300"></div>
+                      <div className="w-0 h-0 border-l-8 border-l-green-500 border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
+                      <div className="w-16 h-0.5 bg-green-300"></div>
                     </div>
                   </div>
-
-                  {/* 4월 (성수기) */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-1 h-6 bg-green-600"></div>
-                      <h5 className="text-lg font-bold text-gray-900">4월 (성수기)</h5>
+                  
+                  <div className="grid md:grid-cols-2 gap-8 relative z-10">
+                    {/* 1월 (비수기) */}
+                    <div className="relative group">
+                      <div className="relative bg-white border border-green-300 rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center justify-between mb-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-8 bg-green-400 rounded-full"></div>
+                            <div>
+                              <h5 className="text-lg font-bold text-gray-900">1월</h5>
+                              <span className="text-xs text-gray-500 font-medium">비수기</span>
+                            </div>
+                          </div>
+                          <div className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                            변화 전
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <p className="text-sm font-semibold text-gray-900">대로변 상권</p>
+                          </div>
+                          <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <p className="text-sm font-semibold text-gray-900">상업형/생활형</p>
+                          </div>
+                          <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <p className="text-sm font-semibold text-gray-900">식당가 중심</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-gray-50 border border-gray-300 rounded-lg p-5 space-y-3">
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-sm font-semibold text-gray-900">한강 주변 상권</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-sm font-semibold text-gray-900">관광 수요 중심</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-sm font-semibold text-gray-900">공원가 특성</p>
+
+                    {/* 4월 (성수기) */}
+                    <div className="relative group">
+                      <div className="relative bg-white border-2 border-green-600 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <div className="flex items-center justify-between mb-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-8 bg-green-600 rounded-full"></div>
+                            <div>
+                              <h5 className="text-lg font-bold text-gray-900">4월</h5>
+                              <span className="text-xs text-green-600 font-semibold">성수기</span>
+                            </div>
+                          </div>
+                          <div className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full">
+                            변화 포착!
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
+                            <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                            <p className="text-sm font-semibold text-gray-900">한강 주변 상권</p>
+                          </div>
+                          <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
+                            <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                            <p className="text-sm font-semibold text-gray-900">관광 수요 중심</p>
+                          </div>
+                          <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
+                            <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                            <p className="text-sm font-semibold text-gray-900">공원가 특성</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -2081,53 +1993,89 @@ export default function OverviewPage() {
               </div>
 
               {/* 사례 2: 역삼만남점 */}
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="text-xl font-bold text-green-600">2</span>
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    2
+                  </div>
                   <h4 className="text-xl font-bold text-gray-900">실제 사례 역삼만남점</h4>
+                  <span className="ml-auto px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                    시기별 변화 포착
+                  </span>
                 </div>
                 
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
-                  {/* 12월 (입시 종료) */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-1 h-6 bg-green-600"></div>
-                      <h5 className="text-lg font-bold text-gray-900">12월 (입시 종료)</h5>
-                    </div>
-                    <div className="bg-gray-50 border border-gray-300 rounded-lg p-5 space-y-3">
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-sm font-semibold text-gray-900">유흥가 상권</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-sm font-semibold text-gray-900">역삼역 환승 중심</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-sm font-semibold text-gray-900">야간 고객 중심</p>
-                      </div>
+                <div className="relative">
+                  {/* 연결 화살표 (데스크톱에서만 표시) */}
+                  <div className="hidden md:block absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-0">
+                    <div className="flex items-center gap-2">
+                      <div className="w-16 h-0.5 bg-green-300"></div>
+                      <div className="w-0 h-0 border-l-8 border-l-green-500 border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
+                      <div className="w-16 h-0.5 bg-green-300"></div>
                     </div>
                   </div>
-
-                  {/* 7월 (재수생 유입) */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-1 h-6 bg-green-600"></div>
-                      <h5 className="text-lg font-bold text-gray-900">7월 (재수생 유입)</h5>
+                  
+                  <div className="grid md:grid-cols-2 gap-8 relative z-10">
+                    {/* 12월 (입시 종료) */}
+                    <div className="relative group">
+                      <div className="relative bg-white border border-green-300 rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center justify-between mb-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-8 bg-green-400 rounded-full"></div>
+                            <div>
+                              <h5 className="text-lg font-bold text-gray-900">12월</h5>
+                              <span className="text-xs text-gray-500 font-medium">입시 종료</span>
+                            </div>
+                          </div>
+                          <div className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                            변화 전
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <p className="text-sm font-semibold text-gray-900">유흥가 상권</p>
+                          </div>
+                          <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <p className="text-sm font-semibold text-gray-900">역삼역 환승 중심</p>
+                          </div>
+                          <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <p className="text-sm font-semibold text-gray-900">야간 고객 중심</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-gray-50 border border-gray-300 rounded-lg p-5 space-y-3">
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-sm font-semibold text-gray-900">대학 정문 상권</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-sm font-semibold text-gray-900">학생 중심</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-sm font-semibold text-gray-900">주중 낮 시간대 활성</p>
+
+                    {/* 7월 (재수생 유입) */}
+                    <div className="relative group">
+                      <div className="relative bg-white border-2 border-green-600 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <div className="flex items-center justify-between mb-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-8 bg-green-600 rounded-full"></div>
+                            <div>
+                              <h5 className="text-lg font-bold text-gray-900">7월</h5>
+                              <span className="text-xs text-green-600 font-semibold">재수생 유입</span>
+                            </div>
+                          </div>
+                          <div className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full">
+                            변화 포착!
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
+                            <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                            <p className="text-sm font-semibold text-gray-900">대학 정문 상권</p>
+                          </div>
+                          <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
+                            <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                            <p className="text-sm font-semibold text-gray-900">학생 중심</p>
+                          </div>
+                          <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
+                            <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                            <p className="text-sm font-semibold text-gray-900">주중 낮 시간대 활성</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

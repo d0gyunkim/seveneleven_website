@@ -2464,7 +2464,7 @@ export default function SimilarStoresPage() {
             <div className="p-6 md:p-8">
               <div className="mb-6 pb-4 border-b-2 border-gray-300">
                 <p className="text-sm text-gray-700 leading-relaxed">
-                  머신러닝 알고리즘을 통해 <span className="font-semibold">판매 패턴 분석</span>과 
+                  딥러닝을 통해 <span className="font-semibold">판매 패턴 분석</span>과 
                   <span className="font-semibold">유동인구 데이터</span>를 종합 분석하여 
                   최적의 유사 매장을 선정합니다.
                 </p>
@@ -2522,13 +2522,12 @@ export default function SimilarStoresPage() {
                   </div>
                 </div>
                 
-                <div className="bg-gray-50 border-2 border-green-600 p-5">
+                <div className="bg-gray-50 border border-gray-300 p-5">
                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
                     <div className="w-2 h-2 bg-green-600"></div>
                     <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
                       유동인구 데이터
                     </h5>
-                    <span className="ml-auto px-2 py-0.5 bg-green-600 text-white text-[10px] font-bold">핵심</span>
                   </div>
                   <p className="text-sm text-gray-700 mb-3 leading-relaxed">
                     실시간 유동인구 정보와 방문객 패턴 분석을 통한 상권 특성 정확한 반영
