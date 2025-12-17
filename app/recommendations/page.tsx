@@ -441,15 +441,31 @@ export default function RecommendationsPage() {
       })
     }
     
+    // 선택된 중분류가 있으면 선택된 것만 초기화, 없으면 모두 초기화
+    if (selectedMiddleCategories.length > 0) {
+      // 선택된 중분류만 초기화
+      selectedMiddleCategories.forEach((category) => {
+        filtered[category] = []
+      })
+    } else {
+      // 모든 중분류 초기화
+      const allCategories = new Set<string>()
+      currentProducts.forEach((product) => {
+        if (product.item_lrdv_nm === selectedLargeCategory) {
+          const category = product.item_mddv_nm || '기타'
+          allCategories.add(category)
+          filtered[category] = []
+        }
+      })
+    }
+    
+    // 선택된 중분류가 있으면 선택된 것만 필터링, 없으면 모두 필터링
     currentProducts.forEach((product) => {
       if (product.item_lrdv_nm === selectedLargeCategory) {
         const category = product.item_mddv_nm || '기타'
-        // 중분류가 선택되었으면 선택된 중분류만 필터링
+        // 중분류가 선택되었으면 선택된 중분류만 필터링, 선택되지 않았으면 모두 표시
         if (selectedMiddleCategories.length > 0 && !selectedMiddleCategories.includes(category)) {
           return
-        }
-        if (!filtered[category]) {
-          filtered[category] = []
         }
         filtered[category].push(product)
       }
@@ -511,6 +527,15 @@ export default function RecommendationsPage() {
       filtered[category] = sortedProducts
     })
 
+    // 선택된 중분류가 있으면 빈 배열인 중분류 제거
+    if (selectedMiddleCategories.length > 0) {
+      Object.keys(filtered).forEach(category => {
+        if (filtered[category].length === 0) {
+          delete filtered[category]
+        }
+      })
+    }
+    
     // 추천 상품의 중분류 순서 기준으로 정렬
     const recommendedOrder = recommendedCategoryOrder.get(selectedLargeCategory) || []
     const sortedFiltered: GroupedProducts = {}
@@ -518,16 +543,16 @@ export default function RecommendationsPage() {
     // 추천 상품에 있는 중분류를 먼저 순서대로 추가
     const sortedKeys: string[] = []
     
-    // 1. 추천 상품에 있는 중분류를 순서대로 추가
+    // 1. 추천 상품에 있는 중분류를 순서대로 추가 (상품이 있는 것만)
     recommendedOrder.forEach(category => {
-      if (filtered[category]) {
+      if (filtered[category] && filtered[category].length > 0) {
         sortedKeys.push(category)
       }
     })
     
-    // 2. 추천 상품에 없는 중분류를 맨 뒤에 추가
+    // 2. 추천 상품에 없는 중분류를 맨 뒤에 추가 (상품이 있는 것만)
     Object.keys(filtered).forEach(category => {
-      if (!recommendedOrder.includes(category)) {
+      if (!recommendedOrder.includes(category) && filtered[category].length > 0) {
         sortedKeys.push(category)
       }
     })
@@ -855,11 +880,10 @@ export default function RecommendationsPage() {
                       return (
                         <label className="w-full flex items-center gap-3 px-2 py-2 text-left transition-colors cursor-pointer">
                           <input
-                            type="radio"
-                            name="filter-category"
+                            type="checkbox"
                             checked={isAllSelected}
                             onChange={() => setSelectedMiddleCategories([])}
-                            className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 focus:ring-2"
+                            className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 focus:ring-2 rounded"
                           />
                           <span className={`text-sm font-medium ${
                             isAllSelected
@@ -922,7 +946,7 @@ export default function RecommendationsPage() {
                         }
                       }
                       
-                      const isSelected = selectedMiddleCategories.length === 1 && selectedMiddleCategories.includes(category)
+                      const isSelected = selectedMiddleCategories.includes(category)
                       
                       return (
                         <label
@@ -930,11 +954,16 @@ export default function RecommendationsPage() {
                           className="w-full flex items-center gap-3 px-2 py-2 text-left transition-colors cursor-pointer"
                         >
                           <input
-                            type="radio"
-                            name="filter-category"
+                            type="checkbox"
                             checked={isSelected}
-                            onChange={() => setSelectedMiddleCategories([category])}
-                            className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 focus:ring-2"
+                            onChange={() => {
+                              if (isSelected) {
+                                setSelectedMiddleCategories(selectedMiddleCategories.filter(c => c !== category))
+                              } else {
+                                setSelectedMiddleCategories([...selectedMiddleCategories, category])
+                              }
+                            }}
+                            className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 focus:ring-2 rounded"
                           />
                           <span className={`text-sm font-medium flex-1 ${
                             isSelected
@@ -1022,17 +1051,13 @@ export default function RecommendationsPage() {
                         })
                       }
                       
-                      const isAllSelected = selectedMiddleCategories.length === 0 || selectedMiddleCategories.length === middleCategories.length
+                      const isAllSelected = selectedMiddleCategories.length === 0
                       
                       return (
                         <>
                           <button
                             onClick={() => {
-                              if (isAllSelected) {
-                                setSelectedMiddleCategories([])
-                              } else {
-                                setSelectedMiddleCategories([...middleCategories])
-                              }
+                              setSelectedMiddleCategories([])
                             }}
                             className={`px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-all duration-200 active:scale-95 shadow-sm ${
                               isAllSelected
@@ -1140,7 +1165,7 @@ export default function RecommendationsPage() {
               {Object.entries(filteredGroupedProducts).map(([category, products]) => (
                 <div key={category} className={`${isMobile ? 'px-4' : 'space-y-4'}`}>
                   {/* 모바일 앱 스타일: 카테고리 제목 */}
-                  {isMobile && selectedMiddleCategories.length === 0 && (
+                  {isMobile && (
                     <div className="flex items-center gap-2.5 mb-4 mt-2">
                       <div className={`w-1 h-6 rounded-full ${
                         activeTab === 'recommended' ? 'bg-emerald-500' : 'bg-amber-500'
@@ -1150,7 +1175,7 @@ export default function RecommendationsPage() {
                   )}
                   
                   {/* 웹 스타일: 카테고리 제목 */}
-                  {!isMobile && selectedMiddleCategories.length === 0 && (
+                  {!isMobile && (
                     <div className="flex items-center gap-2">
                       <div className={`w-1 h-6 rounded-full ${
                         activeTab === 'recommended' ? 'bg-emerald-500' : 'bg-amber-500'
@@ -1200,18 +1225,14 @@ export default function RecommendationsPage() {
                         >
                           {isVisible ? (
                             <>
-                              {/* 모바일 앱 스타일: 상품 이미지 (테두리 있음) */}
+                              {/* 모바일 앱 스타일: 상품 이미지 */}
                               {isMobile && (
-                                <div className="relative aspect-square bg-white rounded-xl border border-gray-200 overflow-hidden flex items-center justify-center mb-3 shadow-sm">
+                                <div className="relative aspect-square bg-white rounded-lg overflow-hidden flex items-center justify-center">
                               {/* 순위 배지 */}
                               {showBadge && (
                                     <div className="absolute top-2 left-2 z-10">
-                                      <div className={`${
-                                        displayRank === 1 ? 'bg-yellow-400 shadow-yellow-300' :
-                                        displayRank === 2 ? 'bg-gray-400 shadow-gray-300' :
-                                        'bg-orange-400 shadow-orange-300'
-                                      } w-7 h-7 rounded-lg flex items-center justify-center shadow-lg`}>
-                                        <span className="text-white font-bold text-xs">
+                                      <div className={`${activeTab === 'recommended' ? 'bg-green-200' : 'bg-orange-200'} w-7 h-7 flex items-center justify-center`}>
+                                        <span className="text-black font-semibold text-xs">
                                           {displayRank}
                                         </span>
                                       </div>
@@ -1231,7 +1252,7 @@ export default function RecommendationsPage() {
                                     <img
                                       src={product.item_img}
                                       alt={product.item_nm}
-                                      className="h-full w-auto object-contain p-3 transition-transform duration-300"
+                                      className="h-full w-auto object-contain p-1.5 transition-transform duration-300"
                                       loading="lazy"
                                       onError={(e) => {
                                         e.currentTarget.style.display = 'none'
@@ -1263,35 +1284,22 @@ export default function RecommendationsPage() {
                               {/* 웹 스타일: 순위 배지 */}
                               {!isMobile && showBadge && (
                                 <div className="absolute top-2 left-2 z-10">
-                                  <div className={`relative ${
-                                    displayRank === 1 ? 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600' :
-                                    displayRank === 2 ? 'bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500' :
-                                    'bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600'
-                                  } rounded-lg shadow-xl transform rotate-[-8deg] hover:rotate-0 transition-all duration-300 hover:scale-110`}
-                                  style={{
-                                    padding: '6px 10px',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3)',
-                                  }}>
-                                    <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent rounded-lg"></div>
-                                    <div className="absolute -inset-0.5 bg-black/10 rounded-lg blur-sm"></div>
-                                    <span className="relative text-white font-black text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] tracking-tight">
+                                  <div className={`${activeTab === 'recommended' ? 'bg-green-200' : 'bg-orange-200'} w-7 h-7 flex items-center justify-center`}>
+                                    <span className="text-black font-semibold text-xs">
                                       {displayRank}
                                     </span>
-                                    {displayRank === 1 && (
-                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-300 rounded-full animate-pulse shadow-md"></div>
-                                    )}
                                   </div>
                                 </div>
                               )}
 
                               {/* 웹 스타일: 상품 이미지 */}
                               {!isMobile && (
-                              <div className="relative aspect-square bg-white overflow-hidden flex items-center justify-center">
+                              <div className="relative aspect-square bg-white overflow-hidden flex items-center justify-center p-2">
                                 {product.item_img ? (
                                   <img
                                     src={product.item_img}
                                     alt={product.item_nm}
-                                    className="h-full w-auto object-contain p-4 md:p-6 transition-transform duration-300 group-hover:scale-105"
+                                    className="h-full w-auto object-contain p-1.5 transition-transform duration-300 group-hover:scale-105"
                                     loading="lazy"
                                     onError={(e) => {
                                       e.currentTarget.style.display = 'none'
@@ -1320,18 +1328,18 @@ export default function RecommendationsPage() {
                               </div>
                               )}
 
-                              {/* 모바일 앱 스타일: 상품 정보 (테두리 없음) */}
+                              {/* 모바일 앱 스타일: 상품 정보 */}
                               {isMobile && (
-                                <div className="flex flex-col space-y-1.5 mt-0">
-                                  <h4 className="text-xs font-semibold text-slate-900 line-clamp-2 leading-tight">
+                                <div className="flex flex-col mt-3">
+                                  <h4 className="text-sm font-medium text-slate-900 line-clamp-2 leading-tight mb-1">
                                     {product.item_nm}
                                   </h4>
                                   
                                   {/* 가격 정보 */}
                                   {product.sale_price !== null && (
-                                    <div className="pt-0.5">
-                                      <span className="text-base font-bold text-slate-900">
-                                        {product.sale_price.toLocaleString()}원
+                                    <div>
+                                      <span className="text-base font-semibold text-slate-900">
+                                        {product.sale_price.toLocaleString()} 원
                                       </span>
                                     </div>
                                   )}
@@ -1340,15 +1348,15 @@ export default function RecommendationsPage() {
 
                               {/* 웹 스타일: 상품 정보 */}
                               {!isMobile && (
-                              <div className="px-4 pb-4 pt-2 flex flex-col space-y-2">
-                                <h4 className="text-sm font-medium text-slate-900 line-clamp-2 leading-snug">
+                              <div className="px-4 pb-4 pt-3 flex flex-col">
+                                <h4 className="text-sm font-medium text-slate-900 line-clamp-2 leading-tight mb-1.5">
                                   {product.item_nm}
                                 </h4>
                                 
                                 {/* 가격 정보 */}
                                 {product.sale_price !== null && (
-                                  <div className="pt-1">
-                                    <span className="text-lg font-bold text-slate-900">
+                                  <div>
+                                    <span className="text-base font-semibold text-slate-900">
                                       {product.sale_price.toLocaleString()} 원
                                     </span>
                                   </div>
@@ -1389,32 +1397,19 @@ export default function RecommendationsPage() {
                             ref={(el) => setItemRef(itemId, el)}
                             data-item-id={itemId}
                             onClick={() => setSelectedProduct(product)}
-                            className="group cursor-pointer flex flex-col relative transition-all duration-300"
+                            className="group cursor-pointer flex flex-col relative transition-all duration-300 bg-white rounded-lg overflow-hidden"
                           >
                             {isVisible ? (
                               <>
-                                {/* 웹 스타일: 상품 이미지 (테두리 있음) */}
-                                <div className="relative aspect-square bg-white rounded-xl border border-gray-200 overflow-hidden flex items-center justify-center mb-3 shadow-sm">
+                                {/* 웹 스타일: 상품 이미지 */}
+                                <div className="relative aspect-square bg-white overflow-hidden flex items-center justify-center p-2">
                                   {/* 순위 배지 */}
                                   {showBadge && (
                                     <div className="absolute top-2 left-2 z-10">
-                                      <div className={`relative ${
-                                        displayRank === 1 ? 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600' :
-                                        displayRank === 2 ? 'bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500' :
-                                        'bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600'
-                                      } rounded-lg shadow-xl transform rotate-[-8deg] hover:rotate-0 transition-all duration-300 hover:scale-110`}
-                                      style={{
-                                        padding: '6px 10px',
-                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3)',
-                                      }}>
-                                        <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent rounded-lg"></div>
-                                        <div className="absolute -inset-0.5 bg-black/10 rounded-lg blur-sm"></div>
-                                        <span className="relative text-white font-black text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] tracking-tight">
+                                      <div className={`${activeTab === 'recommended' ? 'bg-green-200' : 'bg-orange-200'} w-7 h-7 flex items-center justify-center`}>
+                                        <span className="text-black font-semibold text-xs">
                                           {displayRank}
                                         </span>
-                                        {displayRank === 1 && (
-                                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-300 rounded-full animate-pulse shadow-md"></div>
-                                        )}
                                       </div>
                                     </div>
                                   )}
@@ -1432,7 +1427,7 @@ export default function RecommendationsPage() {
                                     <img
                                       src={product.item_img}
                                       alt={product.item_nm}
-                                      className="h-full w-auto object-contain p-4 md:p-6 transition-transform duration-300 group-hover:scale-105"
+                                      className="h-full w-auto object-contain p-1.5 transition-transform duration-300 group-hover:scale-105"
                                       loading="lazy"
                                       onError={(e) => {
                                         e.currentTarget.style.display = 'none'
@@ -1460,16 +1455,16 @@ export default function RecommendationsPage() {
                                   )}
                                 </div>
 
-                                {/* 웹 스타일: 상품 정보 (테두리 없음) */}
-                                <div className="flex flex-col space-y-2 mt-0">
-                                  <h4 className="text-sm font-medium text-slate-900 line-clamp-2 leading-snug">
+                                {/* 웹 스타일: 상품 정보 */}
+                                <div className="px-4 pb-4 pt-3 flex flex-col">
+                                  <h4 className="text-sm font-medium text-slate-900 line-clamp-2 leading-tight mb-1.5">
                                     {product.item_nm}
                                   </h4>
                                   
                                   {/* 가격 정보 */}
                                   {product.sale_price !== null && (
-                                    <div className="pt-1">
-                                      <span className="text-lg font-bold text-slate-900">
+                                    <div>
+                                      <span className="text-base font-semibold text-slate-900">
                                         {product.sale_price.toLocaleString()} 원
                                       </span>
                                     </div>
