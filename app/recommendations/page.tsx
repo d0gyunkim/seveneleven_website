@@ -1231,7 +1231,7 @@ export default function RecommendationsPage() {
                               {/* 순위 배지 */}
                               {showBadge && (
                                     <div className="absolute top-2 left-2 z-10">
-                                      <div className={`${activeTab === 'recommended' ? 'bg-green-200' : 'bg-orange-200'} w-7 h-7 flex items-center justify-center`}>
+                                      <div className={`${activeTab === 'recommended' ? 'bg-green-200' : 'bg-orange-200'} w-7 h-7 flex items-center justify-center rounded shadow-sm`}>
                                         <span className="text-black font-semibold text-xs">
                                           {displayRank}
                                         </span>
@@ -1252,7 +1252,7 @@ export default function RecommendationsPage() {
                                     <img
                                       src={product.item_img}
                                       alt={product.item_nm}
-                                      className="h-full w-auto object-contain p-1.5 transition-transform duration-300"
+                                      className="w-full h-full object-contain max-w-full max-h-full p-1.5 transition-transform duration-300"
                                       loading="lazy"
                                       onError={(e) => {
                                         e.currentTarget.style.display = 'none'
@@ -1284,7 +1284,7 @@ export default function RecommendationsPage() {
                               {/* 웹 스타일: 순위 배지 */}
                               {!isMobile && showBadge && (
                                 <div className="absolute top-2 left-2 z-10">
-                                  <div className={`${activeTab === 'recommended' ? 'bg-green-200' : 'bg-orange-200'} w-7 h-7 flex items-center justify-center`}>
+                                  <div className={`${activeTab === 'recommended' ? 'bg-green-200' : 'bg-orange-200'} w-7 h-7 flex items-center justify-center rounded shadow-sm`}>
                                     <span className="text-black font-semibold text-xs">
                                       {displayRank}
                                     </span>
@@ -1299,7 +1299,7 @@ export default function RecommendationsPage() {
                                   <img
                                     src={product.item_img}
                                     alt={product.item_nm}
-                                    className="h-full w-auto object-contain p-1.5 transition-transform duration-300 group-hover:scale-105"
+                                    className="w-full h-full object-contain max-w-full max-h-full p-1.5 transition-transform duration-300 group-hover:scale-105"
                                     loading="lazy"
                                     onError={(e) => {
                                       e.currentTarget.style.display = 'none'
@@ -1406,7 +1406,7 @@ export default function RecommendationsPage() {
                                   {/* 순위 배지 */}
                                   {showBadge && (
                                     <div className="absolute top-2 left-2 z-10">
-                                      <div className={`${activeTab === 'recommended' ? 'bg-green-200' : 'bg-orange-200'} w-7 h-7 flex items-center justify-center`}>
+                                      <div className={`${activeTab === 'recommended' ? 'bg-green-200' : 'bg-orange-200'} w-7 h-7 flex items-center justify-center rounded shadow-sm`}>
                                         <span className="text-black font-semibold text-xs">
                                           {displayRank}
                                         </span>
@@ -1427,7 +1427,7 @@ export default function RecommendationsPage() {
                                     <img
                                       src={product.item_img}
                                       alt={product.item_nm}
-                                      className="h-full w-auto object-contain p-1.5 transition-transform duration-300 group-hover:scale-105"
+                                      className="w-full h-full object-contain max-w-full max-h-full p-1.5 transition-transform duration-300 group-hover:scale-105"
                                       loading="lazy"
                                       onError={(e) => {
                                         e.currentTarget.style.display = 'none'
@@ -1616,7 +1616,7 @@ export default function RecommendationsPage() {
                             <img
                               src={selectedProduct.item_img}
                               alt={selectedProduct.item_nm}
-                              className="w-full h-full object-contain p-4"
+                              className="w-full h-full object-contain max-w-full max-h-full p-4"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none'
                                 const parent = e.currentTarget.parentElement
@@ -1830,7 +1830,7 @@ export default function RecommendationsPage() {
                             <img
                               src={selectedProduct.item_img}
                               alt={selectedProduct.item_nm}
-                              className="w-full h-full object-contain p-6"
+                              className="w-full h-full object-contain max-w-full max-h-full p-6"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none'
                                 const parent = e.currentTarget.parentElement
