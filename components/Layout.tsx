@@ -173,7 +173,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <header className="bg-white border-b border-gray-200 px-4 py-3">
           <div className="flex items-center justify-center">
             <img 
-              src="https://blog.kakaocdn.net/dna/Rgfiv/btqwQkfumoF/AAAAAAAAAAAAAAAAAAAAAGAZR8R47RTmlda6WEeNVxz2_krzlzUMSYBVH6e7ZgSg/img.jpg?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1767193199&allow_ip=&allow_referer=&signature=xLd%2FpHndt%2BLco2Mpc2IeZmW7nZc%3D"
+              src="/KakaoTalk_Photo_2025-12-18-15-20-51.png"
               alt="7-ELEVEN"
               className="h-8 object-contain select-none"
               draggable="false"
@@ -187,9 +187,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <header className="bg-white border-b border-gray-200 px-4 md:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
-              <div className="ml-16 flex items-center">
+              <div className="ml-4 md:ml-6 flex items-center">
                 <img 
-                  src="https://blog.kakaocdn.net/dna/Rgfiv/btqwQkfumoF/AAAAAAAAAAAAAAAAAAAAAGAZR8R47RTmlda6WEeNVxz2_krzlzUMSYBVH6e7ZgSg/img.jpg?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1767193199&allow_ip=&allow_referer=&signature=xLd%2FpHndt%2BLco2Mpc2IeZmW7nZc%3D"
+                  src="/KakaoTalk_Photo_2025-12-18-15-20-51.png"
                   alt="7-ELEVEN"
                   className="h-8 md:h-10 object-contain select-none"
                   draggable="false"
