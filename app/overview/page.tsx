@@ -596,8 +596,7 @@ export default function OverviewPage() {
                           내 매장과 가장 비슷한 월별 Top5 유사 매장과 유사 매장 평균 데이터를 기반으로 판매 및 운영의 종합적 분석을 제공합니다.
                         </p>
                         <p className="text-sm">
-                          유사 매장의 인기 상품 순위를 확인할 수 있으며,{'\n'}
-                          LLM 기반의 점주 친화적 설명을 안내합니다.
+                          유사 매장의 인기 상품 순위를 확인할 수 있으며, 유사매장 판단 근거에 대한 정보를 제공해드립니다.
                         </p>
                       </>
                     )}
@@ -815,7 +814,7 @@ export default function OverviewPage() {
                                 <div className="text-xs text-gray-400">이미지 없음</div>
                               )}
                             </div>
-                            <div className="text-xs font-semibold text-gray-900 text-center line-clamp-2">
+                            <div className="text-sm font-semibold text-gray-900 text-center line-clamp-2">
                               {product.item_nm || '상품명 없음'}
                             </div>
                             {product.sale_price && (
@@ -927,7 +926,7 @@ export default function OverviewPage() {
                                 <div className="text-xs text-gray-400">이미지 없음</div>
                               )}
                             </div>
-                            <div className="text-xs font-semibold text-gray-900 text-center line-clamp-2">
+                            <div className="text-sm font-semibold text-gray-900 text-center line-clamp-2">
                               {product.item_nm || '상품명 없음'}
                             </div>
                             {product.sale_price && (
@@ -1325,8 +1324,7 @@ export default function OverviewPage() {
                             내 매장과 가장 비슷한 월별 Top5 유사 매장과 유사 매장 평균 데이터를 기반으로 판매 및 운영의 종합적 분석을 제공합니다.
                           </p>
                           <p className="text-lg">
-                            유사 매장의 인기 상품 순위를 확인할 수 있으며,{'\n'}
-                            LLM 기반의 점주 친화적 설명을 안내합니다.
+                            유사 매장의 인기 상품 순위를 확인할 수 있으며, 유사매장 판단 근거에 대한 정보를 제공해드립니다.
                           </p>
                         </div>
                       </div>
@@ -1554,7 +1552,7 @@ export default function OverviewPage() {
                             <div className="text-sm text-gray-400">이미지 없음</div>
                           )}
                         </div>
-                        <div className="text-sm font-semibold text-gray-900 text-center line-clamp-2">
+                        <div className="text-base font-semibold text-gray-900 text-center line-clamp-2">
                           {product.item_nm || '상품명 없음'}
                         </div>
                         {product.sale_price && (
@@ -1668,7 +1666,7 @@ export default function OverviewPage() {
                             <div className="text-sm text-gray-400">이미지 없음</div>
                           )}
                         </div>
-                        <div className="text-sm font-semibold text-gray-900 text-center line-clamp-2">
+                        <div className="text-base font-semibold text-gray-900 text-center line-clamp-2">
                           {product.item_nm || '상품명 없음'}
                         </div>
                         {product.sale_price && (
@@ -1755,7 +1753,7 @@ export default function OverviewPage() {
             
             <div className="p-6 md:p-8">
               <div className="mb-6 pb-4 border-b-2 border-gray-300">
-                <p className="text-sm text-gray-700 leading-relaxed">
+                <p className="text-base text-gray-700 leading-relaxed">
                   딥러닝을 통해 <span className="font-semibold">판매 패턴 분석</span>과 
                   <span className="font-semibold">유동인구 데이터</span>를 종합 분석하여 
                   최적의 유사 매장을 선정합니다.
@@ -1766,11 +1764,11 @@ export default function OverviewPage() {
                 <div className="bg-gray-50 border border-gray-300 p-5">
                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
                     <div className="w-2 h-2 bg-green-600"></div>
-                    <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                    <h5 className="text-base font-bold text-gray-900 uppercase tracking-wide">
                       판매 상품 패턴
                     </h5>
                   </div>
-                  <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                  <p className="text-base text-gray-700 mb-3 leading-relaxed">
                     대분류 카테고리별 판매량 비중 분석을 통한 소비자 구매 패턴 파악
                   </p>
                 </div>
@@ -1778,11 +1776,11 @@ export default function OverviewPage() {
                 <div className="bg-gray-50 border border-gray-300 p-5">
                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
                     <div className="w-2 h-2 bg-green-600"></div>
-                    <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                    <h5 className="text-base font-bold text-gray-900 uppercase tracking-wide">
                       시간대별 패턴
                     </h5>
                   </div>
-                  <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                  <p className="text-base text-gray-700 mb-3 leading-relaxed">
                     주중/주말 × 시간대별 매출 비중 분석을 통한 고객 유입 패턴 추적
                   </p>
                 </div>
@@ -1790,24 +1788,23 @@ export default function OverviewPage() {
                 <div className="bg-gray-50 border border-gray-300 p-5">
                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
                     <div className="w-2 h-2 bg-green-600"></div>
-                    <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                    <h5 className="text-base font-bold text-gray-900 uppercase tracking-wide">
                       주중/주말 편중도
                     </h5>
                   </div>
-                  <p className="text-sm text-gray-700 mb-3 leading-relaxed">
-                    주중 대비 주말 매출 비율 계산을 통한 상권 성격(오피스/주거/관광) 분석
+                  <p className="text-base text-gray-700 mb-3 leading-relaxed">
+                    주중 대비 주말 매출 비율 분석
                   </p>
                 </div>
                 
-                <div className="bg-gray-50 border-2 border-green-600 p-5">
+                <div className="bg-gray-50 border border-gray-300 p-5">
                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
                     <div className="w-2 h-2 bg-green-600"></div>
-                    <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                    <h5 className="text-base font-bold text-gray-900 uppercase tracking-wide">
                       유동인구 데이터
                     </h5>
-                    <span className="ml-auto px-2 py-0.5 bg-green-600 text-white text-[10px] font-bold">핵심</span>
                   </div>
-                  <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                  <p className="text-base text-gray-700 mb-3 leading-relaxed">
                     실시간 유동인구 정보와 방문객 패턴 분석을 통한 상권 특성 정확한 반영
                   </p>
                 </div>
@@ -1839,7 +1836,7 @@ export default function OverviewPage() {
             <div className="p-6 md:p-8">
               {/* 설명 */}
               <div className="mb-6 pb-4 border-b-2 border-gray-300">
-                <p className="text-sm text-gray-700 leading-relaxed">
+                <p className="text-base text-gray-700 leading-relaxed">
                   상권 변화를 실시간으로 반영하기 위해 최근 4주 데이터를 유지하며 2주마다 자동 갱신하는 Rolling Window 알고리즘을 적용합니다.
                 </p>
               </div>
@@ -1849,30 +1846,30 @@ export default function OverviewPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1 h-6 bg-green-600"></div>
-                    <h4 className="text-lg font-bold text-gray-900">분석 구간</h4>
+                    <h4 className="text-xl font-bold text-gray-900">분석 구간</h4>
                   </div>
-                  <p className="text-sm text-gray-700">최근 4주 데이터 (Rolling 4 Weeks)</p>
+                  <p className="text-base text-gray-700">최근 4주 데이터 (Rolling 4 Weeks)</p>
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1 h-6 bg-green-600"></div>
-                    <h4 className="text-lg font-bold text-gray-900">갱신 주기</h4>
+                    <h4 className="text-xl font-bold text-gray-900">갱신 주기</h4>
                   </div>
-                  <p className="text-sm text-gray-700">2주마다 자동 업데이트</p>
+                  <p className="text-base text-gray-700">2주마다 자동 업데이트</p>
                 </div>
               </div>
 
               {/* 작동 원리 */}
               <div className="mb-8">
-                <h4 className="text-lg font-bold text-gray-900 mb-4">작동 원리</h4>
+                <h4 className="text-xl font-bold text-gray-900 mb-4">작동 원리</h4>
                 <ol className="space-y-3 list-decimal list-inside">
-                  <li className="text-sm text-gray-700 leading-relaxed">
+                  <li className="text-base text-gray-700 leading-relaxed">
                     2주마다 새로운 주차 데이터를 추가하고 가장 오래된 주차 데이터를 제거
                   </li>
-                  <li className="text-sm text-gray-700 leading-relaxed">
+                  <li className="text-base text-gray-700 leading-relaxed">
                     최신 4주 데이터 기반으로 유사도 알고리즘 자동 재계산
                   </li>
-                  <li className="text-sm text-gray-700 leading-relaxed">
+                  <li className="text-base text-gray-700 leading-relaxed">
                     시기별 판매 패턴 변화를 즉시 반영하여 정확한 유사 매장 추천
                   </li>
                 </ol>
@@ -1883,8 +1880,8 @@ export default function OverviewPage() {
                 <div className="flex items-start gap-3">
                   <div className="w-1 h-6 bg-green-600 mt-1"></div>
                   <div>
-                    <h4 className="text-sm font-bold text-gray-900 mb-2">최신성 보장:</h4>
-                    <p className="text-sm text-gray-700 leading-relaxed">
+                    <h4 className="text-base font-bold text-gray-900 mb-2">최신성 보장:</h4>
+                    <p className="text-base text-gray-700 leading-relaxed">
                       Rolling Window 알고리즘을 통해 상권의 점진적이고 유동적인 변화를 실시간으로 포착하여 항상 최신 데이터 기반의 정확한 분석 결과를 제공합니다.
                     </p>
                   </div>
@@ -1942,26 +1939,26 @@ export default function OverviewPage() {
                           <div className="flex items-center gap-3">
                             <div className="w-2 h-8 bg-green-400 rounded-full"></div>
                             <div>
-                              <h5 className="text-lg font-bold text-gray-900">1월</h5>
-                              <span className="text-xs text-gray-500 font-medium">비수기</span>
+                              <h5 className="text-xl font-bold text-gray-900">1월</h5>
+                              <span className="text-sm text-gray-500 font-medium">비수기</span>
                             </div>
                           </div>
-                          <div className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                          <div className="px-3 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-full">
                             변화 전
                           </div>
                         </div>
                         <div className="space-y-3">
                           <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
                             <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                            <p className="text-sm font-semibold text-gray-900">대로변 상권</p>
+                            <p className="text-base font-semibold text-gray-900">대로변 상권</p>
                           </div>
                           <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
                             <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                            <p className="text-sm font-semibold text-gray-900">상업형/생활형</p>
+                            <p className="text-base font-semibold text-gray-900">상업형/생활형</p>
                           </div>
                           <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
                             <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                            <p className="text-sm font-semibold text-gray-900">식당가 중심</p>
+                            <p className="text-base font-semibold text-gray-900">식당가 중심</p>
                           </div>
                         </div>
                       </div>
@@ -1974,26 +1971,26 @@ export default function OverviewPage() {
                           <div className="flex items-center gap-3">
                             <div className="w-2 h-8 bg-green-600 rounded-full"></div>
                             <div>
-                              <h5 className="text-lg font-bold text-gray-900">4월</h5>
-                              <span className="text-xs text-green-600 font-semibold">성수기</span>
+                              <h5 className="text-xl font-bold text-gray-900">4월</h5>
+                              <span className="text-sm text-green-600 font-semibold">성수기</span>
                             </div>
                           </div>
-                          <div className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full">
+                          <div className="px-3 py-1 bg-green-600 text-white text-sm font-bold rounded-full">
                             변화 포착!
                           </div>
                         </div>
                         <div className="space-y-3">
                           <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
                             <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                            <p className="text-sm font-semibold text-gray-900">한강 주변 상권</p>
+                            <p className="text-base font-semibold text-gray-900">한강 주변 상권</p>
                           </div>
                           <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
                             <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                            <p className="text-sm font-semibold text-gray-900">관광 수요 중심</p>
+                            <p className="text-base font-semibold text-gray-900">관광 수요 중심</p>
                           </div>
                           <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
                             <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                            <p className="text-sm font-semibold text-gray-900">공원가 특성</p>
+                            <p className="text-base font-semibold text-gray-900">공원가 특성</p>
                           </div>
                         </div>
                       </div>
@@ -2032,26 +2029,26 @@ export default function OverviewPage() {
                           <div className="flex items-center gap-3">
                             <div className="w-2 h-8 bg-green-400 rounded-full"></div>
                             <div>
-                              <h5 className="text-lg font-bold text-gray-900">12월</h5>
-                              <span className="text-xs text-gray-500 font-medium">입시 종료</span>
+                              <h5 className="text-xl font-bold text-gray-900">12월</h5>
+                              <span className="text-sm text-gray-500 font-medium">입시 종료</span>
                             </div>
                           </div>
-                          <div className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                          <div className="px-3 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-full">
                             변화 전
                           </div>
                         </div>
                         <div className="space-y-3">
                           <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
                             <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                            <p className="text-sm font-semibold text-gray-900">유흥가 상권</p>
+                            <p className="text-base font-semibold text-gray-900">유흥가 상권</p>
                           </div>
                           <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
                             <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                            <p className="text-sm font-semibold text-gray-900">역삼역 환승 중심</p>
+                            <p className="text-base font-semibold text-gray-900">역삼역 환승 중심</p>
                           </div>
                           <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
                             <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                            <p className="text-sm font-semibold text-gray-900">야간 고객 중심</p>
+                            <p className="text-base font-semibold text-gray-900">야간 고객 중심</p>
                           </div>
                         </div>
                       </div>
@@ -2064,26 +2061,26 @@ export default function OverviewPage() {
                           <div className="flex items-center gap-3">
                             <div className="w-2 h-8 bg-green-600 rounded-full"></div>
                             <div>
-                              <h5 className="text-lg font-bold text-gray-900">7월</h5>
-                              <span className="text-xs text-green-600 font-semibold">재수생 유입</span>
+                              <h5 className="text-xl font-bold text-gray-900">7월</h5>
+                              <span className="text-sm text-green-600 font-semibold">재수생 유입</span>
                             </div>
                           </div>
-                          <div className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full">
+                          <div className="px-3 py-1 bg-green-600 text-white text-sm font-bold rounded-full">
                             변화 포착!
                           </div>
                         </div>
                         <div className="space-y-3">
                           <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
                             <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                            <p className="text-sm font-semibold text-gray-900">대학 정문 상권</p>
+                            <p className="text-base font-semibold text-gray-900">대학 정문 상권</p>
                           </div>
                           <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
                             <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                            <p className="text-sm font-semibold text-gray-900">학생 중심</p>
+                            <p className="text-base font-semibold text-gray-900">학생 중심</p>
                           </div>
                           <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-green-50 transition-colors">
                             <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                            <p className="text-sm font-semibold text-gray-900">주중 낮 시간대 활성</p>
+                            <p className="text-base font-semibold text-gray-900">주중 낮 시간대 활성</p>
                           </div>
                         </div>
                       </div>

@@ -1331,7 +1331,7 @@ export default function RecommendationsPage() {
                               {/* 모바일 앱 스타일: 상품 정보 */}
                               {isMobile && (
                                 <div className="flex flex-col mt-3">
-                                  <h4 className="text-sm font-medium text-slate-900 line-clamp-2 leading-tight mb-1">
+                                  <h4 className="text-base font-medium text-slate-900 line-clamp-2 leading-tight mb-1">
                                     {product.item_nm}
                                   </h4>
                                   
@@ -1349,7 +1349,7 @@ export default function RecommendationsPage() {
                               {/* 웹 스타일: 상품 정보 */}
                               {!isMobile && (
                               <div className="px-4 pb-4 pt-3 flex flex-col">
-                                <h4 className="text-sm font-medium text-slate-900 line-clamp-2 leading-tight mb-1.5">
+                                <h4 className="text-base font-medium text-slate-900 line-clamp-2 leading-tight mb-1.5">
                                   {product.item_nm}
                                 </h4>
                                 
@@ -1457,7 +1457,7 @@ export default function RecommendationsPage() {
 
                                 {/* 웹 스타일: 상품 정보 */}
                                 <div className="px-4 pb-4 pt-3 flex flex-col">
-                                  <h4 className="text-sm font-medium text-slate-900 line-clamp-2 leading-tight mb-1.5">
+                                  <h4 className="text-base font-medium text-slate-900 line-clamp-2 leading-tight mb-1.5">
                                     {product.item_nm}
                                   </h4>
                                   
@@ -1698,10 +1698,10 @@ export default function RecommendationsPage() {
                             return (
                               <div className="space-y-4">
                                 <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100">
-                                  <p className="text-sm text-slate-900 leading-relaxed mb-4">
+                                  <p className="text-lg text-slate-900 leading-relaxed mb-4">
                                     <span className="font-semibold">{itemName}</span>은 딥러닝 기반 분석을 통해 판매 추세·판매량·매출액 등 주요 지표를 종합적으로 고려하고, 우리 매장의 판매 흐름과 유사 매장의 실제 판매 성과를 함께 반영하여 추천된 상품입니다.
                                   </p>
-                                  <p className="text-sm text-slate-900 leading-relaxed">
+                                  <p className="text-lg text-slate-900 leading-relaxed">
                                     해당 상품은 유사매장들에서 평균적으로 약 <span className="font-semibold text-emerald-600">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>회, 누적 매출은 <span className="font-semibold text-emerald-600">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원을 기록했습니다.
                                   </p>
                                 </div>
@@ -1752,23 +1752,20 @@ export default function RecommendationsPage() {
                                 {isNoSale ? (
                                   <div className="bg-white rounded-xl p-4 text-center border border-amber-200">
                                     <div className="text-3xl mb-2">⚠️</div>
-                                    <div className="text-sm font-bold text-amber-700 mb-1">한달 동안 판매가 이루어지지 않았습니다</div>
-                                    <div className="text-xs text-slate-600">발주 제외를 권장드립니다</div>
+                                    <div className="text-lg font-bold text-amber-700 mb-1">한달 동안 판매가 이루어지지 않았습니다</div>
+                                    <div className="text-base text-slate-600">발주 제외를 권장드립니다</div>
                                   </div>
                                 ) : (
                                   <>
                                     <div className="p-4 bg-amber-50 rounded-xl">
-                                      <p className="text-sm text-slate-900 leading-relaxed mb-3">
-                                        <span className="font-semibold">{itemName}</span>은(는) 내 매장에서 판매 실적이 낮은 상품입니다.
-                                      </p>
-                                      <div className="space-y-2 pt-3 border-t border-amber-200">
-                                        <p className="text-sm text-slate-900 leading-relaxed">
-                                          최근 판매 분석 결과, 이 상품은 분석 기준일로부터 <span className="font-semibold text-amber-600">{recency !== null ? Math.round(recency) : 'N/A'}</span>일 이내에 판매가 발생했습니다.
+                                      <div className="space-y-2">
+                                        <p className="text-lg text-slate-900 leading-relaxed">
+                                          최근 판매 분석 결과, <span className="font-semibold">{itemName}</span>은 분석 기준일로부터 <span className="font-semibold text-amber-600">{recency !== null ? Math.round(recency) : 'N/A'}</span>일 이내에 판매가 발생했습니다.
                                         </p>
-                                        <p className="text-sm text-slate-900 leading-relaxed">
+                                        <p className="text-lg text-slate-900 leading-relaxed">
                                           같은 기간 동안 총 <span className="font-semibold text-amber-600">{frequency !== null ? Math.round(frequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-amber-600">{calculatedMonetary !== null ? Math.round(calculatedMonetary).toLocaleString() : 'N/A'}</span>원입니다.
                                         </p>
-                                        <p className="text-sm text-amber-700 font-semibold mt-2">
+                                        <p className="text-lg text-amber-700 font-semibold mt-2">
                                           판매 실적이 낮아 발주 제외를 권장드립니다.
                                         </p>
                                       </div>
@@ -1933,10 +1930,10 @@ export default function RecommendationsPage() {
                                   {isMobile ? (
                                     <div className="space-y-4">
                                       <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100">
-                                        <p className="text-sm text-slate-900 leading-relaxed mb-4">
+                                        <p className="text-lg text-slate-900 leading-relaxed mb-4">
                                           <span className="font-semibold">{itemName}</span>은 딥러닝 기반 분석을 통해 판매 추세·판매량·매출액 등 주요 지표를 종합적으로 고려하고, 우리 매장의 판매 흐름과 유사 매장의 실제 판매 성과를 함께 반영하여 추천된 상품입니다.
                                         </p>
-                                        <p className="text-sm text-slate-900 leading-relaxed">
+                                        <p className="text-lg text-slate-900 leading-relaxed">
                                           해당 상품은 유사매장들에서 평균적으로 약 <span className="font-semibold text-emerald-600">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>회, 누적 매출은 <span className="font-semibold text-emerald-600">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원을 기록했습니다.
                                         </p>
                                       </div>
@@ -1965,11 +1962,11 @@ export default function RecommendationsPage() {
                                     /* 웹 스타일: 추천 설명 */
                                     <>
                                       <div className="p-6 bg-emerald-50 rounded-lg border border-emerald-100">
-                                        <p className="text-base text-slate-900 leading-relaxed mb-5">
-                                          <span className="font-semibold text-lg">{itemName}</span>은 딥러닝 기반 분석을 통해 판매 추세·판매량·매출액 등 주요 지표를 종합적으로 고려하고, 우리 매장의 판매 흐름과 유사 매장의 실제 판매 성과를 함께 반영하여 추천된 상품입니다.
+                                        <p className="text-xl text-slate-900 leading-relaxed mb-5">
+                                          <span className="font-semibold text-2xl">{itemName}</span>은 딥러닝 기반 분석을 통해 판매 추세·판매량·매출액 등 주요 지표를 종합적으로 고려하고, 우리 매장의 판매 흐름과 유사 매장의 실제 판매 성과를 함께 반영하여 추천된 상품입니다.
                                         </p>
-                                        <p className="text-base text-slate-900 leading-relaxed">
-                                          해당 상품은 유사매장들에서 평균적으로 약 <span className="font-semibold text-emerald-600 text-lg">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>회, 누적 매출은 <span className="font-semibold text-emerald-600 text-lg">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원을 기록했습니다.
+                                        <p className="text-xl text-slate-900 leading-relaxed">
+                                          해당 상품은 유사매장들에서 평균적으로 약 <span className="font-semibold text-emerald-600 text-2xl">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>회, 누적 매출은 <span className="font-semibold text-emerald-600 text-2xl">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원을 기록했습니다.
                                         </p>
                                       </div>
                                       
@@ -2024,23 +2021,20 @@ export default function RecommendationsPage() {
                                       {isNoSale ? (
                                         <div className="bg-white rounded-xl p-4 text-center border border-amber-200">
                                           <div className="text-3xl mb-2">⚠️</div>
-                                          <div className="text-sm font-bold text-amber-700 mb-1">한달 동안 판매가 이루어지지 않았습니다</div>
-                                          <div className="text-xs text-slate-600">발주 제외를 권장드립니다</div>
+                                          <div className="text-lg font-bold text-amber-700 mb-1">한달 동안 판매가 이루어지지 않았습니다</div>
+                                          <div className="text-base text-slate-600">발주 제외를 권장드립니다</div>
                                         </div>
                                       ) : (
                                         <>
                                           <div className="p-4 bg-amber-50 rounded-xl">
-                                            <p className="text-sm text-slate-900 leading-relaxed mb-3">
-                                              <span className="font-semibold">{itemName}</span>은(는) 내 매장에서 판매 실적이 낮은 상품입니다.
-                                            </p>
-                                            <div className="space-y-2 pt-3 border-t border-amber-200">
-                                    <p className="text-sm text-slate-900 leading-relaxed">
-                                                최근 판매 분석 결과, 이 상품은 분석 기준일로부터 <span className="font-semibold text-amber-600">{recency !== null ? Math.round(recency) : 'N/A'}</span>일 이내에 판매가 발생했습니다.
+                                            <div className="space-y-2">
+                                    <p className="text-lg text-slate-900 leading-relaxed">
+                                                최근 판매 분석 결과, <span className="font-semibold">{itemName}</span>은 분석 기준일로부터 <span className="font-semibold text-amber-600">{recency !== null ? Math.round(recency) : 'N/A'}</span>일 이내에 판매가 발생했습니다.
                                               </p>
-                                              <p className="text-sm text-slate-900 leading-relaxed">
+                                              <p className="text-lg text-slate-900 leading-relaxed">
                                                 같은 기간 동안 총 <span className="font-semibold text-amber-600">{frequency !== null ? Math.round(frequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-amber-600">{calculatedMonetary !== null ? Math.round(calculatedMonetary).toLocaleString() : 'N/A'}</span>원입니다.
                                               </p>
-                                              <p className="text-sm text-amber-700 font-semibold mt-2">
+                                              <p className="text-lg text-amber-700 font-semibold mt-2">
                                                 판매 실적이 낮아 발주 제외를 권장드립니다.
                                     </p>
                                             </div>
@@ -2078,28 +2072,22 @@ export default function RecommendationsPage() {
                                   ) : (
                                     /* 웹 스타일: 부진 근거 */
                                     <>
-                                      <div className="p-6 bg-amber-50 rounded-lg border border-amber-100">
-                                        <p className="text-base text-slate-900 leading-relaxed">
-                                          <span className="font-semibold text-lg">{itemName}</span>은(는) 내 매장에서 판매 실적이 낮은 상품입니다.
-                                        </p>
-                                      </div>
-                                      
                                       {isNoSale ? (
                                         <div className="bg-white rounded-lg p-6 text-center border border-amber-200">
                                           <div className="text-4xl mb-3">⚠️</div>
-                                          <div className="text-base font-bold text-amber-700 mb-2">한달 동안 판매가 이루어지지 않았습니다</div>
-                                          <div className="text-sm text-slate-600">발주 제외를 권장드립니다</div>
+                                          <div className="text-xl font-bold text-amber-700 mb-2">한달 동안 판매가 이루어지지 않았습니다</div>
+                                          <div className="text-lg text-slate-600">발주 제외를 권장드립니다</div>
                                         </div>
                                       ) : (
                                         <>
                                           <div className="p-6 bg-white rounded-lg border border-amber-200">
-                                            <p className="text-base text-slate-900 leading-relaxed mb-3">
-                                              최근 판매 분석 결과, 이 상품은 분석 기준일로부터 <span className="font-semibold text-amber-600 text-lg">{recency !== null ? Math.round(recency) : 'N/A'}</span>일 이내에 판매가 발생했습니다.
+                                            <p className="text-xl text-slate-900 leading-relaxed mb-3">
+                                              최근 판매 분석 결과, <span className="font-semibold text-2xl">{itemName}</span>은 분석 기준일로부터 <span className="font-semibold text-amber-600 text-2xl">{recency !== null ? Math.round(recency) : 'N/A'}</span>일 이내에 판매가 발생했습니다.
                                             </p>
-                                            <p className="text-base text-slate-900 leading-relaxed mb-3">
-                                              같은 기간 동안 총 <span className="font-semibold text-amber-600 text-lg">{frequency !== null ? Math.round(frequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-amber-600 text-lg">{calculatedMonetary !== null ? Math.round(calculatedMonetary).toLocaleString() : 'N/A'}</span>원입니다.
+                                            <p className="text-xl text-slate-900 leading-relaxed mb-3">
+                                              같은 기간 동안 총 <span className="font-semibold text-amber-600 text-2xl">{frequency !== null ? Math.round(frequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-amber-600 text-2xl">{calculatedMonetary !== null ? Math.round(calculatedMonetary).toLocaleString() : 'N/A'}</span>원입니다.
                                             </p>
-                                            <p className="text-base text-amber-700 font-semibold mt-4">
+                                            <p className="text-xl text-amber-700 font-semibold mt-4">
                                               판매 실적이 낮아 발주 제외를 권장드립니다.
                                             </p>
                                           </div>
