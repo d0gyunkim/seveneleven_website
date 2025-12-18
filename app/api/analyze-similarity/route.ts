@@ -19,44 +19,37 @@ export async function POST(request: NextRequest) {
       const { myStoreData, comparisonData, categories, similarityScore, categoryDiffs, isAverage } = data
       const comparisonLabel = isAverage ? '유사매장 평균' : '유사매장'
       
-      prompt = `다음은 편의점 매장의 카테고리별 판매 패턴 데이터입니다. 주어진 데이터를 기반으로 깊이 있는 유사도 분석을 수행해주세요. 반드시 제공된 데이터만을 근거로 분석하고, 맥락을 벗어나지 마세요.
+      const topSimilar = [...categoryDiffs].sort((a, b) => a.diff - b.diff).slice(0, 2)
+      const topDifferent = [...categoryDiffs].sort((a, b) => b.diff - a.diff).slice(0, 2)
+      
+      prompt = `편의점 점주님께 전달할 유사매장 판매 패턴 분석입니다.
 
-내 매장 판매 비중:
-${categories.map((cat: string) => `- ${cat}: ${myStoreData[cat]?.toFixed(2) || 0}%`).join('\n')}
+[데이터 요약]
+- 유사도: ${similarityScore.toFixed(0)}%
+- 가장 유사한 카테고리: ${topSimilar.map((item: any) => `${item.category}(${item.diff.toFixed(1)}%p 차이)`).join(', ')}
+- 차이가 큰 카테고리: ${topDifferent.map((item: any) => `${item.category}(${item.diff.toFixed(1)}%p 차이)`).join(', ')}
 
-${comparisonLabel} 판매 비중:
-${categories.map((cat: string) => `- ${cat}: ${comparisonData[cat]?.toFixed(2) || 0}%`).join('\n')}
-
-유사도 점수: ${similarityScore.toFixed(0)}%
-카테고리별 차이:
-${categoryDiffs.map((item: any) => `- ${item.category}: ${item.diff.toFixed(2)}%p`).join('\n')}
-
-위 데이터를 기반으로 다음을 포함한 깊이 있는 분석 텍스트를 작성해주세요:
-1. 전체적인 유사도 평가 (점수를 구체적으로 언급)
-2. 가장 유사한 카테고리와 그 이유
-3. 차이가 있는 카테고리와 그 의미
-4. 고객층 및 상권 특성에 대한 구체적인 인사이트
-
-중요: 반드시 제공된 수치 데이터만을 근거로 분석하고, 추측하거나 일반적인 내용을 추가하지 마세요. 각 카테고리의 구체적인 수치를 언급하며 분석하세요. 핵심만 담아 정확히 2줄로만 작성해주세요.`
+위 데이터를 바탕으로 전문적인 어조로 핵심만 정확히 2줄 이내로 작성해주세요. 수치를 직접 나열하지 말고 자연스럽게 설명하되, 반드시 제공된 데이터만을 근거로 하세요.`
     } else if (analysisType === '시간대패턴') {
       const { myStoreData, comparisonData, timeSlots, timeType, isAverage } = data
       const comparisonLabel = isAverage ? '유사매장 평균' : '유사매장'
       
-      prompt = `다음은 편의점 매장의 ${timeType} 시간대별 판매 패턴 데이터입니다. 주어진 데이터를 기반으로 깊이 있는 유사도 분석을 수행해주세요. 반드시 제공된 데이터만을 근거로 분석하고, 맥락을 벗어나지 마세요.
+      const timeDiffs = timeSlots.map((slot: string, idx: number) => ({
+        slot,
+        diff: Math.abs((myStoreData[idx] || 0) - (comparisonData[idx] || 0)),
+        myValue: myStoreData[idx] || 0,
+        similarValue: comparisonData[idx] || 0
+      }))
+      const mostSimilarTime = [...timeDiffs].sort((a, b) => a.diff - b.diff).slice(0, 1)[0]
+      const peakTime = timeDiffs.reduce((max, item) => (item.myValue + item.similarValue) > (max.myValue + max.similarValue) ? item : max)
+      
+      prompt = `편의점 점주님께 전달할 ${timeType} 시간대별 판매 패턴 분석입니다.
 
-내 매장 ${timeType} 시간대별 판매 비율:
-${timeSlots.map((slot: string, idx: number) => `- ${slot}: ${(myStoreData[idx] || 0).toFixed(2)}%`).join('\n')}
+[데이터 요약]
+- 가장 유사한 시간대: ${mostSimilarTime.slot} (차이 ${mostSimilarTime.diff.toFixed(1)}%p)
+- 매출 집중 시간대: ${peakTime.slot} (내 매장 ${peakTime.myValue.toFixed(1)}%, ${comparisonLabel} ${peakTime.similarValue.toFixed(1)}%)
 
-${comparisonLabel} ${timeType} 시간대별 판매 비율:
-${timeSlots.map((slot: string, idx: number) => `- ${slot}: ${(comparisonData[idx] || 0).toFixed(2)}%`).join('\n')}
-
-위 데이터를 기반으로 다음을 포함한 깊이 있는 분석 텍스트를 작성해주세요:
-1. 시간대별 패턴 유사도 평가 (구체적인 시간대와 수치를 언급)
-2. 매출이 집중되는 주요 시간대 비교
-3. 차이가 있는 시간대와 그 의미 (고객 행동 패턴 관점)
-4. ${timeType} 특성에 맞는 상권 특성 및 고객층 분석
-
-중요: 반드시 제공된 수치 데이터만을 근거로 분석하고, 추측하거나 일반적인 내용을 추가하지 마세요. 각 시간대의 구체적인 수치를 언급하며 분석하세요. 핵심만 담아 정확히 2줄로만 작성해주세요.`
+위 데이터를 바탕으로 전문적인 어조로 핵심만 정확히 2줄 이내로 작성해주세요. 수치를 직접 나열하지 말고 자연스럽게 설명하되, 반드시 제공된 데이터만을 근거로 하세요.`
     } else if (analysisType === '주중주말패턴') {
       const { myWeekendRatio, comparisonWeekendRatio, isAverage } = data
       const comparisonLabel = isAverage ? '유사매장 평균' : '유사매장'
@@ -65,19 +58,17 @@ ${timeSlots.map((slot: string, idx: number) => `- ${slot}: ${(comparisonData[idx
       const comparisonPercentDiff = ((comparisonWeekendRatio - 1) * 100).toFixed(1)
       const ratioDiff = Math.abs(myWeekendRatio - comparisonWeekendRatio).toFixed(2)
       
-      prompt = `다음은 편의점 매장의 주중/주말 판매 패턴 데이터입니다. 주어진 데이터를 기반으로 깊이 있는 유사도 분석을 수행해주세요. 반드시 제공된 데이터만을 근거로 분석하고, 맥락을 벗어나지 마세요.
+      const myType = myWeekendRatio > 1.1 ? '주말 중심형' : myWeekendRatio < 0.9 ? '주중 중심형' : '균형형'
+      const similarType = comparisonWeekendRatio > 1.1 ? '주말 중심형' : comparisonWeekendRatio < 0.9 ? '주중 중심형' : '균형형'
+      
+      prompt = `편의점 점주님께 전달할 주중/주말 판매 패턴 분석입니다.
 
-내 매장 주말/주중 매출 비율: ${myWeekendRatio.toFixed(2)} (주중 대비 주말이 ${parseFloat(myPercentDiff) > 0 ? `${myPercentDiff}% 높음` : `${Math.abs(parseFloat(myPercentDiff))}% 낮음`})
-${comparisonLabel} 주말/주중 매출 비율: ${comparisonWeekendRatio.toFixed(2)} (주중 대비 주말이 ${parseFloat(comparisonPercentDiff) > 0 ? `${comparisonPercentDiff}% 높음` : `${Math.abs(parseFloat(comparisonPercentDiff))}% 낮음`})
-비율 차이: ${ratioDiff}
+[데이터 요약]
+- 내 매장: 주말/주중 비율 ${myWeekendRatio.toFixed(2)} (${myType})
+- ${comparisonLabel}: 주말/주중 비율 ${comparisonWeekendRatio.toFixed(2)} (${similarType})
+- 비율 차이: ${ratioDiff}
 
-위 데이터를 기반으로 다음을 포함한 깊이 있는 분석 텍스트를 작성해주세요:
-1. 주중/주말 매출 패턴 유사도 평가 (구체적인 비율 수치를 언급)
-2. 두 매장의 주중/주말 특성 비교 (주말 중심형 vs 주중 중심형)
-3. 차이의 의미와 상권 특성에 대한 분석
-4. 고객층 및 지역 특성에 대한 구체적인 인사이트
-
-중요: 반드시 제공된 수치 데이터만을 근거로 분석하고, 추측하거나 일반적인 내용을 추가하지 마세요. 구체적인 비율 수치를 언급하며 분석하세요. 핵심만 담아 정확히 2줄로만 작성해주세요.`
+위 데이터를 바탕으로 전문적인 어조로 핵심만 정확히 2줄 이내로 작성해주세요. 수치를 직접 나열하지 말고 자연스럽게 설명하되, 반드시 제공된 데이터만을 근거로 하세요.`
     } else {
       return NextResponse.json(
         { error: '유효하지 않은 분석 타입입니다.' },
@@ -97,7 +88,7 @@ ${comparisonLabel} 주말/주중 매출 비율: ${comparisonWeekendRatio.toFixed
         messages: [
           {
             role: 'system',
-            content: '당신은 편의점 매장 데이터 분석 전문가입니다. 제공된 데이터를 기반으로 정확하고 구체적인 분석을 수행합니다. 반드시 제공된 수치 데이터만을 근거로 하며, 추측이나 일반론을 피합니다.'
+            content: '당신은 편의점 매장 데이터 분석 전문가입니다. 제공된 데이터만을 근거로 전문적인 어조로 핵심만 간단히 설명합니다. 수치를 직접 나열하지 않고 자연스럽게 설명하며, 인사이트나 추측은 포함하지 않습니다.'
           },
           {
             role: 'user',

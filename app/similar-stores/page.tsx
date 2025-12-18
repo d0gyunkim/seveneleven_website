@@ -1069,7 +1069,7 @@ export default function SimilarStoresPage() {
                             유사도 근거
                           </h5>
                           {cachedAnalysis ? (
-                            <div className="space-y-2.5 text-base text-gray-700 leading-relaxed whitespace-pre-line">
+                            <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                               {cachedAnalysis}
                             </div>
                           ) : isLoading ? (
@@ -1291,7 +1291,7 @@ export default function SimilarStoresPage() {
                             유사도 근거
                           </h5>
                           {cachedAnalysis ? (
-                            <div className="space-y-2.5 text-base text-gray-700 leading-relaxed whitespace-pre-line">
+                            <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                               {cachedAnalysis}
                             </div>
                           ) : isLoading ? (
@@ -1417,6 +1417,24 @@ export default function SimilarStoresPage() {
 
                     const ratioDiff = Math.abs(myWeekendWeekdayRatio - avgRatio)
                     const weekendPercentDiff = myWeekendWeekdayRatio > 0 ? ((myWeekendWeekdayRatio - 1) * 100) : 0
+                    
+                    // 캐시 키 생성 (평균)
+                    const cacheKey = `주중주말패턴_평균`
+                    const cachedAnalysis = aiAnalysisCache.get(cacheKey)
+                    const isLoading = aiAnalysisLoading.has(cacheKey)
+                    
+                    // 분석이 없고 로딩 중이 아니면 분석 시작
+                    if (!cachedAnalysis && !isLoading && similarStoresPatterns.length > 0) {
+                      analyzeSimilarity(
+                        '주중주말패턴',
+                        {
+                          myWeekendRatio: myWeekendRatio,
+                          comparisonWeekendRatio: avgRatio,
+                        },
+                        cacheKey,
+                        true
+                      )
+                    }
 
                     return (
                       <div className="mt-6 pt-6 border-t-2 border-gray-100">
@@ -1425,32 +1443,43 @@ export default function SimilarStoresPage() {
                             <div className="w-1 h-4 bg-green-600 rounded-full"></div>
                             유사도 근거
                           </h5>
-                          <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed">
-                            {weekendPercentDiff > 0 && (
-                              <div className="flex items-start gap-2.5">
-                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                <p className="flex-1">
-                                  <span className="font-semibold text-gray-900">주말 매출이 주중 대비 {weekendPercentDiff.toFixed(1)}% 높게 집중</span>되어 주말 중심형 상권 특성을 공유합니다.
-                                </p>
-                              </div>
-                            )}
-                            {ratioDiff < 0.1 && (
-                              <div className="flex items-start gap-2.5">
-                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                <p className="flex-1">
-                                  주말/주중 매출 비율이 거의 동일하여 (차이 {ratioDiff.toFixed(2)}) <span className="font-semibold text-gray-900">주중/주말 매출 패턴이 매우 유사</span>합니다.
-                                </p>
-                              </div>
-                            )}
-                            {(myWeekendWeekdayRatio > 1.1 && avgRatio > 1.1) && (
-                              <div className="flex items-start gap-2.5">
-                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                <p className="flex-1">
-                                  두 매장 모두 주말 매출이 주중보다 높아 <span className="font-semibold text-gray-900">주말 중심형 상권 특성</span>을 공유합니다.
-                                </p>
-                              </div>
-                            )}
-                          </div>
+                          {cachedAnalysis ? (
+                            <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
+                              {cachedAnalysis}
+                            </div>
+                          ) : isLoading ? (
+                            <div className="flex items-center gap-2 text-gray-500">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                              <span className="text-sm">AI 분석 생성 중...</span>
+                            </div>
+                          ) : (
+                            <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed">
+                              {weekendPercentDiff > 0 && (
+                                <div className="flex items-start gap-2.5">
+                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                  <p className="flex-1">
+                                    <span className="font-semibold text-gray-900">주말 매출이 주중 대비 {weekendPercentDiff.toFixed(1)}% 높게 집중</span>되어 주말 중심형 상권 특성을 공유합니다.
+                                  </p>
+                                </div>
+                              )}
+                              {ratioDiff < 0.1 && (
+                                <div className="flex items-start gap-2.5">
+                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                  <p className="flex-1">
+                                    주말/주중 매출 비율이 거의 동일하여 (차이 {ratioDiff.toFixed(2)}) <span className="font-semibold text-gray-900">주중/주말 매출 패턴이 매우 유사</span>합니다.
+                                  </p>
+                                </div>
+                              )}
+                              {(myWeekendWeekdayRatio > 1.1 && avgRatio > 1.1) && (
+                                <div className="flex items-start gap-2.5">
+                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                  <p className="flex-1">
+                                    두 매장 모두 주말 매출이 주중보다 높아 <span className="font-semibold text-gray-900">주말 중심형 상권 특성</span>을 공유합니다.
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )
@@ -1650,7 +1679,7 @@ export default function SimilarStoresPage() {
                                 유사도 근거
                               </h5>
                               {cachedAnalysis ? (
-                                <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                                <div className="space-y-3 text-xl text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                                   {cachedAnalysis}
                                 </div>
                               ) : isLoading ? (
@@ -1885,7 +1914,7 @@ export default function SimilarStoresPage() {
                                 유사도 근거
                               </h5>
                               {cachedAnalysis ? (
-                                <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                                <div className="space-y-3 text-xl text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                                   {cachedAnalysis}
                                 </div>
                               ) : isLoading ? (
@@ -2050,7 +2079,7 @@ export default function SimilarStoresPage() {
                                 유사도 근거
                               </h5>
                               {cachedAnalysis ? (
-                                <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                                <div className="space-y-3 text-xl text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                                   {cachedAnalysis}
                                 </div>
                               ) : isLoading ? (
