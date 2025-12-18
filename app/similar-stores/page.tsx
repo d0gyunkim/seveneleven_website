@@ -2104,7 +2104,7 @@ export default function SimilarStoresPage() {
                                               <img
                                                 src={productInfo.item_img}
                                                 alt={product}
-                                                className="h-full w-auto object-contain p-3 transition-transform duration-300"
+                                                className="w-full h-full object-contain max-w-full max-h-full p-3 transition-transform duration-300"
                                                 loading="lazy"
                                                 onError={(e) => {
                                                   e.currentTarget.style.display = 'none'
@@ -2224,7 +2224,7 @@ export default function SimilarStoresPage() {
                                               <img
                                                 src={productInfo.item_img}
                                                 alt={product}
-                                                className="h-full w-auto object-contain p-4 md:p-6 transition-transform duration-300 group-hover:scale-105"
+                                                className="w-full h-full object-contain max-w-full max-h-full p-4 md:p-6 transition-transform duration-300 group-hover:scale-105"
                                                 loading="lazy"
                                                 onError={(e) => {
                                                   e.currentTarget.style.display = 'none'

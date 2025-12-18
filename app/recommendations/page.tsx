@@ -273,14 +273,27 @@ export default function RecommendationsPage() {
   // 중분류별로 그룹화하고 각 그룹 내에서 mean_monetary 순서로 정렬
   // 상품명이 동일한 경우 판매가가 큰 것만 표시
   // R, F, M 값 중 하나라도 0이면 제외
+  // 부진 상품과 동일한 상품은 제외
   const groupedRecommendedProducts = useMemo(() => {
     const grouped: GroupedProducts = {}
     
+    // 부진 상품의 item_cd Set 생성
+    const excludedItemCds = new Set<string>()
+    excludedProducts.forEach((product) => {
+      if (product.item_cd) {
+        excludedItemCds.add(product.item_cd.toString())
+      }
+    })
+    
     // R, F, M 값 중 하나라도 0이 있는 상품 제외
+    // 부진 상품과 동일한 상품 제외
     const filteredProducts = recommendedProducts.filter((product) => {
       const { r, f, m } = extractRFMValues(product.rec_reason)
       // R, F, M 값 중 하나라도 0이면 제외
-      return !(r === 0 || f === 0 || m === 0)
+      if (r === 0 || f === 0 || m === 0) return false
+      // 부진 상품과 동일한 item_cd면 제외
+      if (product.item_cd && excludedItemCds.has(product.item_cd.toString())) return false
+      return true
     })
     
     filteredProducts.forEach((product) => {
@@ -1231,8 +1244,8 @@ export default function RecommendationsPage() {
                               {/* 순위 배지 */}
                               {showBadge && (
                                     <div className="absolute top-2 left-2 z-10">
-                                      <div className={`${activeTab === 'recommended' ? 'bg-green-200' : 'bg-orange-200'} w-7 h-7 flex items-center justify-center rounded shadow-sm`}>
-                                        <span className="text-black font-semibold text-xs">
+                                      <div className={`${activeTab === 'recommended' ? 'bg-green-500' : 'bg-orange-500'} w-7 h-7 flex items-center justify-center rounded shadow-sm`}>
+                                        <span className="text-white font-semibold text-xs">
                                           {displayRank}
                                         </span>
                                       </div>
@@ -1284,8 +1297,8 @@ export default function RecommendationsPage() {
                               {/* 웹 스타일: 순위 배지 */}
                               {!isMobile && showBadge && (
                                 <div className="absolute top-2 left-2 z-10">
-                                  <div className={`${activeTab === 'recommended' ? 'bg-green-200' : 'bg-orange-200'} w-7 h-7 flex items-center justify-center rounded shadow-sm`}>
-                                    <span className="text-black font-semibold text-xs">
+                                  <div className={`${activeTab === 'recommended' ? 'bg-green-500' : 'bg-orange-200'} w-7 h-7 flex items-center justify-center rounded shadow-sm`}>
+                                    <span className="text-white font-semibold text-xs">
                                       {displayRank}
                                     </span>
                                   </div>
@@ -1406,8 +1419,8 @@ export default function RecommendationsPage() {
                                   {/* 순위 배지 */}
                                   {showBadge && (
                                     <div className="absolute top-2 left-2 z-10">
-                                      <div className={`${activeTab === 'recommended' ? 'bg-green-200' : 'bg-orange-200'} w-7 h-7 flex items-center justify-center rounded shadow-sm`}>
-                                        <span className="text-black font-semibold text-xs">
+                                      <div className={`${activeTab === 'recommended' ? 'bg-green-500' : 'bg-orange-500'} w-7 h-7 flex items-center justify-center rounded shadow-sm`}>
+                                        <span className="text-white font-semibold text-xs">
                                           {displayRank}
                                         </span>
                                       </div>
