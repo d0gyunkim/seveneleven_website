@@ -100,6 +100,33 @@ export default function SimilarStoresPage() {
   const [aiAnalysisCache, setAiAnalysisCache] = useState<Map<string, string>>(new Map()) // 분석 결과 캐시 (key: 분석타입_유형_식별자)
   const [aiAnalysisLoading, setAiAnalysisLoading] = useState<Set<string>>(new Set()) // 분석 로딩 상태
 
+  // localStorage에서 AI 분석 캐시 복원
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedData = localStorage.getItem('ai_analysis_cache')
+        if (cachedData) {
+          const parsedCache = JSON.parse(cachedData)
+          setAiAnalysisCache(new Map(parsedCache))
+        }
+      } catch (error) {
+        console.error('캐시 복원 오류:', error)
+      }
+    }
+  }, [])
+
+  // AI 분석 캐시가 변경될 때 localStorage에 저장
+  useEffect(() => {
+    if (typeof window !== 'undefined' && aiAnalysisCache.size > 0) {
+      try {
+        const cacheArray = Array.from(aiAnalysisCache.entries())
+        localStorage.setItem('ai_analysis_cache', JSON.stringify(cacheArray))
+      } catch (error) {
+        console.error('캐시 저장 오류:', error)
+      }
+    }
+  }, [aiAnalysisCache])
+
   // 모바일 감지
   useEffect(() => {
     const checkMobile = () => {
@@ -499,9 +526,29 @@ export default function SimilarStoresPage() {
     cacheKey: string,
     isAverage: boolean = false
   ): Promise<string | null> => {
-    // 캐시 확인
+    // 메모리 캐시 확인
     if (aiAnalysisCache.has(cacheKey)) {
       return aiAnalysisCache.get(cacheKey) || null
+    }
+
+    // localStorage 캐시 확인
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedData = localStorage.getItem('ai_analysis_cache')
+        if (cachedData) {
+          const parsedCache = new Map<string, string>(JSON.parse(cachedData))
+          if (parsedCache.has(cacheKey)) {
+            const cachedAnalysis = parsedCache.get(cacheKey)
+            if (cachedAnalysis && typeof cachedAnalysis === 'string') {
+              // 메모리 캐시에도 복원
+              setAiAnalysisCache(prev => new Map(prev).set(cacheKey, cachedAnalysis))
+              return cachedAnalysis
+            }
+          }
+        }
+      } catch (error) {
+        console.error('localStorage 캐시 읽기 오류:', error)
+      }
     }
 
     // 이미 로딩 중이면 스킵
