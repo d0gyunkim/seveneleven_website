@@ -876,16 +876,16 @@ export default function SimilarStoresPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </h2>
-                    <p className="text-sm text-gray-600 mt-1">유사매장들의 평균과 우리매장 비교</p>
+                    <p className="text-base text-gray-600 mt-1">유사매장들의 평균 판매 패턴과 우리 매장 비교</p>
                   </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* 1. 카테고리별 판매 비율 */}
+                {/* 1. 카테고리별 판매 패턴 */}
                 <div className="bg-white border-2 border-gray-300 rounded-xl p-6">
                   <div className="mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">카테고리별 판매 비율</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">카테고리별 판매 패턴</h3>
                     <p className="text-xs text-gray-500">주요 카테고리 비교 분석</p>
                   </div>
                   <ResponsiveContainer width="100%" height={320}>
@@ -1008,10 +1008,10 @@ export default function SimilarStoresPage() {
                   })()}
                 </div>
 
-                {/* 2. 시간대 패턴 */}
+                {/* 2. 시간대별 판매 패턴 */}
                 <div className="bg-white border-2 border-gray-300 rounded-xl p-6">
                   <div className="mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">시간대 패턴</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">시간대별 판매 패턴</h3>
                   </div>
                   
                   {/* 주중/주말 탭 */}
@@ -1206,10 +1206,10 @@ export default function SimilarStoresPage() {
                   })()}
                 </div>
 
-                {/* 3. 주중/주말 패턴 */}
+                {/* 3. 주중/주말 판매패턴 */}
                 <div className="bg-white border-2 border-gray-300 rounded-xl p-6">
                   <div className="mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">주중/주말 패턴</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">주중/주말 판매패턴</h3>
                     <p className="text-xs text-gray-500">주말 매출 비중 (주중은 1.0으로 고정)</p>
                   </div>
                   
@@ -1429,7 +1429,7 @@ export default function SimilarStoresPage() {
                     </div>
                     <div className="p-6 space-y-4">
                       <div className="pt-2">
-                        <p className="text-sm font-semibold text-gray-700 mb-1">카테고리별 판매 비율</p>
+                        <p className="text-sm font-semibold text-gray-700 mb-1">카테고리별 판매 패턴</p>
                         <p className="text-xs text-gray-500 mb-4">주요 카테고리 비교 분석</p>
                         <ResponsiveContainer width="100%" height={320}>
                           {(() => {
