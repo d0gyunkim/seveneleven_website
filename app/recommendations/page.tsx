@@ -336,12 +336,33 @@ export default function RecommendationsPage() {
     })
 
     return grouped
-  }, [recommendedProducts])
+  }, [recommendedProducts, excludedProducts])
 
   const groupedExcludedProducts = useMemo(() => {
     const grouped: GroupedProducts = {}
     
-    excludedProducts.forEach((product) => {
+    // 추천 상품의 최소 mean_monetary 계산
+    const recommendedMeanMonetaryValues = recommendedProducts
+      .map((p) => p.mean_monetary ?? 0)
+      .filter((v) => v > 0)
+    const minRecommendedMeanMonetary = recommendedMeanMonetaryValues.length > 0
+      ? Math.min(...recommendedMeanMonetaryValues)
+      : Infinity
+    
+    // 부진 상품 필터링: 추천 상품보다 매출액이 높은 것은 제외
+    const filteredExcludedProducts = excludedProducts.filter((product) => {
+      const frequency = product.frequency ?? 0
+      const salePrice = product.sale_price ?? 0
+      const excludedMonetary = frequency * salePrice
+      
+      // 추천 상품의 최소 mean_monetary보다 부진 상품의 monetary가 높으면 제외
+      if (excludedMonetary > minRecommendedMeanMonetary) {
+        return false
+      }
+      return true
+    })
+    
+    filteredExcludedProducts.forEach((product) => {
       const category = product.item_mddv_nm || '기타'
       if (!grouped[category]) {
         grouped[category] = []
@@ -392,7 +413,7 @@ export default function RecommendationsPage() {
     })
 
     return grouped
-  }, [excludedProducts])
+  }, [excludedProducts, recommendedProducts])
 
   // 대분류 목록 추출
   const largeCategories = useMemo(() => {
