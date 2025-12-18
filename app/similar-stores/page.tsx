@@ -95,6 +95,10 @@ export default function SimilarStoresPage() {
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set()) // 보이는 아이템 추적
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map()) // 아이템 refs
   const observerRef = useRef<IntersectionObserver | null>(null) // IntersectionObserver ref
+  
+  // OpenAI 분석 결과 상태
+  const [aiAnalysisCache, setAiAnalysisCache] = useState<Map<string, string>>(new Map()) // 분석 결과 캐시 (key: 분석타입_유형_식별자)
+  const [aiAnalysisLoading, setAiAnalysisLoading] = useState<Set<string>>(new Set()) // 분석 로딩 상태
 
   // 모바일 감지
   useEffect(() => {
@@ -488,6 +492,70 @@ export default function SimilarStoresPage() {
   }
 
   // 상품마스터에서 상품 정보 조회
+  // OpenAI 분석 함수
+  const analyzeSimilarity = async (
+    analysisType: '판매패턴' | '시간대패턴' | '주중주말패턴',
+    data: any,
+    cacheKey: string,
+    isAverage: boolean = false
+  ): Promise<string | null> => {
+    // 캐시 확인
+    if (aiAnalysisCache.has(cacheKey)) {
+      return aiAnalysisCache.get(cacheKey) || null
+    }
+
+    // 이미 로딩 중이면 스킵
+    if (aiAnalysisLoading.has(cacheKey)) {
+      return null
+    }
+
+    try {
+      // 로딩 상태 설정
+      setAiAnalysisLoading(prev => new Set(prev).add(cacheKey))
+
+      const response = await fetch('/api/analyze-similarity', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          analysisType,
+          data: {
+            ...data,
+            isAverage,
+          },
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('분석 요청 실패:', errorData)
+        return null
+      }
+
+      const result = await response.json()
+      const analysisText = result.analysis || null
+
+      if (analysisText) {
+        // 캐시에 저장
+        setAiAnalysisCache(prev => new Map(prev).set(cacheKey, analysisText))
+        return analysisText
+      }
+
+      return null
+    } catch (error) {
+      console.error('분석 생성 오류:', error)
+      return null
+    } finally {
+      // 로딩 상태 해제
+      setAiAnalysisLoading(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(cacheKey)
+        return newSet
+      })
+    }
+  }
+
   const fetchProductInfo = async (itemNm: string): Promise<ProductInfo | null> => {
     // 캐시 확인
     if (productInfoMap.has(itemNm)) {
@@ -956,7 +1024,7 @@ export default function SimilarStoresPage() {
 
                     let totalDiff = 0
                     let categoryCount = 0
-                    const categoryDiffs: Array<{category: string, diff: number}> = []
+                    const categoryDiffs: Array<{category: string, diff: number, myValue: number, similarValue: number}> = []
                     
                     categories.forEach((category: string) => {
                       const myValue = myStoreData[category] || 0
@@ -965,13 +1033,33 @@ export default function SimilarStoresPage() {
                         const diff = Math.abs(myValue - avgValue)
                         totalDiff += diff
                         categoryCount++
-                        categoryDiffs.push({ category, diff })
+                        categoryDiffs.push({ category, diff, myValue, similarValue: avgValue })
                       }
                     })
                     
                     const avgDiff = categoryCount > 0 ? totalDiff / categoryCount : 0
                     const similarityScore = Math.max(0, 100 - (avgDiff * 2))
-                    const mostSimilar = [...categoryDiffs].sort((a, b) => a.diff - b.diff).slice(0, 3)
+                    
+                    // 캐시 키 생성 (평균)
+                    const cacheKey = `판매패턴_평균`
+                    const cachedAnalysis = aiAnalysisCache.get(cacheKey)
+                    const isLoading = aiAnalysisLoading.has(cacheKey)
+                    
+                    // 분석이 없고 로딩 중이 아니면 분석 시작
+                    if (!cachedAnalysis && !isLoading && similarStoresPatterns.length > 0) {
+                      analyzeSimilarity(
+                        '판매패턴',
+                        {
+                          myStoreData,
+                          comparisonData: averageData,
+                          categories,
+                          similarityScore,
+                          categoryDiffs,
+                        },
+                        cacheKey,
+                        true
+                      )
+                    }
 
                     return (
                       <div className="mt-6 pt-6 border-t-2 border-gray-100">
@@ -980,28 +1068,31 @@ export default function SimilarStoresPage() {
                             <div className="w-1 h-4 bg-green-600 rounded-full"></div>
                             유사도 근거
                           </h5>
-                          <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed">
-                            <div className="flex items-start gap-2.5">
-                              <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                              <p className="flex-1">
-                                고객 방문 패턴 유사도가 {similarityScore.toFixed(0)}% 이상으로 상권 특성과 고객층 구성이 유사합니다.
-                              </p>
+                          {cachedAnalysis ? (
+                            <div className="space-y-2.5 text-base text-gray-700 leading-relaxed whitespace-pre-line">
+                              {cachedAnalysis}
                             </div>
-                            <div className="flex items-start gap-2.5">
-                              <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                              <p className="flex-1">
-                                주요 카테고리별 판매 비중이 거의 동일하여 <span className="font-semibold text-gray-900">고객 니즈와 구매 패턴이 유사</span>합니다.
-                              </p>
+                          ) : isLoading ? (
+                            <div className="flex items-center gap-2 text-gray-500">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                              <span className="text-sm">AI 분석 생성 중...</span>
                             </div>
-                            {mostSimilar.length > 0 && mostSimilar[0].diff <= 0.5 && (
+                          ) : (
+                            <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed">
                               <div className="flex items-start gap-2.5">
                                 <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                                 <p className="flex-1">
-                                  <span className="font-semibold text-gray-900">{mostSimilar.map(c => c.category).join(', ')}</span> 카테고리에서 판매 비중 차이가 {mostSimilar[0].diff.toFixed(1)}%p 이하로 매우 유사합니다.
+                                  고객 방문 패턴 유사도가 {similarityScore.toFixed(0)}% 이상으로 상권 특성과 고객층 구성이 유사합니다.
                                 </p>
                               </div>
-                            )}
-                          </div>
+                              <div className="flex items-start gap-2.5">
+                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                <p className="flex-1">
+                                  주요 카테고리별 판매 비중이 거의 동일하여 <span className="font-semibold text-gray-900">고객 니즈와 구매 패턴이 유사</span>합니다.
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )
@@ -1168,6 +1259,29 @@ export default function SimilarStoresPage() {
                     
                     const weekdayAfternoonDiff = Math.abs(myWeekdayAfternoon - avgWeekdayAfternoon)
                     const weekendEveningDiff = Math.abs(myWeekendEvening - avgWeekendEvening)
+                    
+                    // 캐시 키 생성 (평균, 주중/주말 구분)
+                    const cacheKey = `시간대패턴_평균_${averageComparisonTab}`
+                    const cachedAnalysis = aiAnalysisCache.get(cacheKey)
+                    const isLoading = aiAnalysisLoading.has(cacheKey)
+                    
+                    // 분석이 없고 로딩 중이 아니면 분석 시작
+                    if (!cachedAnalysis && !isLoading && similarStoresPatterns.length > 0) {
+                      const myData = averageComparisonTab === '주중' ? myWeekday : myWeekend
+                      const avgData = averageComparisonTab === '주중' ? avgWeekday : avgWeekend
+                      
+                      analyzeSimilarity(
+                        '시간대패턴',
+                        {
+                          myStoreData: myData,
+                          comparisonData: avgData,
+                          timeSlots,
+                          timeType: averageComparisonTab,
+                        },
+                        cacheKey,
+                        true
+                      )
+                    }
 
                     return (
                       <div className="mt-6 pt-6 border-t-2 border-gray-100">
@@ -1176,30 +1290,41 @@ export default function SimilarStoresPage() {
                             <div className="w-1 h-4 bg-green-600 rounded-full"></div>
                             유사도 근거
                           </h5>
-                          <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed">
-                            {weekdayAfternoonDiff < 5 && (
-                              <div className="flex items-start gap-2.5">
-                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                <p className="flex-1">
-                                  <span className="font-semibold text-gray-900">주중 오후 12-18시</span>에 매출이 집중되는 패턴이 유사합니다 (차이 {weekdayAfternoonDiff.toFixed(1)}%p).
-                                </p>
-                              </div>
-                            )}
-                            {weekendEveningDiff < 5 && (
-                              <div className="flex items-start gap-2.5">
-                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                <p className="flex-1">
-                                  <span className="font-semibold text-gray-900">주말 저녁 18-24시</span>에 매출이 집중되는 패턴이 유사합니다 (차이 {weekendEveningDiff.toFixed(1)}%p).
-                                </p>
-                              </div>
-                            )}
-                            <div className="flex items-start gap-2.5">
-                              <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                              <p className="flex-1">
-                                주중 <span className="font-semibold text-gray-900">오후(12-18시)</span> 시간대에 매출이 가장 집중되는 패턴이 일치합니다.
-                              </p>
+                          {cachedAnalysis ? (
+                            <div className="space-y-2.5 text-base text-gray-700 leading-relaxed whitespace-pre-line">
+                              {cachedAnalysis}
                             </div>
-                          </div>
+                          ) : isLoading ? (
+                            <div className="flex items-center gap-2 text-gray-500">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                              <span className="text-sm">AI 분석 생성 중...</span>
+                            </div>
+                          ) : (
+                            <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed">
+                              {weekdayAfternoonDiff < 5 && (
+                                <div className="flex items-start gap-2.5">
+                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                  <p className="flex-1">
+                                    <span className="font-semibold text-gray-900">주중 오후 12-18시</span>에 매출이 집중되는 패턴이 유사합니다 (차이 {weekdayAfternoonDiff.toFixed(1)}%p).
+                                  </p>
+                                </div>
+                              )}
+                              {weekendEveningDiff < 5 && (
+                                <div className="flex items-start gap-2.5">
+                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                  <p className="flex-1">
+                                    <span className="font-semibold text-gray-900">주말 저녁 18-24시</span>에 매출이 집중되는 패턴이 유사합니다 (차이 {weekendEveningDiff.toFixed(1)}%p).
+                                  </p>
+                                </div>
+                              )}
+                              <div className="flex items-start gap-2.5">
+                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                <p className="flex-1">
+                                  주중 <span className="font-semibold text-gray-900">오후(12-18시)</span> 시간대에 매출이 가장 집중되는 패턴이 일치합니다.
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )
@@ -1496,14 +1621,26 @@ export default function SimilarStoresPage() {
                         const avgDiff = categoryCount > 0 ? totalDiff / categoryCount : 0
                         const similarityScore = Math.max(0, 100 - (avgDiff * 2))
                         
-                        // 가장 유사한 카테고리 (차이가 작은 순)
-                        const mostSimilar = [...categoryDiffs].sort((a, b) => a.diff - b.diff).slice(0, 3)
+                        // 캐시 키 생성
+                        const cacheKey = `판매패턴_유사매장_${selectedStore?.store_code}`
+                        const cachedAnalysis = aiAnalysisCache.get(cacheKey)
+                        const isLoading = aiAnalysisLoading.has(cacheKey)
                         
-                        // 주요 카테고리 (비중이 높은 순)
-                        const topCategories = [...categoryDiffs]
-                          .sort((a, b) => Math.max(a.myValue, a.similarValue) - Math.max(b.myValue, b.similarValue))
-                          .reverse()
-                          .slice(0, 3)
+                        // 분석이 없고 로딩 중이 아니면 분석 시작
+                        if (!cachedAnalysis && !isLoading && selectedStore?.store_code) {
+                          analyzeSimilarity(
+                            '판매패턴',
+                            {
+                              myStoreData: mySalesPattern,
+                              comparisonData: similarSalesPattern,
+                              categories,
+                              similarityScore,
+                              categoryDiffs,
+                            },
+                            cacheKey,
+                            false
+                          )
+                        }
                         
                         return (
                           <div className="mt-6 pt-6 border-t-2 border-gray-100">
@@ -1512,28 +1649,31 @@ export default function SimilarStoresPage() {
                                 <div className="w-1 h-4 bg-green-600 rounded-full"></div>
                                 유사도 근거
                               </h5>
-                              <div className="space-y-2.5 text-base text-gray-700 leading-relaxed">
-                                <div className="flex items-start gap-2.5">
-                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                  <p className="flex-1">
-                                    고객 방문 패턴 유사도 <span className="font-bold text-green-700">{similarityScore.toFixed(0)}% 이상</span>으로 상권 특성과 고객층 구성이 유사합니다.
-                                  </p>
+                              {cachedAnalysis ? (
+                                <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                                  {cachedAnalysis}
                                 </div>
-                                <div className="flex items-start gap-2.5">
-                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                  <p className="flex-1">
-                                    주요 카테고리별 판매 비중이 거의 동일하여 <span className="font-semibold text-gray-900">고객 니즈와 구매 패턴이 유사</span>합니다.
-                                  </p>
+                              ) : isLoading ? (
+                                <div className="flex items-center gap-2 text-gray-500">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                                  <span className="text-sm">AI 분석 생성 중...</span>
                                 </div>
-                                {mostSimilar.length > 0 && (
+                              ) : (
+                                <div className="space-y-2.5 text-base text-gray-700 leading-relaxed">
                                   <div className="flex items-start gap-2.5">
                                     <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                                     <p className="flex-1">
-                                      <span className="font-semibold text-gray-900">{mostSimilar.map(c => c.category).join(', ')}</span> 카테고리에서 판매 비중 차이가 {mostSimilar[0].diff.toFixed(1)}%p 이하로 매우 유사합니다.
+                                      고객 방문 패턴 유사도 <span className="font-bold text-green-700">{similarityScore.toFixed(0)}% 이상</span>으로 상권 특성과 고객층 구성이 유사합니다.
                                     </p>
                                   </div>
-                                )}
-                              </div>
+                                  <div className="flex items-start gap-2.5">
+                                    <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                    <p className="flex-1">
+                                      주요 카테고리별 판매 비중이 거의 동일하여 <span className="font-semibold text-gray-900">고객 니즈와 구매 패턴이 유사</span>합니다.
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )
@@ -1714,6 +1854,29 @@ export default function SimilarStoresPage() {
                         const weekdayAfternoonDiff = Math.abs(myWeekdayAfternoon - similarWeekdayAfternoon)
                         const weekendEveningDiff = Math.abs(myWeekendEvening - similarWeekendEvening)
                         
+                        // 캐시 키 생성 (주중/주말 구분)
+                        const cacheKey = `시간대패턴_유사매장_${selectedStore?.store_code}_${timePatternTab}`
+                        const cachedAnalysis = aiAnalysisCache.get(cacheKey)
+                        const isLoading = aiAnalysisLoading.has(cacheKey)
+                        
+                        // 분석이 없고 로딩 중이 아니면 분석 시작
+                        if (!cachedAnalysis && !isLoading && selectedStore?.store_code) {
+                          const myData = timePatternTab === '주중' ? myWeekday : myWeekend
+                          const similarData = timePatternTab === '주중' ? similarWeekday : similarWeekend
+                          
+                          analyzeSimilarity(
+                            '시간대패턴',
+                            {
+                              myStoreData: myData,
+                              comparisonData: similarData,
+                              timeSlots,
+                              timeType: timePatternTab,
+                            },
+                            cacheKey,
+                            false
+                          )
+                        }
+                        
                         return (
                           <div className="mt-6 pt-6 border-t-2 border-gray-100">
                             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
@@ -1721,32 +1884,43 @@ export default function SimilarStoresPage() {
                                 <div className="w-1 h-4 bg-green-600 rounded-full"></div>
                                 유사도 근거
                               </h5>
-                              <div className="space-y-2.5 text-base text-gray-700 leading-relaxed">
-                                {weekdayAfternoonDiff < 5 && (
-                                  <div className="flex items-start gap-2.5">
-                                    <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                    <p className="flex-1">
-                                      <span className="font-semibold text-gray-900">주중 오후 12-18시</span>에 매출이 집중되는 패턴이 유사합니다 (차이 {weekdayAfternoonDiff.toFixed(1)}%p).
-                                    </p>
-                                  </div>
-                                )}
-                                {weekendEveningDiff < 5 && (
-                                  <div className="flex items-start gap-2.5">
-                                    <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                    <p className="flex-1">
-                                      <span className="font-semibold text-gray-900">주말 저녁 18-24시</span>에 매출이 집중되는 패턴이 유사합니다 (차이 {weekendEveningDiff.toFixed(1)}%p).
-                                    </p>
-                                  </div>
-                                )}
-                                {timeSlots[weekdayMaxIndex] && (
-                                  <div className="flex items-start gap-2.5">
-                                    <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                    <p className="flex-1">
-                                      주중 <span className="font-semibold text-gray-900">{timeSlots[weekdayMaxIndex]}</span> 시간대에 매출이 가장 집중되는 패턴이 일치합니다.
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
+                              {cachedAnalysis ? (
+                                <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                                  {cachedAnalysis}
+                                </div>
+                              ) : isLoading ? (
+                                <div className="flex items-center gap-2 text-gray-500">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                                  <span className="text-sm">AI 분석 생성 중...</span>
+                                </div>
+                              ) : (
+                                <div className="space-y-2.5 text-base text-gray-700 leading-relaxed">
+                                  {weekdayAfternoonDiff < 5 && (
+                                    <div className="flex items-start gap-2.5">
+                                      <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                      <p className="flex-1">
+                                        <span className="font-semibold text-gray-900">주중 오후 12-18시</span>에 매출이 집중되는 패턴이 유사합니다 (차이 {weekdayAfternoonDiff.toFixed(1)}%p).
+                                      </p>
+                                    </div>
+                                  )}
+                                  {weekendEveningDiff < 5 && (
+                                    <div className="flex items-start gap-2.5">
+                                      <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                      <p className="flex-1">
+                                        <span className="font-semibold text-gray-900">주말 저녁 18-24시</span>에 매출이 집중되는 패턴이 유사합니다 (차이 {weekendEveningDiff.toFixed(1)}%p).
+                                      </p>
+                                    </div>
+                                  )}
+                                  {timeSlots[weekdayMaxIndex] && (
+                                    <div className="flex items-start gap-2.5">
+                                      <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                      <p className="flex-1">
+                                        주중 <span className="font-semibold text-gray-900">{timeSlots[weekdayMaxIndex]}</span> 시간대에 매출이 가장 집중되는 패턴이 일치합니다.
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                         )
@@ -1850,6 +2024,24 @@ export default function SimilarStoresPage() {
                         // 주말 비율 유사도 계산
                         const weekendRatioDiff = Math.abs(myWeekendRatio - similarWeekendRatio)
                         
+                        // 캐시 키 생성
+                        const cacheKey = `주중주말패턴_유사매장_${selectedStore?.store_code}`
+                        const cachedAnalysis = aiAnalysisCache.get(cacheKey)
+                        const isLoading = aiAnalysisLoading.has(cacheKey)
+                        
+                        // 분석이 없고 로딩 중이 아니면 분석 시작
+                        if (!cachedAnalysis && !isLoading && selectedStore?.store_code) {
+                          analyzeSimilarity(
+                            '주중주말패턴',
+                            {
+                              myWeekendRatio,
+                              comparisonWeekendRatio: similarWeekendRatio,
+                            },
+                            cacheKey,
+                            false
+                          )
+                        }
+                        
                         return (
                           <div className="mt-6 pt-6 border-t-2 border-gray-100">
                             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
@@ -1857,46 +2049,57 @@ export default function SimilarStoresPage() {
                                 <div className="w-1 h-4 bg-green-600 rounded-full"></div>
                                 유사도 근거
                               </h5>
-                              <div className="space-y-2.5 text-base text-gray-700 leading-relaxed">
-                                {weekendPercentDiff > 0 && (
-                                  <div className="flex items-start gap-2.5">
-                                    <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                    <p className="flex-1">
-                                      <span className="font-semibold text-gray-900">주말 매출이 주중 대비 {weekendPercentDiff.toFixed(1)}% 높게 집중</span>되어 주말 중심형 상권 특성을 공유합니다.
-                                    </p>
-                                  </div>
-                                )}
-                                {ratioDiff < 0.1 && (
-                                  <div className="flex items-start gap-2.5">
-                                    <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                    <p className="flex-1">
-                                      주말/주중 매출 비율이 거의 동일하여 (차이 {ratioDiff.toFixed(2)}) <span className="font-semibold text-gray-900">주중/주말 매출 패턴이 매우 유사</span>합니다.
-                                    </p>
-                                  </div>
-                                )}
-                                {(myWeekendWeekdayRatio > 1.1 && similarWeekendWeekdayRatio > 1.1) ? (
-                                  <div className="flex items-start gap-2.5">
-                                    <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                    <p className="flex-1">
-                                      두 매장 모두 주말 매출이 주중보다 높아 <span className="font-semibold text-gray-900">주말 중심형 상권 특성</span>을 공유합니다.
-                                    </p>
-                                  </div>
-                                ) : (myWeekendWeekdayRatio < 0.9 && similarWeekendWeekdayRatio < 0.9) ? (
-                                  <div className="flex items-start gap-2.5">
-                                    <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                    <p className="flex-1">
-                                      두 매장 모두 주중 매출이 주말보다 높아 <span className="font-semibold text-gray-900">주중 중심형 상권 특성</span>을 공유합니다.
-                                    </p>
-                                  </div>
-                                ) : (weekendRatioDiff < 0.05) ? (
-                                  <div className="flex items-start gap-2.5">
-                                    <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                    <p className="flex-1">
-                                      주말 매출 비중이 유사하여 (차이 {weekendRatioDiff.toFixed(2)}) 고객 유입 패턴이 일치합니다.
-                                    </p>
-                                  </div>
-                                ) : null}
-                              </div>
+                              {cachedAnalysis ? (
+                                <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                                  {cachedAnalysis}
+                                </div>
+                              ) : isLoading ? (
+                                <div className="flex items-center gap-2 text-gray-500">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                                  <span className="text-sm">AI 분석 생성 중...</span>
+                                </div>
+                              ) : (
+                                <div className="space-y-2.5 text-base text-gray-700 leading-relaxed">
+                                  {weekendPercentDiff > 0 && (
+                                    <div className="flex items-start gap-2.5">
+                                      <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                      <p className="flex-1">
+                                        <span className="font-semibold text-gray-900">주말 매출이 주중 대비 {weekendPercentDiff.toFixed(1)}% 높게 집중</span>되어 주말 중심형 상권 특성을 공유합니다.
+                                      </p>
+                                    </div>
+                                  )}
+                                  {ratioDiff < 0.1 && (
+                                    <div className="flex items-start gap-2.5">
+                                      <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                      <p className="flex-1">
+                                        주말/주중 매출 비율이 거의 동일하여 (차이 {ratioDiff.toFixed(2)}) <span className="font-semibold text-gray-900">주중/주말 매출 패턴이 매우 유사</span>합니다.
+                                      </p>
+                                    </div>
+                                  )}
+                                  {(myWeekendWeekdayRatio > 1.1 && similarWeekendWeekdayRatio > 1.1) ? (
+                                    <div className="flex items-start gap-2.5">
+                                      <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                      <p className="flex-1">
+                                        두 매장 모두 주말 매출이 주중보다 높아 <span className="font-semibold text-gray-900">주말 중심형 상권 특성</span>을 공유합니다.
+                                      </p>
+                                    </div>
+                                  ) : (myWeekendWeekdayRatio < 0.9 && similarWeekendWeekdayRatio < 0.9) ? (
+                                    <div className="flex items-start gap-2.5">
+                                      <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                      <p className="flex-1">
+                                        두 매장 모두 주중 매출이 주말보다 높아 <span className="font-semibold text-gray-900">주중 중심형 상권 특성</span>을 공유합니다.
+                                      </p>
+                                    </div>
+                                  ) : (weekendRatioDiff < 0.05) ? (
+                                    <div className="flex items-start gap-2.5">
+                                      <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                                      <p className="flex-1">
+                                        주말 매출 비중이 유사하여 (차이 {weekendRatioDiff.toFixed(2)}) 고객 유입 패턴이 일치합니다.
+                                      </p>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              )}
                             </div>
                           </div>
                         )
