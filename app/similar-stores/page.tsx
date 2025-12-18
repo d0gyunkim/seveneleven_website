@@ -708,8 +708,8 @@ export default function SimilarStoresPage() {
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight mb-2">
                   우리 매장과 유사 매장 찾기
                 </h2>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  한달 동안, 우리 매장과 가장 유사한 매장들을 알려드립니다
+                <p className="text-base md:text-lg text-gray-600 leading-relaxed">
+                  한달 동안, 우리 매장과 가장 유사했던 매장들을 알려드립니다
                 </p>
               </div>
             </div>
@@ -886,7 +886,7 @@ export default function SimilarStoresPage() {
                 <div className="bg-white border-2 border-gray-300 rounded-xl p-6">
                   <div className="mb-4">
                     <h3 className="text-lg font-bold text-gray-900 mb-1">카테고리별 판매 비율</h3>
-                    <p className="text-xs text-gray-500">9개 주요 카테고리 비교 분석</p>
+                    <p className="text-xs text-gray-500">주요 카테고리 비교 분석</p>
                   </div>
                   <ResponsiveContainer width="100%" height={320}>
                     {(() => {
@@ -1424,13 +1424,13 @@ export default function SimilarStoresPage() {
                         <div className={`w-1 h-6 rounded-full ${
                           selectedPatternType === '판매패턴' ? 'bg-green-600' : 'bg-gray-400'
                         }`}></div>
-                        <h4 className="text-lg font-bold text-gray-900 tracking-tight">판매 패턴</h4>
+                        <h4 className="text-lg font-bold text-gray-900 tracking-tight">카테고리별 판매 패턴</h4>
                       </div>
                     </div>
                     <div className="p-6 space-y-4">
                       <div className="pt-2">
                         <p className="text-sm font-semibold text-gray-700 mb-1">카테고리별 판매 비율</p>
-                        <p className="text-xs text-gray-500 mb-4">9개 주요 카테고리 비교 분석</p>
+                        <p className="text-xs text-gray-500 mb-4">주요 카테고리 비교 분석</p>
                         <ResponsiveContainer width="100%" height={320}>
                           {(() => {
                             // 현재 매장과 유사매장의 판매패턴 데이터 가져오기
@@ -1559,7 +1559,7 @@ export default function SimilarStoresPage() {
                         <div className={`w-1 h-6 rounded-full ${
                           selectedPatternType === '시간대패턴' ? 'bg-green-600' : 'bg-gray-400'
                         }`}></div>
-                        <h4 className="text-lg font-bold text-gray-900 tracking-tight">시간대 패턴</h4>
+                        <h4 className="text-lg font-bold text-gray-900 tracking-tight">시간대별 판매 패턴</h4>
                       </div>
                     </div>
                     <div className="p-6 space-y-4">
@@ -1772,7 +1772,7 @@ export default function SimilarStoresPage() {
                         <div className={`w-1 h-6 rounded-full ${
                           selectedPatternType === '주중주말패턴' ? 'bg-green-600' : 'bg-gray-400'
                         }`}></div>
-                        <h4 className="text-lg font-bold text-gray-900 tracking-tight">주중/주말 패턴</h4>
+                        <h4 className="text-lg font-bold text-gray-900 tracking-tight">주중/주말 판매패턴</h4>
                       </div>
                     </div>
                     <div className="p-6 space-y-4">
@@ -2516,7 +2516,7 @@ export default function SimilarStoresPage() {
                     </h5>
                   </div>
                   <p className="text-sm text-gray-700 mb-3 leading-relaxed">
-                    주중 대비 주말 매출 비율 계산을 통한 상권 성격(오피스/주거/관광) 분석
+                    주중 대비 주말 매출 비율 분석
                   </p>
                   <div className="bg-white border-l-4 border-green-600 p-3">
                     <p className="text-xs text-gray-700 leading-relaxed">
