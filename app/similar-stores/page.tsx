@@ -1120,7 +1120,7 @@ export default function SimilarStoresPage() {
                             유사도 근거
                           </h5>
                           {cachedAnalysis ? (
-                            <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
+                            <div className="space-y-3 text-base text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                               {cachedAnalysis}
                             </div>
                           ) : isLoading ? (
@@ -1342,7 +1342,7 @@ export default function SimilarStoresPage() {
                             유사도 근거
                           </h5>
                           {cachedAnalysis ? (
-                            <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
+                            <div className="space-y-3 text-base text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                               {cachedAnalysis}
                             </div>
                           ) : isLoading ? (
@@ -1506,7 +1506,7 @@ export default function SimilarStoresPage() {
                             유사도 근거
                           </h5>
                           {cachedAnalysis ? (
-                            <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
+                            <div className="space-y-3 text-base text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                               {cachedAnalysis}
                             </div>
                           ) : isLoading ? (
@@ -1741,7 +1741,7 @@ export default function SimilarStoresPage() {
                                 유사도 근거
                               </h5>
                               {cachedAnalysis ? (
-                                <div className="space-y-3 text-xl text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
+                                <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                                   {cachedAnalysis}
                                 </div>
                               ) : isLoading ? (
@@ -1976,7 +1976,7 @@ export default function SimilarStoresPage() {
                                 유사도 근거
                               </h5>
                               {cachedAnalysis ? (
-                                <div className="space-y-3 text-xl text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
+                                <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                                   {cachedAnalysis}
                                 </div>
                               ) : isLoading ? (
@@ -2152,7 +2152,7 @@ export default function SimilarStoresPage() {
                                 유사도 근거
                               </h5>
                               {cachedAnalysis ? (
-                                <div className="space-y-3 text-xl text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
+                                <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                                   {cachedAnalysis}
                                 </div>
                               ) : isLoading ? (

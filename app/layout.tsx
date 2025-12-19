@@ -1,5 +1,13 @@
 import type { Metadata, Viewport } from 'next'
+import { Noto_Sans_KR } from 'next/font/google'
 import './globals.css'
+
+const notoSansKR = Noto_Sans_KR({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  display: 'swap',
+  variable: '--font-noto-sans-kr',
+})
 
 export const metadata: Metadata = {
   title: '세븐일레븐 발주 추천 시스템',
@@ -37,8 +45,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ko">
-      <body>{children}</body>
+    <html lang="ko" className={notoSansKR.variable}>
+      <body className={notoSansKR.className}>{children}</body>
     </html>
   )
 }

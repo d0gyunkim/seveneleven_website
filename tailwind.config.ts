@@ -13,7 +13,7 @@ const config: Config = {
         foreground: 'var(--foreground)',
       },
       fontFamily: {
-        sans: ['Pretendard', 'sans-serif'],
+        sans: ['Noto Sans KR', 'sans-serif'],
       },
     },
   },
