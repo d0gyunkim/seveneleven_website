@@ -2378,12 +2378,8 @@ export default function SimilarStoresPage() {
                                             {/* 순위 배지 */}
                                             {showBadge && (
                                               <div className="absolute top-2 left-2 z-10">
-                                                <div className={`${
-                                                  displayRank === 1 ? 'bg-yellow-400 shadow-yellow-300' :
-                                                  displayRank === 2 ? 'bg-gray-400 shadow-gray-300' :
-                                                  'bg-orange-400 shadow-orange-300'
-                                                } w-7 h-7 rounded-lg flex items-center justify-center shadow-lg`}>
-                                                  <span className="text-white font-bold text-xs">
+                                                <div className="bg-green-500 w-7 h-7 flex items-center justify-center rounded shadow-sm">
+                                                  <span className="text-white font-semibold text-xs">
                                                     {displayRank}
                                                   </span>
                                                 </div>
@@ -2489,23 +2485,10 @@ export default function SimilarStoresPage() {
                                             {/* 순위 배지 */}
                                             {showBadge && (
                                               <div className="absolute top-2 left-2 z-10">
-                                                <div className={`relative ${
-                                                  displayRank === 1 ? 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600' :
-                                                  displayRank === 2 ? 'bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500' :
-                                                  'bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600'
-                                                } rounded-lg shadow-xl transform rotate-[-8deg] hover:rotate-0 transition-all duration-300 hover:scale-110`}
-                                                style={{
-                                                  padding: '6px 10px',
-                                                  boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3)',
-                                                }}>
-                                                  <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent rounded-lg"></div>
-                                                  <div className="absolute -inset-0.5 bg-black/10 rounded-lg blur-sm"></div>
-                                                  <span className="relative text-white font-black text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] tracking-tight">
+                                                <div className="bg-green-500 w-7 h-7 flex items-center justify-center rounded shadow-sm">
+                                                  <span className="text-white font-semibold text-xs">
                                                     {displayRank}
                                                   </span>
-                                                  {displayRank === 1 && (
-                                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-300 rounded-full animate-pulse shadow-md"></div>
-                                                  )}
                                                 </div>
                                               </div>
                                             )}
