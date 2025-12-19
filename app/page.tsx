@@ -55,7 +55,7 @@ export default function LoginPage() {
       
       // 매장 코드가 존재하지 않으면 로그인 차단
       if (!storeExists) {
-        setError('점주님 죄송합니다, 다시 입력해주세요')
+        setError('해당 매장 정보를 찾을 수 없습니다. 다시 입력해주세요.')
         setLoading(false)
         return
       }

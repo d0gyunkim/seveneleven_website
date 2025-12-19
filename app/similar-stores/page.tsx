@@ -825,10 +825,10 @@ export default function SimilarStoresPage() {
             <div className="flex items-start justify-between mb-6">
               <div className="flex-1">
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight mb-2">
-                  우리 매장과 유사 매장 찾기
+                  우리 매장과 유사한 매장 찾기
                 </h2>
                 <p className="text-base md:text-lg text-gray-600 leading-relaxed">
-                  한달 동안, 우리 매장과 가장 유사했던 매장들을 알려드립니다
+                  한 달 동안 우리 매장과 가장 유사했던 매장들을 알려드립니다.
                 </p>
               </div>
             </div>
