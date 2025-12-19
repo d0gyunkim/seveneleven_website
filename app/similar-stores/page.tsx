@@ -1429,12 +1429,19 @@ export default function SimilarStoresPage() {
                             tickFormatter={(value: number) => value.toFixed(2)}
                           />
                           <Tooltip 
-                            formatter={(value: number, name: any, props: any) => {
-                              const label = props.payload?.name || '값';
-                              return `${label}: ${value.toFixed(2)}`;
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                const label = data.name || '값';
+                                const value = payload[0].value as number;
+                                return (
+                                  <div className="bg-white p-2 border border-gray-200 rounded shadow-sm text-xs">
+                                    <p className="text-gray-700">{label}: {value.toFixed(2)}</p>
+                                  </div>
+                                );
+                              }
+                              return null;
                             }}
-                            labelFormatter={() => ''}
-                            contentStyle={{ fontSize: '11px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
                           />
                           <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                             <Cell fill="#16a34a" />
