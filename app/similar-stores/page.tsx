@@ -1386,7 +1386,7 @@ export default function SimilarStoresPage() {
                 <div className="bg-white border-2 border-gray-300 rounded-xl p-6">
                   <div className="mb-4">
                     <h3 className="text-lg font-bold text-gray-900 mb-1">주중/주말 판매패턴</h3>
-                    <p className="text-sm text-gray-500">주말 매출 비중 (주중은 1.0으로 고정)</p>
+                    <p className="text-sm text-gray-500">주중 매출 비중 (주말은 1.0으로 고정)</p>
                   </div>
                   
                   <ResponsiveContainer width="100%" height={240}>
@@ -1451,7 +1451,7 @@ export default function SimilarStoresPage() {
                       )
                     })()}
                   </ResponsiveContainer>
-                  <p className="text-sm text-gray-500 mt-2">*1.0 초과시, 주말 매출 비중 &gt; 주중 매출 비중</p>
+                  <p className="text-sm text-gray-500 mt-2">1.0 초과시 주중 매출 비중 &gt; 주말 매출 비중</p>
 
                   {/* 유사도 근거 */}
                   {(() => {
@@ -2042,8 +2042,8 @@ export default function SimilarStoresPage() {
                     </div>
                     <div className="p-6 space-y-4">
                       <div className="pt-2">
-                        <p className="text-sm font-semibold text-gray-700 mb-1">주말 매출 비중</p>
-                        <p className="text-sm text-gray-500 mb-4">주말 매출 비중 (주중은 1.0으로 고정)</p>
+                        <p className="text-sm font-semibold text-gray-700 mb-1">주중 매출 비중</p>
+                        <p className="text-sm text-gray-500 mb-4">주중 매출 비중 (주말은 1.0으로 고정)</p>
                         <ResponsiveContainer width="100%" height={240}>
                           {(() => {
                             // 현재 매장과 유사매장의 주중주말패턴 데이터 가져오기
@@ -2099,7 +2099,7 @@ export default function SimilarStoresPage() {
                             )
                           })()}
                         </ResponsiveContainer>
-                        <p className="text-sm text-gray-500 mt-2">*1.0 초과시, 주말 매출 비중 &gt; 주중 매출 비중</p>
+                        <p className="text-sm text-gray-500 mt-2">1.0 초과시 주중 매출 비중 &gt; 주말 매출 비중</p>
                       </div>
                       {/* 주중/주말 패턴 관련 근거 */}
                       {(() => {
@@ -2800,11 +2800,11 @@ export default function SimilarStoresPage() {
                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
                     <div className="w-2 h-2 bg-green-600"></div>
                     <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
-                      주중/주말 편중도
+                      주말 대비 주중 매출 비율 분석
                     </h5>
                   </div>
                   <p className="text-sm text-gray-700 mb-3 leading-relaxed">
-                    주중 대비 주말 매출 비율 분석
+                    주말 대비 주중 매출 비율 분석
                   </p>
                   <div className="bg-white border-l-4 border-green-600 p-3">
                     <p className="text-xs text-gray-700 leading-relaxed">
