@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         similarValue: comparisonData[idx] || 0
       }))
       const mostSimilarTime = [...timeDiffs].sort((a, b) => a.diff - b.diff).slice(0, 1)[0]
-      const peakTime = timeDiffs.reduce((max, item) => (item.myValue + item.similarValue) > (max.myValue + max.similarValue) ? item : max)
+      const peakTime = timeDiffs.reduce((max: {slot: string, diff: number, myValue: number, similarValue: number}, item: {slot: string, diff: number, myValue: number, similarValue: number}) => (item.myValue + item.similarValue) > (max.myValue + max.similarValue) ? item : max, timeDiffs[0])
       
       prompt = `편의점 점주님께 전달할 ${timeType} 시간대별 판매 패턴 분석입니다.
 
