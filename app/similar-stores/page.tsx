@@ -873,8 +873,8 @@ export default function SimilarStoresPage() {
                 <div className="bg-white border border-gray-300 overflow-hidden">
                   {/* 목록 헤더 */}
                   <div className="bg-white border-b border-gray-300 px-4 py-3 md:px-5 md:py-4">
-                    <h3 className="text-base font-bold text-gray-900 mb-1">유사 매장 순위</h3>
-                    <p className="text-xs text-gray-500">클릭하여 상세 분석 리포트 확인</p>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">유사 매장 순위</h3>
+                    <p className="text-sm text-gray-500">유사 매장들의 선정근거와 각 매장별 인기 상품을 보여드립니다</p>
                   </div>
                   
                   {/* 스크롤 가능한 목록 */}
@@ -1005,7 +1005,7 @@ export default function SimilarStoresPage() {
                 <div className="bg-white border-2 border-gray-300 rounded-xl p-6">
                   <div className="mb-4">
                     <h3 className="text-lg font-bold text-gray-900 mb-1">카테고리별 판매 패턴</h3>
-                    <p className="text-xs text-gray-500">주요 카테고리 비교 분석</p>
+                    <p className="text-sm text-gray-500">주요 카테고리 비교 분석</p>
                   </div>
                   <ResponsiveContainer width="100%" height={320}>
                     {(() => {
@@ -1181,7 +1181,7 @@ export default function SimilarStoresPage() {
                   </div>
 
                   <div className="mb-2">
-                    <p className="text-xs font-semibold text-gray-700">{averageComparisonTab} 시간대별 판매 비율</p>
+                    <p className="text-sm font-semibold text-gray-700">{averageComparisonTab} 시간대별 판매 비율</p>
                   </div>
                   
                   <ResponsiveContainer width="100%" height={300}>
@@ -1386,7 +1386,7 @@ export default function SimilarStoresPage() {
                 <div className="bg-white border-2 border-gray-300 rounded-xl p-6">
                   <div className="mb-4">
                     <h3 className="text-lg font-bold text-gray-900 mb-1">주중/주말 판매패턴</h3>
-                    <p className="text-xs text-gray-500">주말 매출 비중 (주중은 1.0으로 고정)</p>
+                    <p className="text-sm text-gray-500">주말 매출 비중 (주중은 1.0으로 고정)</p>
                   </div>
                   
                   <ResponsiveContainer width="100%" height={240}>
@@ -1451,7 +1451,7 @@ export default function SimilarStoresPage() {
                       )
                     })()}
                   </ResponsiveContainer>
-                  <p className="text-xs text-gray-500 mt-2">*1.0 초과시, 주말 매출 비중 &gt; 주중 매출 비중</p>
+                  <p className="text-sm text-gray-500 mt-2">*1.0 초과시, 주말 매출 비중 &gt; 주중 매출 비중</p>
 
                   {/* 유사도 근거 */}
                   {(() => {
@@ -1646,7 +1646,7 @@ export default function SimilarStoresPage() {
                     <div className="p-6 space-y-4">
                       <div className="pt-2">
                         <p className="text-sm font-semibold text-gray-700 mb-1">카테고리별 판매 패턴</p>
-                        <p className="text-xs text-gray-500 mb-4">주요 카테고리 비교 분석</p>
+                        <p className="text-sm text-gray-500 mb-4">주요 카테고리 비교 분석</p>
                         <ResponsiveContainer width="100%" height={320}>
                           {(() => {
                             // 현재 매장과 유사매장의 판매패턴 데이터 가져오기
@@ -1825,7 +1825,7 @@ export default function SimilarStoresPage() {
                       </div>
 
                       <div className="pt-2">
-                        <p className="text-sm font-semibold text-gray-700 mb-1">{timePatternTab} 시간대별 판매 비율</p>
+                        <p className="text-base font-semibold text-gray-700 mb-1">{timePatternTab} 시간대별 판매 비율</p>
                         <ResponsiveContainer width="100%" height={300}>
                           {(() => {
                             // 현재 매장과 유사매장의 시간대패턴 데이터 가져오기
@@ -2043,7 +2043,7 @@ export default function SimilarStoresPage() {
                     <div className="p-6 space-y-4">
                       <div className="pt-2">
                         <p className="text-sm font-semibold text-gray-700 mb-1">주말 매출 비중</p>
-                        <p className="text-xs text-gray-500 mb-4">주말 매출 비중 (주중은 1.0으로 고정)</p>
+                        <p className="text-sm text-gray-500 mb-4">주말 매출 비중 (주중은 1.0으로 고정)</p>
                         <ResponsiveContainer width="100%" height={240}>
                           {(() => {
                             // 현재 매장과 유사매장의 주중주말패턴 데이터 가져오기
@@ -2099,7 +2099,7 @@ export default function SimilarStoresPage() {
                             )
                           })()}
                         </ResponsiveContainer>
-                        <p className="text-xs text-gray-500 mt-2">*1.0 초과시, 주말 매출 비중 &gt; 주중 매출 비중</p>
+                        <p className="text-sm text-gray-500 mt-2">*1.0 초과시, 주말 매출 비중 &gt; 주중 매출 비중</p>
                       </div>
                       {/* 주중/주말 패턴 관련 근거 */}
                       {(() => {
