@@ -576,7 +576,11 @@ export default function SimilarStoresPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        console.error('분석 요청 실패:', errorData)
+        console.error('분석 요청 실패:', response.status, errorData)
+        // 환경 변수 오류인 경우 로그에 명확히 표시
+        if (response.status === 500 && errorData.error?.includes('OPENAI_API_KEY')) {
+          console.error('⚠️ OPENAI_API_KEY가 배포 환경에 설정되지 않았습니다. Netlify 환경 변수 설정을 확인해주세요.')
+        }
         return null
       }
 
@@ -1425,7 +1429,11 @@ export default function SimilarStoresPage() {
                             tickFormatter={(value: number) => value.toFixed(2)}
                           />
                           <Tooltip 
-                            formatter={(value: number) => value.toFixed(2)}
+                            formatter={(value: number, name: any, props: any) => {
+                              const label = props.payload?.name || '값';
+                              return `${label}: ${value.toFixed(2)}`;
+                            }}
+                            labelFormatter={() => ''}
                             contentStyle={{ fontSize: '11px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
                           />
                           <Bar dataKey="value" radius={[4, 4, 0, 0]}>
@@ -2062,7 +2070,12 @@ export default function SimilarStoresPage() {
                                   tickFormatter={(value: number) => value.toFixed(2)}
                                 />
                                 <Tooltip 
-                                  formatter={(value: number) => value.toFixed(2)}
+                                  formatter={(value: number, name: any, props: any) => {
+                                    const dataIndex = props.payload?.index;
+                                    const label = chartData[dataIndex]?.name || '값';
+                                    return [`${label}: ${value.toFixed(2)}`, ''];
+                                  }}
+                                  labelFormatter={() => ''}
                                   contentStyle={{ fontSize: '11px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
                                 />
                                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
