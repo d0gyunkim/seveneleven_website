@@ -1794,6 +1794,12 @@ export default function RecommendationsPage() {
                   {/* 모바일 앱 스타일: 추천근거/부진근거 탭 */}
                   {isMobile && productDetailTab === 'reason' && (
                     <div className="space-y-4">
+                      {/* 점수 안내 */}
+                      <div className="flex justify-end mb-2">
+                        <div className="text-sm font-medium text-slate-700 border-b border-slate-700 pb-1">
+                          점수 안내
+                        </div>
+                      </div>
                       {(() => {
                         const itemName = selectedProduct.item_nm
                         
@@ -1823,10 +1829,10 @@ export default function RecommendationsPage() {
                             'mean_monetary'
                           )
                           
-                          // 최소 4점 보장
-                          const normalizedRecency = normalizedRecencyRaw !== null ? Math.max(4, normalizedRecencyRaw) : null
-                          const normalizedFrequency = normalizedFrequencyRaw !== null ? Math.max(4, normalizedFrequencyRaw) : null
-                          const normalizedMonetary = normalizedMonetaryRaw !== null ? Math.max(4, normalizedMonetaryRaw) : null
+                          // 최소 3점 보장
+                          const normalizedRecency = normalizedRecencyRaw !== null ? Math.max(3, normalizedRecencyRaw) : null
+                          const normalizedFrequency = normalizedFrequencyRaw !== null ? Math.max(3, normalizedFrequencyRaw) : null
+                          const normalizedMonetary = normalizedMonetaryRaw !== null ? Math.max(3, normalizedMonetaryRaw) : null
                           
                           // R, F, M 값이 하나라도 있으면 추천 근거 표시
                           if (meanRecency !== null || meanFrequency !== null || meanMonetary !== null) {
@@ -1843,7 +1849,9 @@ export default function RecommendationsPage() {
                                 
                                 {/* F, M 지표 카드 */}
                                 {(meanFrequency !== null || meanMonetary !== null) && (
-                                  <div className="grid grid-cols-2 gap-3">
+                                  <div className="space-y-3">
+                                    <div className="text-base font-semibold text-slate-700">유사매장들에서의 실제 판매 성과</div>
+                                    <div className="grid grid-cols-2 gap-3">
                                     {meanFrequency !== null && (
                                       <div className="bg-white rounded-xl p-4 text-center border border-emerald-200 shadow-sm">
                                         <div className="text-xs text-slate-500 font-medium mb-2">판매 횟수</div>
@@ -1858,6 +1866,7 @@ export default function RecommendationsPage() {
                                         <div className="text-xs text-slate-500">원</div>
                                       </div>
                                     )}
+                                    </div>
                                   </div>
                                 )}
                               </div>
@@ -2094,9 +2103,14 @@ export default function RecommendationsPage() {
                   {!isMobile && (
                   <div className="space-y-6">
                     <div>
-                      <h4 className="text-lg font-semibold text-slate-700 mb-4">
-                        {activeTab === 'recommended' ? '추천 근거' : '부진 근거'}
-                      </h4>
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="text-lg font-semibold text-slate-700">
+                          {activeTab === 'recommended' ? '추천 근거' : '부진 근거'}
+                        </h4>
+                        <div className="text-base font-medium text-slate-700 border-b border-slate-700 pb-1">
+                          점수 안내
+                        </div>
+                      </div>
                       <div className="space-y-4">
                         {(() => {
                           const itemName = selectedProduct.item_nm
@@ -2150,21 +2164,24 @@ export default function RecommendationsPage() {
                                       
                                       {/* F, M 지표 카드 */}
                                       {(meanFrequency !== null || meanMonetary !== null) && (
-                                        <div className="grid grid-cols-2 gap-3">
-                                          {meanFrequency !== null && (
-                                            <div className="bg-white rounded-xl p-4 text-center border border-emerald-200 shadow-sm">
-                                              <div className="text-xs text-slate-500 font-medium mb-2">판매 횟수</div>
-                                              <div className="text-2xl font-bold text-emerald-600 mb-1">{Math.round(meanFrequency).toLocaleString()}</div>
-                                              <div className="text-xs text-slate-500">회</div>
-                                            </div>
-                                          )}
-                                          {meanMonetary !== null && (
-                                            <div className="bg-white rounded-xl p-4 text-center border border-emerald-200 shadow-sm">
-                                              <div className="text-xs text-slate-500 font-medium mb-2">총 매출액</div>
-                                              <div className="text-2xl font-bold text-emerald-600 mb-1">{Math.round(meanMonetary).toLocaleString()}</div>
-                                              <div className="text-xs text-slate-500">원</div>
-                                            </div>
-                                          )}
+                                        <div className="space-y-3">
+                                          <div className="text-base font-semibold text-slate-700">유사매장들에서의 실제 판매 성과</div>
+                                          <div className="grid grid-cols-2 gap-3">
+                                            {meanFrequency !== null && (
+                                              <div className="bg-white rounded-xl p-4 text-center border border-emerald-200 shadow-sm">
+                                                <div className="text-xs text-slate-500 font-medium mb-2">판매 횟수</div>
+                                                <div className="text-2xl font-bold text-emerald-600 mb-1">{Math.round(meanFrequency).toLocaleString()}</div>
+                                                <div className="text-xs text-slate-500">회</div>
+                                              </div>
+                                            )}
+                                            {meanMonetary !== null && (
+                                              <div className="bg-white rounded-xl p-4 text-center border border-emerald-200 shadow-sm">
+                                                <div className="text-xs text-slate-500 font-medium mb-2">총 매출액</div>
+                                                <div className="text-2xl font-bold text-emerald-600 mb-1">{Math.round(meanMonetary).toLocaleString()}</div>
+                                                <div className="text-xs text-slate-500">원</div>
+                                              </div>
+                                            )}
+                                          </div>
                                         </div>
                                       )}
                                     </div>
@@ -2182,21 +2199,24 @@ export default function RecommendationsPage() {
                                       
                                       {/* F, M 지표 카드 */}
                                       {(meanFrequency !== null || meanMonetary !== null) && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                          {meanFrequency !== null && (
-                                            <div className="bg-white rounded-lg p-5 text-center border border-emerald-200 shadow-sm">
-                                              <div className="text-sm text-slate-500 font-medium mb-3">한 달 판매 횟수</div>
-                                              <div className="text-3xl font-bold text-emerald-600 mb-2">{Math.round(meanFrequency).toLocaleString()}</div>
-                                              <div className="text-sm text-slate-500">회 판매</div>
-                                            </div>
-                                          )}
-                                          {meanMonetary !== null && (
-                                            <div className="bg-white rounded-lg p-5 text-center border border-emerald-200 shadow-sm">
-                                              <div className="text-sm text-slate-500 font-medium mb-3">총 매출액</div>
-                                              <div className="text-3xl font-bold text-emerald-600 mb-2">{Math.round(meanMonetary).toLocaleString()}원</div>
-                                              <div className="text-sm text-slate-500">한 달 기준</div>
-                                            </div>
-                                          )}
+                                        <div className="space-y-4">
+                                          <div className="text-lg font-semibold text-slate-700">유사매장들에서의 실제 판매 성과</div>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                            {meanFrequency !== null && (
+                                              <div className="bg-white rounded-lg p-5 text-center border border-emerald-200 shadow-sm">
+                                                <div className="text-sm text-slate-500 font-medium mb-3">한 달 판매 횟수</div>
+                                                <div className="text-3xl font-bold text-emerald-600 mb-2">{Math.round(meanFrequency).toLocaleString()}</div>
+                                                <div className="text-sm text-slate-500">회 판매</div>
+                                              </div>
+                                            )}
+                                            {meanMonetary !== null && (
+                                              <div className="bg-white rounded-lg p-5 text-center border border-emerald-200 shadow-sm">
+                                                <div className="text-sm text-slate-500 font-medium mb-3">총 매출액</div>
+                                                <div className="text-3xl font-bold text-emerald-600 mb-2">{Math.round(meanMonetary).toLocaleString()}원</div>
+                                                <div className="text-sm text-slate-500">한 달 기준</div>
+                                              </div>
+                                            )}
+                                          </div>
                                         </div>
                                       )}
                                     </>
