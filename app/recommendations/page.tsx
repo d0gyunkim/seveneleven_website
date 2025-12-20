@@ -424,7 +424,7 @@ export default function RecommendationsPage() {
       ? Math.min(...recommendedMeanMonetaryValues)
       : Infinity
     
-    // 부진 상품 필터링: 추천 상품보다 매출액이 높은 것은 제외
+    // 부진 상품 필터링: 추천 상품보다 판매액이 높은 것은 제외
     const filteredExcludedProducts = excludedProducts.filter((product) => {
       const frequency = product.frequency ?? 0
       const salePrice = product.sale_price ?? 0
@@ -1840,7 +1840,7 @@ export default function RecommendationsPage() {
                               <div className="space-y-4">
                                 <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100">
                                   <p className="text-base text-slate-900 leading-relaxed mb-4">
-                                    <span className="font-semibold">{itemName}</span>은 최근 판매, 판매량, 매출액을 종합적으로 평가하여 추천된 상품으로, 본점의 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
+                                    <span className="font-semibold">{itemName}</span>은 최근 판매, 판매량, 판매액을 종합적으로 평가하여 추천된 상품으로, 본점의 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
                                   </p>
                                   <p className="text-base text-slate-900 leading-relaxed">
                                     유사 매장 평균 (각 10점 만점 기준) <span className="font-semibold text-emerald-600">최근성</span> <span className="font-semibold text-emerald-600">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>점, <span className="font-semibold text-emerald-600">판매횟수</span> <span className="font-semibold text-emerald-600">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>점, <span className="font-semibold text-emerald-600">수익성</span> <span className="font-semibold text-emerald-600">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점으로, 세 지표를 종합적으로 예측했을 때 고객의 구매 가능성이 높아 발주 추천 상품으로 선정되었습니다.
@@ -1861,7 +1861,7 @@ export default function RecommendationsPage() {
                                     )}
                                     {meanMonetary !== null && (
                                       <div className="bg-white rounded-xl p-4 text-center border border-emerald-200 shadow-sm">
-                                        <div className="text-xs text-slate-500 font-medium mb-2">총 매출액</div>
+                                        <div className="text-xs text-slate-500 font-medium mb-2">총 판매액</div>
                                         <div className="text-2xl font-bold text-emerald-600 mb-1">{Math.round(meanMonetary).toLocaleString()}</div>
                                         <div className="text-xs text-slate-500">원</div>
                                       </div>
@@ -1975,13 +1975,13 @@ export default function RecommendationsPage() {
                                         )}
                                         {monetary !== null ? (
                                           <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
-                                            <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 매출액</div>
+                                            <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 판매액</div>
                                             <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(monetary).toLocaleString()}</div>
                                             <div className="text-[10px] text-slate-500">원</div>
                                           </div>
                                         ) : (
                                           <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
-                                            <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 매출액</div>
+                                            <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 판매액</div>
                                             <div className="text-lg font-bold text-amber-600 mb-1">-</div>
                                             <div className="text-[10px] text-slate-500">팔린 적 없음</div>
                                           </div>
@@ -2158,7 +2158,7 @@ export default function RecommendationsPage() {
                                     <div className="space-y-4">
                                       <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100">
                                         <p className="text-base text-slate-900 leading-relaxed mb-4">
-                                          <span className="font-semibold">{itemName}</span>은 최근 판매, 판매량, 매출액을 종합적으로 평가하여 추천된 상품으로, 본점의 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
+                                          <span className="font-semibold">{itemName}</span>은 최근 판매, 판매량, 판매액을 종합적으로 평가하여 추천된 상품으로, 본점의 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
                                         </p>
                                         <p className="text-base text-slate-900 leading-relaxed">
                                           유사 매장 평균 (각 10점 만점 기준) <span className="font-semibold text-emerald-600">최근성</span> <span className="font-semibold text-emerald-600">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>점, <span className="font-semibold text-emerald-600">판매횟수</span> <span className="font-semibold text-emerald-600">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>점, <span className="font-semibold text-emerald-600">수익성</span> <span className="font-semibold text-emerald-600">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점으로, 세 지표를 종합적으로 예측했을 때 고객의 구매 가능성이 높아 발주 추천 상품으로 선정되었습니다.
@@ -2179,7 +2179,7 @@ export default function RecommendationsPage() {
                                             )}
                                             {meanMonetary !== null && (
                                               <div className="bg-white rounded-xl p-4 text-center border border-emerald-200 shadow-sm">
-                                                <div className="text-xs text-slate-500 font-medium mb-2">총 매출액</div>
+                                                <div className="text-xs text-slate-500 font-medium mb-2">총 판매액</div>
                                                 <div className="text-2xl font-bold text-emerald-600 mb-1">{Math.round(meanMonetary).toLocaleString()}</div>
                                                 <div className="text-xs text-slate-500">원</div>
                                               </div>
@@ -2193,7 +2193,7 @@ export default function RecommendationsPage() {
                                     <>
                                       <div className="p-6 bg-emerald-50 rounded-lg border border-emerald-100">
                                         <p className="text-lg text-slate-900 leading-relaxed mb-5">
-                                          <span className="font-semibold text-xl">{itemName}</span>은 최근 판매, 판매량, 매출액을 종합적으로 평가하여 추천된 상품으로, 본점의 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
+                                          <span className="font-semibold text-xl">{itemName}</span>은 최근 판매, 판매량, 판매액을 종합적으로 평가하여 추천된 상품으로, 본점의 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
                                         </p>
                                         <p className="text-lg text-slate-900 leading-relaxed">
                                           유사 매장 평균 (각 10점 만점 기준) <span className="font-semibold text-emerald-600 text-xl">최근성</span> <span className="font-semibold text-emerald-600 text-xl">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>점, <span className="font-semibold text-emerald-600 text-xl">판매횟수</span> <span className="font-semibold text-emerald-600 text-xl">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>점, <span className="font-semibold text-emerald-600 text-xl">수익성</span> <span className="font-semibold text-emerald-600 text-xl">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점으로, 세 지표를 종합적으로 예측했을 때 고객의 구매 가능성이 높아 발주 추천 상품으로 선정되었습니다.
@@ -2214,7 +2214,7 @@ export default function RecommendationsPage() {
                                             )}
                                             {meanMonetary !== null && (
                                               <div className="bg-white rounded-lg p-5 text-center border border-emerald-200 shadow-sm">
-                                                <div className="text-sm text-slate-500 font-medium mb-3">총 매출액</div>
+                                                <div className="text-sm text-slate-500 font-medium mb-3">총 판매액</div>
                                                 <div className="text-3xl font-bold text-emerald-600 mb-2">{Math.round(meanMonetary).toLocaleString()}원</div>
                                                 <div className="text-sm text-slate-500">한 달 기준</div>
                                               </div>
@@ -2333,13 +2333,13 @@ export default function RecommendationsPage() {
                                       )}
                                                 {monetary !== null ? (
                                                 <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
-                                                  <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 매출액</div>
+                                                  <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 판매액</div>
                                                     <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(monetary).toLocaleString()}</div>
                                                   <div className="text-[10px] text-slate-500">원</div>
                                         </div>
                                                 ) : (
                                                   <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
-                                                    <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 매출액</div>
+                                                    <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 판매액</div>
                                                     <div className="text-lg font-bold text-amber-600 mb-1">-</div>
                                                     <div className="text-[10px] text-slate-500">팔린 적 없음</div>
                                         </div>
@@ -2404,13 +2404,13 @@ export default function RecommendationsPage() {
                                               )}
                                                 {monetary !== null ? (
                                                 <div className="bg-white rounded-lg p-5 text-center border border-amber-200 shadow-sm">
-                                                  <div className="text-sm text-slate-500 font-medium mb-3">총 매출액</div>
+                                                  <div className="text-sm text-slate-500 font-medium mb-3">총 판매액</div>
                                                     <div className="text-3xl font-bold text-amber-600 mb-2">{Math.round(monetary).toLocaleString()}원</div>
                                                   <div className="text-sm text-slate-500">한 달 기준</div>
                                                 </div>
                                                 ) : (
                                                   <div className="bg-white rounded-lg p-5 text-center border border-amber-200 shadow-sm">
-                                                    <div className="text-sm text-slate-500 font-medium mb-3">총 매출액</div>
+                                                    <div className="text-sm text-slate-500 font-medium mb-3">총 판매액</div>
                                                     <div className="text-3xl font-bold text-amber-600 mb-2">-</div>
                                                     <div className="text-sm text-slate-500">팔린 적 없음</div>
                                                 </div>

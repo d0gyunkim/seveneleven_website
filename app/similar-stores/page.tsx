@@ -332,7 +332,7 @@ export default function SimilarStoresPage() {
         const similarityReasons = [
           '판매 패턴 유사도 높음',
           '시간대별 고객 유입 패턴 일치',
-          '주중/주말 매출 비율 유사'
+          '주중/주말 판매 비율 유사'
         ]
 
         similarStoresData.push({
@@ -1173,9 +1173,9 @@ export default function SimilarStoresPage() {
                           </h5>
                           <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                             {averageComparisonTab === '주중' ? (
-                              <>주중 시간대별 판매 패턴 분석 결과, 저녁 시간대의 매출이 가장 집중되고 있으며, 이는 유사 매장들과 유사한 경향을 보입니다. 이 시간대의 매출 비중은 전체에서 두드러진 것으로 확인되었습니다.</>
+                              <>주중 시간대별 판매 패턴 분석 결과, 저녁 시간대의 판매이 가장 집중되고 있으며, 이는 유사 매장들과 유사한 경향을 보입니다. 이 시간대의 판매 비중은 전체에서 두드러진 것으로 확인되었습니다.</>
                             ) : (
-                              <>주말 저녁 시간대의 판매 패턴이 유사한 다른 시간대와 비교해 차이가 거의 없는 것으로 나타났습니다. 또한, 매출의 대부분이 오후 시간대에 집중되어 있으며, 이는 유사 매장들과 유사한 경향을 보입니다.</>
+                              <>주말 저녁 시간대의 판매 패턴이 유사한 다른 시간대와 비교해 차이가 거의 없는 것으로 나타났습니다. 또한, 판매의 대부분이 오후 시간대에 집중되어 있으며, 이는 유사 매장들과 유사한 경향을 보입니다.</>
                             )}
                           </div>
                         </div>
@@ -1188,7 +1188,7 @@ export default function SimilarStoresPage() {
                 <div className="bg-white border-2 border-gray-300 rounded-xl p-6">
                   <div className="mb-4">
                     <h3 className="text-lg font-bold text-gray-900 mb-1">주중/주말 판매패턴</h3>
-                    <p className="text-sm text-gray-500">주중 매출 비중 (주말은 1.0으로 고정)</p>
+                    <p className="text-sm text-gray-500">주중 판매 비중 (주말은 1.0으로 고정)</p>
                   </div>
                   
                   <ResponsiveContainer width="100%" height={240}>
@@ -1253,7 +1253,7 @@ export default function SimilarStoresPage() {
                       )
                     })()}
                   </ResponsiveContainer>
-                  <p className="text-sm text-gray-500 mt-2">1.0 초과시 주중 매출 비중 &gt; 주말 매출 비중</p>
+                  <p className="text-sm text-gray-500 mt-2">1.0 초과시 주중 판매 비중 &gt; 주말 판매 비중</p>
 
                   {/* 분석 결과 */}
                   {(() => {
@@ -1700,7 +1700,7 @@ export default function SimilarStoresPage() {
                                     <div className="flex items-start gap-2.5">
                                       <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                                       <p className="flex-1">
-                                        <span className="font-semibold text-gray-900">주중 오후 12-18시</span>에 매출이 집중되는 패턴이 유사합니다 (차이 {weekdayAfternoonDiff.toFixed(1)}%p).
+                                        <span className="font-semibold text-gray-900">주중 오후 12-18시</span>에 판매이 집중되는 패턴이 유사합니다 (차이 {weekdayAfternoonDiff.toFixed(1)}%p).
                                       </p>
                                     </div>
                                   )}
@@ -1708,7 +1708,7 @@ export default function SimilarStoresPage() {
                                     <div className="flex items-start gap-2.5">
                                       <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                                       <p className="flex-1">
-                                        <span className="font-semibold text-gray-900">주말 저녁 18-24시</span>에 매출이 집중되는 패턴이 유사합니다 (차이 {weekendEveningDiff.toFixed(1)}%p).
+                                        <span className="font-semibold text-gray-900">주말 저녁 18-24시</span>에 판매이 집중되는 패턴이 유사합니다 (차이 {weekendEveningDiff.toFixed(1)}%p).
                                       </p>
                                     </div>
                                   )}
@@ -1716,7 +1716,7 @@ export default function SimilarStoresPage() {
                                     <div className="flex items-start gap-2.5">
                                       <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                                       <p className="flex-1">
-                                        주중 <span className="font-semibold text-gray-900">{timeSlots[weekdayMaxIndex]}</span> 시간대에 매출이 가장 집중되는 패턴이 일치합니다.
+                                        주중 <span className="font-semibold text-gray-900">{timeSlots[weekdayMaxIndex]}</span> 시간대에 판매이 가장 집중되는 패턴이 일치합니다.
                                       </p>
                                     </div>
                                   )}
@@ -1752,8 +1752,8 @@ export default function SimilarStoresPage() {
                     </div>
                     <div className="p-6 space-y-4">
                       <div className="pt-2">
-                        <p className="text-sm font-semibold text-gray-700 mb-1">주중 매출 비중</p>
-                        <p className="text-sm text-gray-500 mb-4">주중 매출 비중 (주말은 1.0으로 고정)</p>
+                        <p className="text-sm font-semibold text-gray-700 mb-1">주중 판매 비중</p>
+                        <p className="text-sm text-gray-500 mb-4">주중 판매 비중 (주말은 1.0으로 고정)</p>
                         <ResponsiveContainer width="100%" height={240}>
                           {(() => {
                             // 현재 매장과 유사매장의 주중주말패턴 데이터 가져오기
@@ -1809,7 +1809,7 @@ export default function SimilarStoresPage() {
                             )
                           })()}
                         </ResponsiveContainer>
-                        <p className="text-sm text-gray-500 mt-2">1.0 초과시 주중 매출 비중 &gt; 주말 매출 비중</p>
+                        <p className="text-sm text-gray-500 mt-2">1.0 초과시 주중 판매 비중 &gt; 주말 판매 비중</p>
                       </div>
                       {/* 주중/주말 패턴 관련 근거 */}
                       {(() => {
@@ -1859,7 +1859,7 @@ export default function SimilarStoresPage() {
                                     <div className="flex items-start gap-2.5">
                                       <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                                       <p className="flex-1">
-                                        <span className="font-semibold text-gray-900">주말 매출이 주중 대비 {weekendPercentDiff.toFixed(1)}% 높게 집중</span>되어 주말 중심형 상권 특성을 공유합니다.
+                                        <span className="font-semibold text-gray-900">주말 판매이 주중 대비 {weekendPercentDiff.toFixed(1)}% 높게 집중</span>되어 주말 중심형 상권 특성을 공유합니다.
                                       </p>
                                     </div>
                                   )}
@@ -1867,7 +1867,7 @@ export default function SimilarStoresPage() {
                                     <div className="flex items-start gap-2.5">
                                       <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                                       <p className="flex-1">
-                                        주말/주중 매출 비율이 거의 동일하여 (차이 {ratioDiff.toFixed(2)}) <span className="font-semibold text-gray-900">주중/주말 매출 패턴이 매우 유사</span>합니다.
+                                        주말/주중 판매 비율이 거의 동일하여 (차이 {ratioDiff.toFixed(2)}) <span className="font-semibold text-gray-900">주중/주말 판매 패턴이 매우 유사</span>합니다.
                                       </p>
                                     </div>
                                   )}
@@ -1875,21 +1875,21 @@ export default function SimilarStoresPage() {
                                     <div className="flex items-start gap-2.5">
                                       <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                                       <p className="flex-1">
-                                        두 매장 모두 주말 매출이 주중보다 높아 <span className="font-semibold text-gray-900">주말 중심형 상권 특성</span>을 공유합니다.
+                                        두 매장 모두 주말 판매이 주중보다 높아 <span className="font-semibold text-gray-900">주말 중심형 상권 특성</span>을 공유합니다.
                                       </p>
                                     </div>
                                   ) : (myWeekendWeekdayRatio < 0.9 && similarWeekendWeekdayRatio < 0.9) ? (
                                     <div className="flex items-start gap-2.5">
                                       <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                                       <p className="flex-1">
-                                        두 매장 모두 주중 매출이 주말보다 높아 <span className="font-semibold text-gray-900">주중 중심형 상권 특성</span>을 공유합니다.
+                                        두 매장 모두 주중 판매이 주말보다 높아 <span className="font-semibold text-gray-900">주중 중심형 상권 특성</span>을 공유합니다.
                                       </p>
                                     </div>
                                   ) : (weekendRatioDiff < 0.05) ? (
                                     <div className="flex items-start gap-2.5">
                                       <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
                                       <p className="flex-1">
-                                        주말 매출 비중이 유사하여 (차이 {weekendRatioDiff.toFixed(2)}) 고객 유입 패턴이 일치합니다.
+                                        주말 판매 비중이 유사하여 (차이 {weekendRatioDiff.toFixed(2)}) 고객 유입 패턴이 일치합니다.
                                       </p>
                                     </div>
                                   ) : null}
@@ -1918,7 +1918,7 @@ export default function SimilarStoresPage() {
                       <h3 className="text-lg md:text-xl font-bold text-gray-900 uppercase tracking-wide">
                         인기 상품 순위
                       </h3>
-                      <p className="text-sm text-gray-600 mt-1">매출 상위 상품을 보여드립니다</p>
+                      <p className="text-sm text-gray-600 mt-1">판매 상위 상품을 보여드립니다</p>
                     </div>
                   </div>
                 </div>
@@ -2467,7 +2467,7 @@ export default function SimilarStoresPage() {
                   </p>
                   <div className="bg-white border-l-4 border-green-600 p-3">
                     <p className="text-xs text-gray-700 leading-relaxed">
-                      <span className="font-semibold text-gray-900">분석 결과:</span> 주요 카테고리가 전체 매출의 60% 이상을 차지하여 매장별 고객층의 구매 선호도를 명확히 반영
+                      <span className="font-semibold text-gray-900">분석 결과:</span> 주요 카테고리가 전체 판매의 60% 이상을 차지하여 매장별 고객층의 구매 선호도를 명확히 반영
                     </p>
                   </div>
                 </div>
@@ -2480,7 +2480,7 @@ export default function SimilarStoresPage() {
                     </h5>
                   </div>
                   <p className="text-sm text-gray-700 mb-3 leading-relaxed">
-                    주중/주말 × 시간대별 매출 비중 분석을 통한 고객 유입 패턴 추적
+                    주중/주말 × 시간대별 판매 비중 분석을 통한 고객 유입 패턴 추적
                   </p>
                   <div className="bg-white border-l-4 border-green-600 p-3">
                     <p className="text-xs text-gray-700 leading-relaxed">
@@ -2493,11 +2493,11 @@ export default function SimilarStoresPage() {
                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
                     <div className="w-2 h-2 bg-green-600"></div>
                     <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
-                      주말 대비 주중 매출 비율 분석
+                      주말 대비 주중 판매 비율 분석
                     </h5>
                   </div>
                   <p className="text-sm text-gray-700 mb-3 leading-relaxed">
-                    주말 대비 주중 매출 비율 분석
+                    주말 대비 주중 판매 비율 분석
                   </p>
                   <div className="bg-white border-l-4 border-green-600 p-3">
                     <p className="text-xs text-gray-700 leading-relaxed">

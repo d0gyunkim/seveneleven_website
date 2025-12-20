@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
 [데이터 요약]
 - 가장 유사한 시간대: ${mostSimilarTime.slot} (차이 ${mostSimilarTime.diff.toFixed(1)}%p)
-- 매출 집중 시간대: ${peakTime.slot} (내 매장 ${peakTime.myValue.toFixed(1)}%, ${comparisonLabel} ${peakTime.similarValue.toFixed(1)}%)
+- 판매 집중 시간대: ${peakTime.slot} (내 매장 ${peakTime.myValue.toFixed(1)}%, ${comparisonLabel} ${peakTime.similarValue.toFixed(1)}%)
 
 위 데이터를 바탕으로 전문적인 어조로 핵심만 정확히 2줄 이내로 작성해주세요. 수치를 직접 나열하지 말고 자연스럽게 설명하되, 반드시 제공된 데이터만을 근거로 하세요.`
     } else if (analysisType === '주중주말패턴') {
