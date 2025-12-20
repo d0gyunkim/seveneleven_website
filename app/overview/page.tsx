@@ -1754,7 +1754,7 @@ export default function OverviewPage() {
             <div className="p-6 md:p-8">
               <div className="mb-6 pb-4 border-b-2 border-gray-300">
                 <p className="text-base text-gray-700 leading-relaxed">
-                  딥러닝을 통해 <span className="font-semibold">판매 패턴 분석</span>과 
+                  <span className="font-semibold">영수증 데이터</span>와 
                   <span className="font-semibold">유동인구 데이터</span>를 종합 분석하여 
                   최적의 유사 매장을 선정합니다.
                 </p>
@@ -1765,7 +1765,7 @@ export default function OverviewPage() {
                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
                     <div className="w-2 h-2 bg-green-600"></div>
                     <h5 className="text-base font-bold text-gray-900 uppercase tracking-wide">
-                      판매 상품 패턴
+                      카테고리별 상품 판매 패턴
                     </h5>
                   </div>
                   <p className="text-base text-gray-700 mb-3 leading-relaxed">
@@ -1777,11 +1777,11 @@ export default function OverviewPage() {
                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
                     <div className="w-2 h-2 bg-green-600"></div>
                     <h5 className="text-base font-bold text-gray-900 uppercase tracking-wide">
-                      시간대별 패턴
+                      시간대별 판매 패턴
                     </h5>
                   </div>
                   <p className="text-base text-gray-700 mb-3 leading-relaxed">
-                    주중/주말 × 시간대별 매출 비중 분석을 통한 고객 유입 패턴 추적
+                    시간대별 판매 비중 분석을 통한 고객 유입 패턴 추적
                   </p>
                 </div>
                 
@@ -1789,7 +1789,7 @@ export default function OverviewPage() {
                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
                     <div className="w-2 h-2 bg-green-600"></div>
                     <h5 className="text-base font-bold text-gray-900 uppercase tracking-wide">
-                      주중/주말 편중도
+                      주말/주중 판매 패턴
                     </h5>
                   </div>
                   <p className="text-base text-gray-700 mb-3 leading-relaxed">
@@ -1805,7 +1805,7 @@ export default function OverviewPage() {
                     </h5>
                   </div>
                   <p className="text-base text-gray-700 mb-3 leading-relaxed">
-                    실시간 유동인구 정보와 방문객 패턴 분석을 통한 상권 특성 정확한 반영
+                    유동인구 정보와 방문객 패턴 분석을 통한 상권 특성 정확한 반영
                   </p>
                 </div>
               </div>

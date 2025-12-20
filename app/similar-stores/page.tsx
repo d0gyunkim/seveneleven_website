@@ -18,7 +18,7 @@ interface SimilarStore {
   latitude?: number
   longitude?: number
   similarity_score?: number // 유사도 점수 (0-100)
-  similarity_reasons?: string[] // 유사도 근거 (주요 2-3개)
+  similarity_reasons?: string[] // 분석 결과 (주요 2-3개)
 }
 
 interface StoreDetail {
@@ -328,7 +328,7 @@ export default function SimilarStoresPage() {
         // 순위가 높을수록 유사도가 높으므로 역순으로 점수 계산
         const similarityScore = Math.max(85, 100 - (i * 2)) // 1위: 100점, 2위: 98점, ...
         
-        // 유사도 근거 생성 (실제로는 백엔드에서 제공되어야 함)
+        // 분석 결과 생성 (실제로는 백엔드에서 제공되어야 함)
         const similarityReasons = [
           '판매 패턴 유사도 높음',
           '시간대별 고객 유입 패턴 일치',
@@ -947,7 +947,7 @@ export default function SimilarStoresPage() {
                     })()}
                   </ResponsiveContainer>
                   
-                  {/* 유사도 근거 */}
+                  {/* 분석 결과 */}
                   {(() => {
                     const myStorePattern = currentStorePatterns?.판매패턴
                     if (!myStorePattern) return null
@@ -992,7 +992,7 @@ export default function SimilarStoresPage() {
                         <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
                           <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
                             <div className="w-1 h-4 bg-green-600 rounded-full"></div>
-                            유사도 근거
+                            분석 결과
                           </h5>
                           <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                             유사매장들과의 판매 패턴 분석 결과, 조리빵과 주류 카테고리에서 높은 유사성을 보였으며, 과자와 미반 카테고리에서는 상대적으로 큰 차이를 나타냈습니다.
@@ -1120,7 +1120,7 @@ export default function SimilarStoresPage() {
                     })()}
                   </ResponsiveContainer>
 
-                  {/* 유사도 근거 */}
+                  {/* 분석 결과 */}
                   {(() => {
                     const myStorePattern = currentStorePatterns?.시간대패턴
                     if (!myStorePattern) return null
@@ -1169,7 +1169,7 @@ export default function SimilarStoresPage() {
                         <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
                           <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
                             <div className="w-1 h-4 bg-green-600 rounded-full"></div>
-                            유사도 근거
+                            분석 결과
                           </h5>
                           <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                             {averageComparisonTab === '주중' ? (
@@ -1255,7 +1255,7 @@ export default function SimilarStoresPage() {
                   </ResponsiveContainer>
                   <p className="text-sm text-gray-500 mt-2">1.0 초과시 주중 매출 비중 &gt; 주말 매출 비중</p>
 
-                  {/* 유사도 근거 */}
+                  {/* 분석 결과 */}
                   {(() => {
                     const myStorePattern = currentStorePatterns?.주중주말패턴
                     if (!myStorePattern) return null
@@ -1287,7 +1287,7 @@ export default function SimilarStoresPage() {
                         <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
                           <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
                             <div className="w-1 h-4 bg-green-600 rounded-full"></div>
-                            유사도 근거
+                            분석 결과
                           </h5>
                           <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
                             우리 매장은 유사 매장들보다 주중 판매 비중이 상대적으로 더 높으며, 주말 대비 주중 판매 비율이 우세한 경향을 보입니다. 이러한 주중 중심형 판매 패턴은 우리 매장이 유사 매장들과 유사한 성향을 가지고 있음을 나타냅니다.
@@ -1462,7 +1462,7 @@ export default function SimilarStoresPage() {
                         const avgDiff = categoryCount > 0 ? totalDiff / categoryCount : 0
                         const similarityScore = Math.max(0, 100 - (avgDiff * 2))
                         
-                        // 유사매장의 유사도 근거 가져오기
+                        // 유사매장의 분석 결과 가져오기
                         const similarStorePatternData = similarStoresPatterns.find(
                           p => p.store_code === selectedStore?.store_code
                         )
@@ -1473,7 +1473,7 @@ export default function SimilarStoresPage() {
                             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
                               <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
                                 <div className="w-1 h-4 bg-green-600 rounded-full"></div>
-                                유사도 근거
+                                분석 결과
                               </h5>
                               {similarityReason ? (
                                 <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
@@ -1675,7 +1675,7 @@ export default function SimilarStoresPage() {
                         const weekdayAfternoonDiff = Math.abs(myWeekdayAfternoon - similarWeekdayAfternoon)
                         const weekendEveningDiff = Math.abs(myWeekendEvening - similarWeekendEvening)
                         
-                        // 유사매장의 유사도 근거 가져오기 (주중/주말에 따라)
+                        // 유사매장의 분석 결과 가져오기 (주중/주말에 따라)
                         const similarStorePatternData = similarStoresPatterns.find(
                           p => p.store_code === selectedStore?.store_code
                         )
@@ -1688,7 +1688,7 @@ export default function SimilarStoresPage() {
                             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
                               <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
                                 <div className="w-1 h-4 bg-green-600 rounded-full"></div>
-                                유사도 근거
+                                분석 결과
                               </h5>
                               {similarityReason ? (
                                 <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
@@ -1836,7 +1836,7 @@ export default function SimilarStoresPage() {
                         // 주말 비율 유사도 계산
                         const weekendRatioDiff = Math.abs(myWeekendRatio - similarWeekendRatio)
                         
-                        // 유사매장의 유사도 근거 가져오기
+                        // 유사매장의 분석 결과 가져오기
                         const similarStorePatternData = similarStoresPatterns.find(
                           p => p.store_code === selectedStore?.store_code
                         )
@@ -1847,7 +1847,7 @@ export default function SimilarStoresPage() {
                             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
                               <h5 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
                                 <div className="w-1 h-4 bg-green-600 rounded-full"></div>
-                                유사도 근거
+                                분석 결과
                               </h5>
                               {similarityReason ? (
                                 <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
