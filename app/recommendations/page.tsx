@@ -52,6 +52,7 @@ export default function RecommendationsPage() {
   const [selectedMiddleCategories, setSelectedMiddleCategories] = useState<string[]>([])
   const [isMobile, setIsMobile] = useState(false)
   const [productDetailTab, setProductDetailTab] = useState<'info' | 'reason'>('info')
+  const [showScoreGuide, setShowScoreGuide] = useState(false)
 
   useEffect(() => {
     // 모바일 감지
@@ -1796,9 +1797,12 @@ export default function RecommendationsPage() {
                     <div className="space-y-4">
                       {/* 점수 안내 */}
                       <div className="flex justify-end mb-2">
-                        <div className="text-sm font-medium text-slate-700 border-b border-slate-700 pb-1">
+                        <button
+                          onClick={() => setShowScoreGuide(true)}
+                          className="text-sm font-medium text-slate-700 border-b border-slate-700 pb-1 cursor-pointer hover:text-slate-900 transition-colors"
+                        >
                           점수 안내
-                        </div>
+                        </button>
                       </div>
                       {(() => {
                         const itemName = selectedProduct.item_nm
@@ -2110,9 +2114,12 @@ export default function RecommendationsPage() {
                         <h4 className="text-lg font-semibold text-slate-700">
                         {activeTab === 'recommended' ? '추천 근거' : '부진 근거'}
                       </h4>
-                        <div className="text-base font-medium text-slate-700 border-b border-slate-700 pb-1">
+                        <button
+                          onClick={() => setShowScoreGuide(true)}
+                          className="text-base font-medium text-slate-700 border-b border-slate-700 pb-1 cursor-pointer hover:text-slate-900 transition-colors"
+                        >
                           점수 안내
-                        </div>
+                        </button>
                       </div>
                       <div className="space-y-4">
                         {(() => {
@@ -2482,6 +2489,69 @@ export default function RecommendationsPage() {
             </div>
             )
           })()}
+
+          {/* 점수 안내 모달 */}
+          {showScoreGuide && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-8">
+                  <div className="flex justify-between items-center mb-8">
+                    <h3 className="text-4xl font-bold text-slate-900">점수 안내</h3>
+                    <button
+                      onClick={() => setShowScoreGuide(false)}
+                      className="text-slate-500 hover:text-slate-700 transition-colors"
+                    >
+                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-8 text-slate-700">
+                    <p className="text-lg leading-relaxed">
+                      최근성 / 판매빈도 / 수익성 점수는 아래와 같습니다.
+                    </p>
+                    
+                    <div className="space-y-6">
+                      <div>
+                        <h4 className="text-2xl font-semibold text-slate-900 mb-3">최근성</h4>
+                        <p className="text-lg leading-relaxed">
+                          최근성는 해당 중분류별로 '주어진 기간 내 상품이 얼마나 최근에 팔리는가'를 측정한 지표로, 해당 수치가 높을수록 최근에 팔린 상품입니다.
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-2xl font-semibold text-slate-900 mb-3">판매빈도</h4>
+                        <p className="text-lg leading-relaxed">
+                          판매빈도는 해당 중분류별로 '주어진 기간 내 상품이 얼마나 자주 팔렸는가'를 측정한 지표로, 해당 수치가 높을수록 자주 팔린 상품입니다.
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-2xl font-semibold text-slate-900 mb-3">수익성</h4>
+                        <p className="text-lg leading-relaxed">
+                          수익성는 해당 중분류별로 '주어진 기간 내 상품이 얼마나 많은 매출을 내는가'를 측정한 지표로, 수익성 수치가 높을수록 수익성이 높은 상품입니다.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-8 flex justify-end">
+                    <button
+                      onClick={() => setShowScoreGuide(false)}
+                      className={`px-8 py-3 text-lg text-white font-semibold rounded-lg transition-colors ${
+                        activeTab === 'recommended'
+                          ? 'bg-emerald-600 hover:bg-emerald-700'
+                          : 'bg-amber-600 hover:bg-amber-700'
+                      }`}
+                    >
+                      확인
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
     </Layout>
   )
 }
