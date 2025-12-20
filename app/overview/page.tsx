@@ -1793,7 +1793,7 @@ export default function OverviewPage() {
                     </h5>
                   </div>
                   <p className="text-base text-gray-700 mb-3 leading-relaxed">
-                    주중 대비 주말 매출 비율 분석
+                    주중 대비 주말 판매 비율 분석
                   </p>
                 </div>
                 
@@ -1848,7 +1848,7 @@ export default function OverviewPage() {
                     <div className="w-1 h-6 bg-green-600"></div>
                     <h4 className="text-xl font-bold text-gray-900">분석 구간</h4>
                   </div>
-                  <p className="text-base text-gray-700">최근 4주 데이터 (Rolling 4 Weeks)</p>
+                  <p className="text-base text-gray-700">최근 4주 데이터</p>
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-3">
@@ -1863,9 +1863,6 @@ export default function OverviewPage() {
               <div className="mb-8">
                 <h4 className="text-xl font-bold text-gray-900 mb-4">작동 원리</h4>
                 <ol className="space-y-3 list-decimal list-inside">
-                  <li className="text-base text-gray-700 leading-relaxed">
-                    2주마다 새로운 주차 데이터를 추가하고 가장 오래된 주차 데이터를 제거
-                  </li>
                   <li className="text-base text-gray-700 leading-relaxed">
                     최신 4주 데이터 기반으로 유사도 알고리즘 자동 재계산
                   </li>
