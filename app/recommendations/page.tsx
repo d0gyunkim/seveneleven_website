@@ -270,6 +270,81 @@ export default function RecommendationsPage() {
     return { r: rValue, f: fValue, m: mValue }
   }, [])
 
+  // 중분류별 정규화 함수 (1~10 범위) - 현재 화면에 표시되는 상품들에 대해서만 정규화
+  const normalizeByMidCategory = useCallback((
+    value: number | null,
+    midCategory: string | null,
+    filteredGroupedProducts: GroupedProducts,
+    field: 'mean_recency' | 'mean_frequency' | 'mean_monetary'
+  ): number | null => {
+    if (value === null || midCategory === null) return null
+    
+    // filteredGroupedProducts에서 같은 중분류(item_mddv_nm)의 상품들 찾기
+    // filteredGroupedProducts는 이미 중분류별로 그룹화되어 있으므로, 해당 키의 상품들을 가져오면 됨
+    const sameCategoryProducts: Product[] = filteredGroupedProducts[midCategory] || []
+    
+    // 해당 필드의 값이 있는 상품들만 필터링
+    const productsWithValue = sameCategoryProducts.filter(
+      (p) => p[field] !== null
+    )
+    
+    if (productsWithValue.length === 0) return value
+    
+    // 해당 필드의 값들 추출
+    const values = productsWithValue
+      .map((p) => p[field])
+      .filter((v): v is number => v !== null)
+    
+    if (values.length === 0) return value
+    
+    const min = Math.min(...values)
+    const max = Math.max(...values)
+    
+    // 최솟값과 최댓값이 같으면 5.5 반환 (중간값)
+    if (min === max) return 5.5
+    
+    // 정규화: (value - min) / (max - min) * 9 + 1 (1~10 범위)
+    const normalized = ((value - min) / (max - min)) * 9 + 1
+    return normalized
+  }, [])
+
+  // 부진재고용 중분류별 정규화 함수 (1~10 범위) - recency, frequency, monetary 사용
+  const normalizeExcludedByMidCategory = useCallback((
+    value: number | null,
+    midCategory: string | null,
+    filteredGroupedProducts: GroupedProducts,
+    field: 'recency' | 'frequency' | 'monetary'
+  ): number | null => {
+    if (value === null || midCategory === null) return null
+    
+    // filteredGroupedProducts에서 같은 중분류(item_mddv_nm)의 상품들 찾기
+    const sameCategoryProducts: Product[] = filteredGroupedProducts[midCategory] || []
+    
+    // 해당 필드의 값이 있는 상품들만 필터링
+    const productsWithValue = sameCategoryProducts.filter(
+      (p) => p[field] !== null
+    )
+    
+    if (productsWithValue.length === 0) return value
+    
+    // 해당 필드의 값들 추출
+    const values = productsWithValue
+      .map((p) => p[field])
+      .filter((v): v is number => v !== null)
+    
+    if (values.length === 0) return value
+    
+    const min = Math.min(...values)
+    const max = Math.max(...values)
+    
+    // 최솟값과 최댓값이 같으면 5.5 반환 (중간값)
+    if (min === max) return 5.5
+    
+    // 정규화: (value - min) / (max - min) * 9 + 1 (1~10 범위)
+    const normalized = ((value - min) / (max - min)) * 9 + 1
+    return normalized
+  }, [])
+
   // 중분류별로 그룹화하고 각 그룹 내에서 mean_monetary 순서로 정렬
   // 상품명이 동일한 경우 판매가가 큰 것만 표시
   // R, F, M 값 중 하나라도 0이면 제외
@@ -1723,20 +1798,46 @@ export default function RecommendationsPage() {
                         const itemName = selectedProduct.item_nm
                         
                         if (activeTab === 'recommended') {
-                          // 추천 상품: mean_frequency, mean_monetary 사용
+                          // 추천 상품: mean_recency, mean_frequency, mean_monetary 사용
+                          const meanRecency = selectedProduct.mean_recency ?? null
                           const meanFrequency = selectedProduct.mean_frequency ?? null
                           const meanMonetary = selectedProduct.mean_monetary ?? null
                           
-                          // F, M 값이 하나라도 있으면 추천 근거 표시
-                          if (meanFrequency !== null || meanMonetary !== null) {
+                          // 중분류별 정규화 (1~10 범위) - 현재 화면에 표시되는 상품들 기준
+                          const normalizedRecencyRaw = normalizeByMidCategory(
+                            meanRecency,
+                            selectedProduct.item_mddv_nm,
+                            filteredGroupedProducts,
+                            'mean_recency'
+                          )
+                          const normalizedFrequencyRaw = normalizeByMidCategory(
+                            meanFrequency,
+                            selectedProduct.item_mddv_nm,
+                            filteredGroupedProducts,
+                            'mean_frequency'
+                          )
+                          const normalizedMonetaryRaw = normalizeByMidCategory(
+                            meanMonetary,
+                            selectedProduct.item_mddv_nm,
+                            filteredGroupedProducts,
+                            'mean_monetary'
+                          )
+                          
+                          // 최소 4점 보장
+                          const normalizedRecency = normalizedRecencyRaw !== null ? Math.max(4, normalizedRecencyRaw) : null
+                          const normalizedFrequency = normalizedFrequencyRaw !== null ? Math.max(4, normalizedFrequencyRaw) : null
+                          const normalizedMonetary = normalizedMonetaryRaw !== null ? Math.max(4, normalizedMonetaryRaw) : null
+                          
+                          // R, F, M 값이 하나라도 있으면 추천 근거 표시
+                          if (meanRecency !== null || meanFrequency !== null || meanMonetary !== null) {
                             return (
                               <div className="space-y-4">
                                 <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100">
                                   <p className="text-lg text-slate-900 leading-relaxed mb-4">
-                                    <span className="font-semibold">{itemName}</span>은 딥러닝 기반 분석을 통해 판매 추세·판매량·매출액 등 주요 지표를 종합적으로 고려하고, 우리 매장의 판매 흐름과 유사 매장의 실제 판매 성과를 함께 반영하여 추천된 상품입니다.
+                                    <span className="font-semibold">{itemName}</span>는 판매 트렌드, 판매량, 수익성이라는 3가지 핵심 지표를 종합적으로 평가한 딥러닝 분석을 기반으로 추천된 상품으로, 본점의 판매 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
                                   </p>
                                   <p className="text-lg text-slate-900 leading-relaxed">
-                                    해당 상품은 유사매장들에서 평균적으로 약 <span className="font-semibold text-emerald-600">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>회, 누적 매출은 <span className="font-semibold text-emerald-600">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원을 기록했습니다.
+                                    이 상품은 유사 매장에서 평균 <span className="font-semibold text-emerald-700">최근성 점수</span> <span className="font-semibold text-emerald-600">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-emerald-700">판매 빈도 점수</span> <span className="font-semibold text-emerald-600">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-emerald-700">수익성 점수</span> <span className="font-semibold text-emerald-600">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 예측한 결과, 고객의 구매 확률이 높아 주문 추천 상품으로 선정되었습니다.
                                   </p>
                                 </div>
                                 
@@ -1769,18 +1870,51 @@ export default function RecommendationsPage() {
                             )
                           }
                         } else {
-                          // 부진재고: recency, frequency 사용, monetary는 frequency * sale_price로 계산
+                          // 부진재고: recency, frequency, monetary 사용
                           const recency = selectedProduct.recency ?? null
                           const frequency = selectedProduct.frequency ?? null
-                          const salePrice = selectedProduct.sale_price ?? 0
-                          const calculatedMonetary = frequency !== null ? frequency * salePrice : null
+                          const monetary = selectedProduct.monetary ?? null
                           const rfmScore = selectedProduct.rfm_score ?? null
                           
-                          // rfm_score가 0이거나 frequency가 0이거나 계산된 monetary가 0이면 판매 없음
-                          const isNoSale = rfmScore === 0 || frequency === 0 || calculatedMonetary === 0
+                          // 중분류별 정규화 (1~10 범위) - 현재 화면에 표시되는 상품들 기준
+                          const normalizedRecency = normalizeExcludedByMidCategory(
+                            recency,
+                            selectedProduct.item_mddv_nm,
+                            filteredGroupedProducts,
+                            'recency'
+                          )
+                          const normalizedFrequency = normalizeExcludedByMidCategory(
+                            frequency,
+                            selectedProduct.item_mddv_nm,
+                            filteredGroupedProducts,
+                            'frequency'
+                          )
+                          const normalizedMonetary = normalizeExcludedByMidCategory(
+                            monetary,
+                            selectedProduct.item_mddv_nm,
+                            filteredGroupedProducts,
+                            'monetary'
+                          )
                           
-                          // recency, frequency, 계산된 monetary 값이 하나라도 있으면 부진 근거 표시
-                          if (isNoSale || recency !== null || frequency !== null || calculatedMonetary !== null) {
+                          // 정규화된 값의 비율대로 rfm_score를 삼등분한 점수 계산 (정수만, 최소 1점)
+                          let recencyScore: number | null = null
+                          let frequencyScore: number | null = null
+                          let monetaryScore: number | null = null
+                          
+                          if (normalizedRecency !== null && normalizedFrequency !== null && normalizedMonetary !== null && rfmScore !== null) {
+                            const sum = normalizedRecency + normalizedFrequency + normalizedMonetary
+                            if (sum > 0) {
+                              recencyScore = Math.max(1, Math.round((normalizedRecency / sum) * rfmScore))
+                              frequencyScore = Math.max(1, Math.round((normalizedFrequency / sum) * rfmScore))
+                              monetaryScore = Math.max(1, Math.round((normalizedMonetary / sum) * rfmScore))
+                            }
+                          }
+                          
+                          // rfm_score가 0이거나 값이 없으면 판매 없음
+                          const isNoSale = rfmScore === 0 || (recency === null && frequency === null && monetary === null)
+                          
+                          // 값이 하나라도 있으면 부진 근거 표시
+                          if (isNoSale || recency !== null || frequency !== null || monetary !== null) {
                             return (
                               <div className="space-y-3">
                                 {isNoSale ? (
@@ -1794,41 +1928,57 @@ export default function RecommendationsPage() {
                                     <div className="p-4 bg-amber-50 rounded-xl">
                                       <div className="space-y-2">
                                         <p className="text-lg text-slate-900 leading-relaxed">
-                                          최근 판매 분석 결과, <span className="font-semibold">{itemName}</span>은 분석 기준일로부터 <span className="font-semibold text-amber-600">{recency !== null ? Math.round(recency) : 'N/A'}</span>일 이내에 판매가 발생했습니다.
-                                        </p>
-                                        <p className="text-lg text-slate-900 leading-relaxed">
-                                          같은 기간 동안 총 <span className="font-semibold text-amber-600">{frequency !== null ? Math.round(frequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-amber-600">{calculatedMonetary !== null ? Math.round(calculatedMonetary).toLocaleString() : 'N/A'}</span>원입니다.
-                                        </p>
-                                        <p className="text-lg text-amber-700 font-semibold mt-2">
-                                          판매 실적이 낮아 발주 제외를 권장드립니다.
+                                          우리 매장에서 종합적인 판매실적이 낮은 제품입니다. 이 상품은 우리 매장에서 <span className="font-semibold text-amber-700">최근성 점수</span> <span className="font-semibold text-amber-600">{recencyScore !== null ? recencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-700">판매 빈도 점수</span> <span className="font-semibold text-amber-600">{frequencyScore !== null ? frequencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-700">수익성 점수</span> <span className="font-semibold text-amber-600">{monetaryScore !== null ? monetaryScore : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 예측한 결과, 판매 실적이 낮아 발주 제외를 권장드립니다.
                                         </p>
                                       </div>
                                     </div>
                                     
                                     {/* R, F, M 지표 카드 */}
-                                    {(recency !== null || frequency !== null || calculatedMonetary !== null) && (
+                                    {(recency !== null || frequency !== null || monetary !== null) ? (
                                       <div className="grid grid-cols-3 gap-2">
-                                        {recency !== null && (
+                                        {recency !== null ? (
                                           <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
                                             <div className="text-[10px] text-slate-500 font-medium mb-1.5">최근 판매 기간</div>
                                             <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(recency)}</div>
                                             <div className="text-[10px] text-slate-500">일 내</div>
                                           </div>
+                                        ) : (
+                                          <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
+                                            <div className="text-[10px] text-slate-500 font-medium mb-1.5">최근 판매 기간</div>
+                                            <div className="text-lg font-bold text-amber-600 mb-1">-</div>
+                                            <div className="text-[10px] text-slate-500">팔린 적 없음</div>
+                                          </div>
                                         )}
-                                        {frequency !== null && (
+                                        {frequency !== null ? (
                                           <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
                                             <div className="text-[10px] text-slate-500 font-medium mb-1.5">판매 횟수</div>
                                             <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(frequency).toLocaleString()}</div>
                                             <div className="text-[10px] text-slate-500">회</div>
                                           </div>
-                                        )}
-                                        {calculatedMonetary !== null && (
+                                        ) : (
                                           <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
-                                            <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 매출액</div>
-                                            <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(calculatedMonetary).toLocaleString()}</div>
-                                            <div className="text-[10px] text-slate-500">원</div>
+                                            <div className="text-[10px] text-slate-500 font-medium mb-1.5">판매 횟수</div>
+                                            <div className="text-lg font-bold text-amber-600 mb-1">-</div>
+                                            <div className="text-[10px] text-slate-500">팔린 적 없음</div>
                                           </div>
                                         )}
+                                        {monetary !== null ? (
+                                          <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
+                                            <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 매출액</div>
+                                            <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(monetary).toLocaleString()}</div>
+                                            <div className="text-[10px] text-slate-500">원</div>
+                                          </div>
+                                        ) : (
+                                          <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
+                                            <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 매출액</div>
+                                            <div className="text-lg font-bold text-amber-600 mb-1">-</div>
+                                            <div className="text-[10px] text-slate-500">팔린 적 없음</div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <div className="bg-white rounded-xl p-4 text-center border border-amber-200">
+                                        <div className="text-base text-amber-700">팔린 적 없음</div>
                                       </div>
                                     )}
                                   </>
@@ -1952,12 +2102,38 @@ export default function RecommendationsPage() {
                           const itemName = selectedProduct.item_nm
                           
                           if (activeTab === 'recommended') {
-                            // 추천 상품: mean_frequency, mean_monetary 사용
+                            // 추천 상품: mean_recency, mean_frequency, mean_monetary 사용
+                            const meanRecency = selectedProduct.mean_recency ?? null
                             const meanFrequency = selectedProduct.mean_frequency ?? null
                             const meanMonetary = selectedProduct.mean_monetary ?? null
                             
-                            // F, M 값이 하나라도 있으면 추천 근거 표시
-                            if (meanFrequency !== null || meanMonetary !== null) {
+                            // 중분류별 정규화 (1~10 범위) - 현재 화면에 표시되는 상품들 기준
+                            const normalizedRecencyRaw = normalizeByMidCategory(
+                              meanRecency,
+                              selectedProduct.item_mddv_nm,
+                              filteredGroupedProducts,
+                              'mean_recency'
+                            )
+                            const normalizedFrequencyRaw = normalizeByMidCategory(
+                              meanFrequency,
+                              selectedProduct.item_mddv_nm,
+                              filteredGroupedProducts,
+                              'mean_frequency'
+                            )
+                            const normalizedMonetaryRaw = normalizeByMidCategory(
+                              meanMonetary,
+                              selectedProduct.item_mddv_nm,
+                              filteredGroupedProducts,
+                              'mean_monetary'
+                            )
+                            
+                            // 최소 4점 보장
+                            const normalizedRecency = normalizedRecencyRaw !== null ? Math.max(4, normalizedRecencyRaw) : null
+                            const normalizedFrequency = normalizedFrequencyRaw !== null ? Math.max(4, normalizedFrequencyRaw) : null
+                            const normalizedMonetary = normalizedMonetaryRaw !== null ? Math.max(4, normalizedMonetaryRaw) : null
+                            
+                            // R, F, M 값이 하나라도 있으면 추천 근거 표시
+                            if (meanRecency !== null || meanFrequency !== null || meanMonetary !== null) {
                               return (
                                 <div className="space-y-4">
                                   {/* 모바일 앱 스타일: 추천 설명 */}
@@ -1965,10 +2141,10 @@ export default function RecommendationsPage() {
                                     <div className="space-y-4">
                                       <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100">
                                         <p className="text-lg text-slate-900 leading-relaxed mb-4">
-                                          <span className="font-semibold">{itemName}</span>은 딥러닝 기반 분석을 통해 판매 추세·판매량·매출액 등 주요 지표를 종합적으로 고려하고, 우리 매장의 판매 흐름과 유사 매장의 실제 판매 성과를 함께 반영하여 추천된 상품입니다.
+                                          <span className="font-semibold">{itemName}</span>는 판매 트렌드, 판매량, 수익성이라는 3가지 핵심 지표를 종합적으로 평가한 딥러닝 분석을 기반으로 추천된 상품으로, 본점의 판매 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
                                         </p>
                                         <p className="text-lg text-slate-900 leading-relaxed">
-                                          해당 상품은 유사매장들에서 평균적으로 약 <span className="font-semibold text-emerald-600">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>회, 누적 매출은 <span className="font-semibold text-emerald-600">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원을 기록했습니다.
+                                          이 상품은 유사 매장에서 평균 <span className="font-semibold text-emerald-700">최근성 점수</span> <span className="font-semibold text-emerald-600">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-emerald-700">판매 빈도 점수</span> <span className="font-semibold text-emerald-600">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-emerald-700">수익성 점수</span> <span className="font-semibold text-emerald-600">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 예측한 결과, 고객의 구매 확률이 높아 주문 추천 상품으로 선정되었습니다.
                                         </p>
                                       </div>
                                       
@@ -1997,10 +2173,10 @@ export default function RecommendationsPage() {
                                     <>
                                       <div className="p-6 bg-emerald-50 rounded-lg border border-emerald-100">
                                         <p className="text-xl text-slate-900 leading-relaxed mb-5">
-                                          <span className="font-semibold text-2xl">{itemName}</span>은 딥러닝 기반 분석을 통해 판매 추세·판매량·매출액 등 주요 지표를 종합적으로 고려하고, 우리 매장의 판매 흐름과 유사 매장의 실제 판매 성과를 함께 반영하여 추천된 상품입니다.
+                                          <span className="font-semibold text-2xl">{itemName}</span>는 판매 트렌드, 판매량, 수익성이라는 3가지 핵심 지표를 종합적으로 평가한 딥러닝 분석을 기반으로 추천된 상품으로, 본점의 판매 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
                                         </p>
                                         <p className="text-xl text-slate-900 leading-relaxed">
-                                          해당 상품은 유사매장들에서 평균적으로 약 <span className="font-semibold text-emerald-600 text-2xl">{meanFrequency !== null ? Math.round(meanFrequency).toLocaleString() : 'N/A'}</span>회, 누적 매출은 <span className="font-semibold text-emerald-600 text-2xl">{meanMonetary !== null ? Math.round(meanMonetary).toLocaleString() : 'N/A'}</span>원을 기록했습니다.
+                                          이 상품은 유사 매장에서 평균 <span className="font-semibold text-emerald-500 text-2xl">최근성 점수</span> <span className="font-semibold text-emerald-600 text-2xl">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-emerald-500 text-2xl">판매 빈도 점수</span> <span className="font-semibold text-emerald-600 text-2xl">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-emerald-500 text-2xl">수익성 점수</span> <span className="font-semibold text-emerald-600 text-2xl">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 예측한 결과, 고객의 구매 확률이 높아 주문 추천 상품으로 선정되었습니다.
                                         </p>
                                       </div>
                                       
@@ -2035,18 +2211,51 @@ export default function RecommendationsPage() {
                               )
                             }
                           } else {
-                            // 부진재고: recency, frequency 사용, monetary는 frequency * sale_price로 계산
+                            // 부진재고: recency, frequency, monetary 사용
                             const recency = selectedProduct.recency ?? null
                             const frequency = selectedProduct.frequency ?? null
-                            const salePrice = selectedProduct.sale_price ?? 0
-                            const calculatedMonetary = frequency !== null ? frequency * salePrice : null
+                            const monetary = selectedProduct.monetary ?? null
                             const rfmScore = selectedProduct.rfm_score ?? null
-                              
-                            // rfm_score가 0이거나 frequency가 0이거나 계산된 monetary가 0이면 판매 없음
-                            const isNoSale = rfmScore === 0 || frequency === 0 || calculatedMonetary === 0
                             
-                            // recency, frequency, 계산된 monetary 값이 하나라도 있으면 부진 근거 표시
-                            if (isNoSale || recency !== null || frequency !== null || calculatedMonetary !== null) {
+                            // 중분류별 정규화 (1~10 범위) - 현재 화면에 표시되는 상품들 기준
+                            const normalizedRecency = normalizeExcludedByMidCategory(
+                              recency,
+                              selectedProduct.item_mddv_nm,
+                              filteredGroupedProducts,
+                              'recency'
+                            )
+                            const normalizedFrequency = normalizeExcludedByMidCategory(
+                              frequency,
+                              selectedProduct.item_mddv_nm,
+                              filteredGroupedProducts,
+                              'frequency'
+                            )
+                            const normalizedMonetary = normalizeExcludedByMidCategory(
+                              monetary,
+                              selectedProduct.item_mddv_nm,
+                              filteredGroupedProducts,
+                              'monetary'
+                            )
+                            
+                            // 정규화된 값의 비율대로 rfm_score를 삼등분한 점수 계산 (정수만, 최소 1점)
+                            let recencyScore: number | null = null
+                            let frequencyScore: number | null = null
+                            let monetaryScore: number | null = null
+                            
+                            if (normalizedRecency !== null && normalizedFrequency !== null && normalizedMonetary !== null && rfmScore !== null) {
+                              const sum = normalizedRecency + normalizedFrequency + normalizedMonetary
+                              if (sum > 0) {
+                                recencyScore = Math.max(1, Math.round((normalizedRecency / sum) * rfmScore))
+                                frequencyScore = Math.max(1, Math.round((normalizedFrequency / sum) * rfmScore))
+                                monetaryScore = Math.max(1, Math.round((normalizedMonetary / sum) * rfmScore))
+                              }
+                            }
+                              
+                            // rfm_score가 0이거나 값이 없으면 판매 없음
+                            const isNoSale = rfmScore === 0 || (recency === null && frequency === null && monetary === null)
+                            
+                            // 값이 하나라도 있으면 부진 근거 표시
+                            if (isNoSale || recency !== null || frequency !== null || monetary !== null) {
                               return (
                                 <div className="space-y-4">
                                   {/* 모바일 앱 스타일: 부진 근거 */}
@@ -2063,46 +2272,62 @@ export default function RecommendationsPage() {
                                           <div className="p-4 bg-amber-50 rounded-xl">
                                             <div className="space-y-2">
                                     <p className="text-lg text-slate-900 leading-relaxed">
-                                                최근 판매 분석 결과, <span className="font-semibold">{itemName}</span>은 분석 기준일로부터 <span className="font-semibold text-amber-600">{recency !== null ? Math.round(recency) : 'N/A'}</span>일 이내에 판매가 발생했습니다.
-                                              </p>
-                                              <p className="text-lg text-slate-900 leading-relaxed">
-                                                같은 기간 동안 총 <span className="font-semibold text-amber-600">{frequency !== null ? Math.round(frequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-amber-600">{calculatedMonetary !== null ? Math.round(calculatedMonetary).toLocaleString() : 'N/A'}</span>원입니다.
-                                              </p>
-                                              <p className="text-lg text-amber-700 font-semibold mt-2">
-                                                판매 실적이 낮아 발주 제외를 권장드립니다.
+                                                우리 매장에서 종합적인 판매실적이 낮은 제품입니다. 이 상품은 우리 매장에서 <span className="font-semibold text-amber-700">최근성 점수</span> <span className="font-semibold text-amber-600">{recencyScore !== null ? recencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-700">판매 빈도 점수</span> <span className="font-semibold text-amber-600">{frequencyScore !== null ? frequencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-700">수익성 점수</span> <span className="font-semibold text-amber-600">{monetaryScore !== null ? monetaryScore : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 예측한 결과, 판매 실적이 낮아 발주 제외를 권장드립니다.
                                     </p>
                                             </div>
                                   </div>
                                   
                                   {/* R, F, M 지표 카드 */}
-                                          {(recency !== null || frequency !== null || calculatedMonetary !== null) && (
+                                          {(recency !== null || frequency !== null || monetary !== null) ? (
                                             <div className="grid grid-cols-3 gap-2">
-                                              {recency !== null && (
+                                              {recency !== null ? (
                                                 <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
                                                   <div className="text-[10px] text-slate-500 font-medium mb-1.5">최근 판매 기간</div>
                                                   <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(recency)}</div>
                                                   <div className="text-[10px] text-slate-500">일 내</div>
                                         </div>
-                                      )}
-                                              {frequency !== null && (
+                                      ) : (
+                                                <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
+                                                  <div className="text-[10px] text-slate-500 font-medium mb-1.5">최근 판매 기간</div>
+                                                  <div className="text-lg font-bold text-amber-600 mb-1">-</div>
+                                                  <div className="text-[10px] text-slate-500">팔린 적 없음</div>
+                                                </div>
+                                              )}
+                                              {frequency !== null ? (
                                                 <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
                                                   <div className="text-[10px] text-slate-500 font-medium mb-1.5">판매 횟수</div>
                                                   <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(frequency).toLocaleString()}</div>
                                                   <div className="text-[10px] text-slate-500">회</div>
                                         </div>
-                                      )}
-                                              {calculatedMonetary !== null && (
+                                      ) : (
+                                                <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
+                                                  <div className="text-[10px] text-slate-500 font-medium mb-1.5">판매 횟수</div>
+                                                  <div className="text-lg font-bold text-amber-600 mb-1">-</div>
+                                                  <div className="text-[10px] text-slate-500">팔린 적 없음</div>
+                                                </div>
+                                              )}
+                                              {monetary !== null ? (
                                                 <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
                                                   <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 매출액</div>
-                                                  <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(calculatedMonetary).toLocaleString()}</div>
+                                                  <div className="text-lg font-bold text-amber-600 mb-1">{Math.round(monetary).toLocaleString()}</div>
                                                   <div className="text-[10px] text-slate-500">원</div>
                                         </div>
+                                      ) : (
+                                                <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
+                                                  <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 매출액</div>
+                                                  <div className="text-lg font-bold text-amber-600 mb-1">-</div>
+                                                  <div className="text-[10px] text-slate-500">팔린 적 없음</div>
+                                                </div>
+                                              )}
+                                    </div>
+                                  ) : (
+                                            <div className="bg-white rounded-xl p-4 text-center border border-amber-200">
+                                              <div className="text-base text-amber-700">팔린 적 없음</div>
+                                            </div>
+                                          )}
+                                        </>
                                       )}
                                     </div>
-                                  )}
-                                        </>
-                                  )}
-                                </div>
                                   ) : (
                                     /* 웹 스타일: 부진 근거 */
                                     <>
@@ -2116,54 +2341,70 @@ export default function RecommendationsPage() {
                                         <>
                                           <div className="p-6 bg-white rounded-lg border border-amber-200">
                                             <p className="text-xl text-slate-900 leading-relaxed mb-3">
-                                              최근 판매 분석 결과, <span className="font-semibold text-2xl">{itemName}</span>은 분석 기준일로부터 <span className="font-semibold text-amber-600 text-2xl">{recency !== null ? Math.round(recency) : 'N/A'}</span>일 이내에 판매가 발생했습니다.
-                                            </p>
-                                            <p className="text-xl text-slate-900 leading-relaxed mb-3">
-                                              같은 기간 동안 총 <span className="font-semibold text-amber-600 text-2xl">{frequency !== null ? Math.round(frequency).toLocaleString() : 'N/A'}</span>번 판매되었고, 매출은 <span className="font-semibold text-amber-600 text-2xl">{calculatedMonetary !== null ? Math.round(calculatedMonetary).toLocaleString() : 'N/A'}</span>원입니다.
-                                            </p>
-                                            <p className="text-xl text-amber-700 font-semibold mt-4">
-                                              판매 실적이 낮아 발주 제외를 권장드립니다.
+                                              우리 매장에서 종합적인 판매실적이 낮은 제품입니다. 이 상품은 우리 매장에서 <span className="font-semibold text-amber-500 text-2xl">최근성 점수</span> <span className="font-semibold text-amber-600 text-2xl">{recencyScore !== null ? recencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-500 text-2xl">판매 빈도 점수</span> <span className="font-semibold text-amber-600 text-2xl">{frequencyScore !== null ? frequencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-500 text-2xl">수익성 점수</span> <span className="font-semibold text-amber-600 text-2xl">{monetaryScore !== null ? monetaryScore : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 예측한 결과, 판매 실적이 낮아 발주 제외를 권장드립니다.
                                             </p>
                                           </div>
                                           
                                           {/* R, F, M 지표 카드 */}
-                                          {(recency !== null || frequency !== null || calculatedMonetary !== null) && (
+                                          {(recency !== null || frequency !== null || monetary !== null) ? (
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                              {recency !== null && (
+                                              {recency !== null ? (
                                                 <div className="bg-white rounded-lg p-5 text-center border border-amber-200 shadow-sm">
                                                   <div className="text-sm text-slate-500 font-medium mb-3">최근 판매 기간</div>
                                                   <div className="text-3xl font-bold text-amber-600 mb-2">{Math.round(recency)}</div>
                                                   <div className="text-sm text-slate-500">일 내 판매 발생</div>
                                                 </div>
+                                              ) : (
+                                                <div className="bg-white rounded-lg p-5 text-center border border-amber-200 shadow-sm">
+                                                  <div className="text-sm text-slate-500 font-medium mb-3">최근 판매 기간</div>
+                                                  <div className="text-3xl font-bold text-amber-600 mb-2">-</div>
+                                                  <div className="text-sm text-slate-500">팔린 적 없음</div>
+                                                </div>
                                               )}
-                                              {frequency !== null && (
+                                              {frequency !== null ? (
                                                 <div className="bg-white rounded-lg p-5 text-center border border-amber-200 shadow-sm">
                                                   <div className="text-sm text-slate-500 font-medium mb-3">한 달 판매 횟수</div>
                                                   <div className="text-3xl font-bold text-amber-600 mb-2">{Math.round(frequency).toLocaleString()}</div>
                                                   <div className="text-sm text-slate-500">회 판매</div>
                                                 </div>
-                                              )}
-                                              {calculatedMonetary !== null && (
+                                              ) : (
                                                 <div className="bg-white rounded-lg p-5 text-center border border-amber-200 shadow-sm">
-                                                  <div className="text-sm text-slate-500 font-medium mb-3">총 매출액</div>
-                                                  <div className="text-3xl font-bold text-amber-600 mb-2">{Math.round(calculatedMonetary).toLocaleString()}원</div>
-                                                  <div className="text-sm text-slate-500">한 달 기준</div>
+                                                  <div className="text-sm text-slate-500 font-medium mb-3">한 달 판매 횟수</div>
+                                                  <div className="text-3xl font-bold text-amber-600 mb-2">-</div>
+                                                  <div className="text-sm text-slate-500">팔린 적 없음</div>
                                                 </div>
                                               )}
+                                              {monetary !== null ? (
+                                                <div className="bg-white rounded-lg p-5 text-center border border-amber-200 shadow-sm">
+                                                  <div className="text-sm text-slate-500 font-medium mb-3">총 매출액</div>
+                                                  <div className="text-3xl font-bold text-amber-600 mb-2">{Math.round(monetary).toLocaleString()}원</div>
+                                                  <div className="text-sm text-slate-500">한 달 기준</div>
+                                                </div>
+                                              ) : (
+                                                <div className="bg-white rounded-lg p-5 text-center border border-amber-200 shadow-sm">
+                                                  <div className="text-sm text-slate-500 font-medium mb-3">총 매출액</div>
+                                                  <div className="text-3xl font-bold text-amber-600 mb-2">-</div>
+                                                  <div className="text-sm text-slate-500">팔린 적 없음</div>
+                                                </div>
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <div className="bg-white rounded-lg p-6 text-center border border-amber-200">
+                                              <div className="text-lg text-amber-700">팔린 적 없음</div>
                                             </div>
                                           )}
                                         </>
                                       )}
                                     </>
                                   )}
-                              </div>
-                            )
+                                </div>
+                              )
                             } else {
-                          return (
+                              return (
                                 <p className="text-slate-500 text-sm">
                                   부진 근거가 없습니다.
                                 </p>
-                          )
+                              )
                             }
                           }
                         })()}
