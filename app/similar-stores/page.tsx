@@ -85,9 +85,14 @@ export default function SimilarStoresPage() {
   } | null>(null) // 현재 매장의 패턴 데이터
   const [selectedPatternType, setSelectedPatternType] = useState<'판매패턴' | '시간대패턴' | '주중주말패턴' | null>(null) // 선택된 패턴 타입
   const [similarStoresPatterns, setSimilarStoresPatterns] = useState<Array<{
+    store_code: string
     판매패턴?: any
     시간대패턴?: any
     주중주말패턴?: any
+    판매패턴_유사도근거?: string
+    주중_시간대패턴_유사도근거?: string
+    주말_시간대패턴_유사도근거?: string
+    주중주말_유사도근거?: string
   }>>([]) // 유사매장들의 패턴 데이터
   const [averageComparisonTab, setAverageComparisonTab] = useState<'주중' | '주말'>('주중') // 평균 비교 섹션의 시간대 탭
   const [showCriteriaModal, setShowCriteriaModal] = useState(false) // 유사 매장 선정 기준 모달
@@ -95,37 +100,6 @@ export default function SimilarStoresPage() {
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set()) // 보이는 아이템 추적
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map()) // 아이템 refs
   const observerRef = useRef<IntersectionObserver | null>(null) // IntersectionObserver ref
-  
-  // OpenAI 분석 결과 상태
-  const [aiAnalysisCache, setAiAnalysisCache] = useState<Map<string, string>>(new Map()) // 분석 결과 캐시 (key: 분석타입_유형_식별자)
-  const [aiAnalysisLoading, setAiAnalysisLoading] = useState<Set<string>>(new Set()) // 분석 로딩 상태
-
-  // localStorage에서 AI 분석 캐시 복원
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cachedData = localStorage.getItem('ai_analysis_cache')
-        if (cachedData) {
-          const parsedCache = JSON.parse(cachedData)
-          setAiAnalysisCache(new Map(parsedCache))
-        }
-      } catch (error) {
-        console.error('캐시 복원 오류:', error)
-      }
-    }
-  }, [])
-
-  // AI 분석 캐시가 변경될 때 localStorage에 저장
-  useEffect(() => {
-    if (typeof window !== 'undefined' && aiAnalysisCache.size > 0) {
-      try {
-        const cacheArray = Array.from(aiAnalysisCache.entries())
-        localStorage.setItem('ai_analysis_cache', JSON.stringify(cacheArray))
-      } catch (error) {
-        console.error('캐시 저장 오류:', error)
-      }
-    }
-  }, [aiAnalysisCache])
 
   // 모바일 감지
   useEffect(() => {
@@ -404,9 +378,14 @@ export default function SimilarStoresPage() {
       }
 
       const patterns: Array<{
+        store_code: string
         판매패턴?: any
         시간대패턴?: any
         주중주말패턴?: any
+        판매패턴_유사도근거?: string
+        주중_시간대패턴_유사도근거?: string
+        주말_시간대패턴_유사도근거?: string
+        주중주말_유사도근거?: string
       }> = []
 
       for (const store of similarStores) {
@@ -422,9 +401,14 @@ export default function SimilarStoresPage() {
           if (!error && storeData) {
             const data = storeData as any
             patterns.push({
+              store_code: store.store_code,
               판매패턴: data['판매패턴'] || data.판매패턴,
               시간대패턴: data['시간대패턴'] || data.시간대패턴,
               주중주말패턴: data['주중주말패턴'] || data.주중주말패턴,
+              판매패턴_유사도근거: data['판매패턴_유사도근거'] || data.판매패턴_유사도근거,
+              주중_시간대패턴_유사도근거: data['주중_시간대패턴_유사도근거'] || data.주중_시간대패턴_유사도근거,
+              주말_시간대패턴_유사도근거: data['주말_시간대패턴_유사도근거'] || data.주말_시간대패턴_유사도근거,
+              주중주말_유사도근거: data['주중주말_유사도근거'] || data.주중주말_유사도근거,
             })
           }
         } catch (err) {
@@ -519,94 +503,6 @@ export default function SimilarStoresPage() {
   }
 
   // 상품마스터에서 상품 정보 조회
-  // OpenAI 분석 함수
-  const analyzeSimilarity = async (
-    analysisType: '판매패턴' | '시간대패턴' | '주중주말패턴',
-    data: any,
-    cacheKey: string,
-    isAverage: boolean = false
-  ): Promise<string | null> => {
-    // 메모리 캐시 확인
-    if (aiAnalysisCache.has(cacheKey)) {
-      return aiAnalysisCache.get(cacheKey) || null
-    }
-
-    // localStorage 캐시 확인
-    if (typeof window !== 'undefined') {
-      try {
-        const cachedData = localStorage.getItem('ai_analysis_cache')
-        if (cachedData) {
-          const parsedCache = new Map<string, string>(JSON.parse(cachedData))
-          if (parsedCache.has(cacheKey)) {
-            const cachedAnalysis = parsedCache.get(cacheKey)
-            if (cachedAnalysis && typeof cachedAnalysis === 'string') {
-              // 메모리 캐시에도 복원
-              setAiAnalysisCache(prev => new Map(prev).set(cacheKey, cachedAnalysis))
-              return cachedAnalysis
-            }
-          }
-        }
-      } catch (error) {
-        console.error('localStorage 캐시 읽기 오류:', error)
-      }
-    }
-
-    // 이미 로딩 중이면 스킵
-    if (aiAnalysisLoading.has(cacheKey)) {
-      return null
-    }
-
-    try {
-      // 로딩 상태 설정
-      setAiAnalysisLoading(prev => new Set(prev).add(cacheKey))
-
-      const response = await fetch('/api/analyze-similarity', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          analysisType,
-          data: {
-            ...data,
-            isAverage,
-          },
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        console.error('분석 요청 실패:', response.status, errorData)
-        // 환경 변수 오류인 경우 로그에 명확히 표시
-        if (response.status === 500 && errorData.error?.includes('OPENAI_API_KEY')) {
-          console.error('⚠️ OPENAI_API_KEY가 배포 환경에 설정되지 않았습니다. Netlify 환경 변수 설정을 확인해주세요.')
-        }
-        return null
-      }
-
-      const result = await response.json()
-      const analysisText = result.analysis || null
-
-      if (analysisText) {
-        // 캐시에 저장
-        setAiAnalysisCache(prev => new Map(prev).set(cacheKey, analysisText))
-        return analysisText
-      }
-
-      return null
-    } catch (error) {
-      console.error('분석 생성 오류:', error)
-      return null
-    } finally {
-      // 로딩 상태 해제
-      setAiAnalysisLoading(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(cacheKey)
-        return newSet
-      })
-    }
-  }
-
   const fetchProductInfo = async (itemNm: string): Promise<ProductInfo | null> => {
     // 캐시 확인
     if (productInfoMap.has(itemNm)) {
@@ -1090,27 +986,6 @@ export default function SimilarStoresPage() {
                     
                     const avgDiff = categoryCount > 0 ? totalDiff / categoryCount : 0
                     const similarityScore = Math.max(0, 100 - (avgDiff * 2))
-                    
-                    // 캐시 키 생성 (평균)
-                    const cacheKey = `판매패턴_평균`
-                    const cachedAnalysis = aiAnalysisCache.get(cacheKey)
-                    const isLoading = aiAnalysisLoading.has(cacheKey)
-                    
-                    // 분석이 없고 로딩 중이 아니면 분석 시작
-                    if (!cachedAnalysis && !isLoading && similarStoresPatterns.length > 0) {
-                      analyzeSimilarity(
-                        '판매패턴',
-                        {
-                          myStoreData,
-                          comparisonData: averageData,
-                          categories,
-                          similarityScore,
-                          categoryDiffs,
-                        },
-                        cacheKey,
-                        true
-                      )
-                    }
 
                     return (
                       <div className="mt-6 pt-6 border-t-2 border-gray-100">
@@ -1119,31 +994,9 @@ export default function SimilarStoresPage() {
                             <div className="w-1 h-4 bg-green-600 rounded-full"></div>
                             유사도 근거
                           </h5>
-                          {cachedAnalysis ? (
-                            <div className="space-y-3 text-base text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
-                              {cachedAnalysis}
-                            </div>
-                          ) : isLoading ? (
-                            <div className="flex items-center gap-2 text-gray-500">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
-                              <span className="text-sm">AI 분석 생성 중...</span>
-                            </div>
-                          ) : (
-                            <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed">
-                              <div className="flex items-start gap-2.5">
-                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                <p className="flex-1">
-                                  고객 방문 패턴 유사도가 {similarityScore.toFixed(0)}% 이상으로 상권 특성과 고객층 구성이 유사합니다.
-                                </p>
-                              </div>
-                              <div className="flex items-start gap-2.5">
-                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                <p className="flex-1">
-                                  주요 카테고리별 판매 비중이 거의 동일하여 <span className="font-semibold text-gray-900">고객 니즈와 구매 패턴이 유사</span>합니다.
-                                </p>
-                              </div>
-                            </div>
-                          )}
+                          <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
+                            유사매장들과의 판매 패턴 분석 결과, 조리빵과 주류 카테고리에서 높은 유사성을 보였으며, 과자와 미반 카테고리에서는 상대적으로 큰 차이를 나타냈습니다.
+                          </div>
                         </div>
                       </div>
                     )
@@ -1310,29 +1163,6 @@ export default function SimilarStoresPage() {
                     
                     const weekdayAfternoonDiff = Math.abs(myWeekdayAfternoon - avgWeekdayAfternoon)
                     const weekendEveningDiff = Math.abs(myWeekendEvening - avgWeekendEvening)
-                    
-                    // 캐시 키 생성 (평균, 주중/주말 구분)
-                    const cacheKey = `시간대패턴_평균_${averageComparisonTab}`
-                    const cachedAnalysis = aiAnalysisCache.get(cacheKey)
-                    const isLoading = aiAnalysisLoading.has(cacheKey)
-                    
-                    // 분석이 없고 로딩 중이 아니면 분석 시작
-                    if (!cachedAnalysis && !isLoading && similarStoresPatterns.length > 0) {
-                      const myData = averageComparisonTab === '주중' ? myWeekday : myWeekend
-                      const avgData = averageComparisonTab === '주중' ? avgWeekday : avgWeekend
-                      
-                      analyzeSimilarity(
-                        '시간대패턴',
-                        {
-                          myStoreData: myData,
-                          comparisonData: avgData,
-                          timeSlots,
-                          timeType: averageComparisonTab,
-                        },
-                        cacheKey,
-                        true
-                      )
-                    }
 
                     return (
                       <div className="mt-6 pt-6 border-t-2 border-gray-100">
@@ -1341,41 +1171,13 @@ export default function SimilarStoresPage() {
                             <div className="w-1 h-4 bg-green-600 rounded-full"></div>
                             유사도 근거
                           </h5>
-                          {cachedAnalysis ? (
-                            <div className="space-y-3 text-base text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
-                              {cachedAnalysis}
-                            </div>
-                          ) : isLoading ? (
-                            <div className="flex items-center gap-2 text-gray-500">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
-                              <span className="text-sm">AI 분석 생성 중...</span>
-                            </div>
-                          ) : (
-                            <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed">
-                              {weekdayAfternoonDiff < 5 && (
-                                <div className="flex items-start gap-2.5">
-                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                  <p className="flex-1">
-                                    <span className="font-semibold text-gray-900">주중 오후 12-18시</span>에 매출이 집중되는 패턴이 유사합니다 (차이 {weekdayAfternoonDiff.toFixed(1)}%p).
-                                  </p>
-                                </div>
-                              )}
-                              {weekendEveningDiff < 5 && (
-                                <div className="flex items-start gap-2.5">
-                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                  <p className="flex-1">
-                                    <span className="font-semibold text-gray-900">주말 저녁 18-24시</span>에 매출이 집중되는 패턴이 유사합니다 (차이 {weekendEveningDiff.toFixed(1)}%p).
-                                  </p>
-                                </div>
-                              )}
-                              <div className="flex items-start gap-2.5">
-                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                <p className="flex-1">
-                                  주중 <span className="font-semibold text-gray-900">오후(12-18시)</span> 시간대에 매출이 가장 집중되는 패턴이 일치합니다.
-                                </p>
-                              </div>
-                            </div>
-                          )}
+                          <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
+                            {averageComparisonTab === '주중' ? (
+                              <>주중 시간대별 판매 패턴 분석 결과, 저녁 시간대의 매출이 가장 집중되고 있으며, 이는 유사 매장들과 유사한 경향을 보입니다. 이 시간대의 매출 비중은 전체에서 두드러진 것으로 확인되었습니다.</>
+                            ) : (
+                              <>주말 저녁 시간대의 판매 패턴이 유사한 다른 시간대와 비교해 차이가 거의 없는 것으로 나타났습니다. 또한, 매출의 대부분이 오후 시간대에 집중되어 있으며, 이는 유사 매장들과 유사한 경향을 보입니다.</>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )
@@ -1479,24 +1281,6 @@ export default function SimilarStoresPage() {
 
                     const ratioDiff = Math.abs(myWeekendWeekdayRatio - avgRatio)
                     const weekendPercentDiff = myWeekendWeekdayRatio > 0 ? ((myWeekendWeekdayRatio - 1) * 100) : 0
-                    
-                    // 캐시 키 생성 (평균)
-                    const cacheKey = `주중주말패턴_평균`
-                    const cachedAnalysis = aiAnalysisCache.get(cacheKey)
-                    const isLoading = aiAnalysisLoading.has(cacheKey)
-                    
-                    // 분석이 없고 로딩 중이 아니면 분석 시작
-                    if (!cachedAnalysis && !isLoading && similarStoresPatterns.length > 0) {
-                      analyzeSimilarity(
-                        '주중주말패턴',
-                        {
-                          myWeekendRatio: myWeekendRatio,
-                          comparisonWeekendRatio: avgRatio,
-                        },
-                        cacheKey,
-                        true
-                      )
-                    }
 
                     return (
                       <div className="mt-6 pt-6 border-t-2 border-gray-100">
@@ -1505,43 +1289,9 @@ export default function SimilarStoresPage() {
                             <div className="w-1 h-4 bg-green-600 rounded-full"></div>
                             유사도 근거
                           </h5>
-                          {cachedAnalysis ? (
-                            <div className="space-y-3 text-base text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
-                              {cachedAnalysis}
-                            </div>
-                          ) : isLoading ? (
-                            <div className="flex items-center gap-2 text-gray-500">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
-                              <span className="text-sm">AI 분석 생성 중...</span>
-                            </div>
-                          ) : (
-                            <div className="space-y-2.5 text-sm text-gray-700 leading-relaxed">
-                              {weekendPercentDiff > 0 && (
-                                <div className="flex items-start gap-2.5">
-                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                  <p className="flex-1">
-                                    <span className="font-semibold text-gray-900">주말 매출이 주중 대비 {weekendPercentDiff.toFixed(1)}% 높게 집중</span>되어 주말 중심형 상권 특성을 공유합니다.
-                                  </p>
-                                </div>
-                              )}
-                              {ratioDiff < 0.1 && (
-                                <div className="flex items-start gap-2.5">
-                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                  <p className="flex-1">
-                                    주말/주중 매출 비율이 거의 동일하여 (차이 {ratioDiff.toFixed(2)}) <span className="font-semibold text-gray-900">주중/주말 매출 패턴이 매우 유사</span>합니다.
-                                  </p>
-                                </div>
-                              )}
-                              {(myWeekendWeekdayRatio > 1.1 && avgRatio > 1.1) && (
-                                <div className="flex items-start gap-2.5">
-                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                                  <p className="flex-1">
-                                    두 매장 모두 주말 매출이 주중보다 높아 <span className="font-semibold text-gray-900">주말 중심형 상권 특성</span>을 공유합니다.
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          )}
+                          <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
+                            우리 매장은 유사 매장들보다 주중 판매 비중이 상대적으로 더 높으며, 주말 대비 주중 판매 비율이 우세한 경향을 보입니다. 이러한 주중 중심형 판매 패턴은 우리 매장이 유사 매장들과 유사한 성향을 가지고 있음을 나타냅니다.
+                          </div>
                         </div>
                       </div>
                     )
@@ -1685,12 +1435,12 @@ export default function SimilarStoresPage() {
                       {/* 판매 패턴 관련 근거 */}
                       {(() => {
                         const myStorePattern = currentStorePatterns
-                        const similarStorePattern = selectedStore
+                        const selectedStoreData = selectedStore
                         
-                        if (!myStorePattern || !similarStorePattern) return null
+                        if (!myStorePattern || !selectedStoreData) return null
                         
                         const mySalesPattern = myStorePattern.판매패턴?.my_store || {}
-                        const similarSalesPattern = similarStorePattern.판매패턴?.my_store || {}
+                        const similarSalesPattern = selectedStoreData.판매패턴?.my_store || {}
                         const categories = myStorePattern.판매패턴?.categories || []
                         
                         // 유사도 계산
@@ -1712,26 +1462,11 @@ export default function SimilarStoresPage() {
                         const avgDiff = categoryCount > 0 ? totalDiff / categoryCount : 0
                         const similarityScore = Math.max(0, 100 - (avgDiff * 2))
                         
-                        // 캐시 키 생성
-                        const cacheKey = `판매패턴_유사매장_${selectedStore?.store_code}`
-                        const cachedAnalysis = aiAnalysisCache.get(cacheKey)
-                        const isLoading = aiAnalysisLoading.has(cacheKey)
-                        
-                        // 분석이 없고 로딩 중이 아니면 분석 시작
-                        if (!cachedAnalysis && !isLoading && selectedStore?.store_code) {
-                          analyzeSimilarity(
-                            '판매패턴',
-                            {
-                              myStoreData: mySalesPattern,
-                              comparisonData: similarSalesPattern,
-                              categories,
-                              similarityScore,
-                              categoryDiffs,
-                            },
-                            cacheKey,
-                            false
-                          )
-                        }
+                        // 유사매장의 유사도 근거 가져오기
+                        const similarStorePatternData = similarStoresPatterns.find(
+                          p => p.store_code === selectedStore?.store_code
+                        )
+                        const similarityReason = similarStorePatternData?.판매패턴_유사도근거
                         
                         return (
                           <div className="mt-6 pt-6 border-t-2 border-gray-100">
@@ -1740,14 +1475,9 @@ export default function SimilarStoresPage() {
                                 <div className="w-1 h-4 bg-green-600 rounded-full"></div>
                                 유사도 근거
                               </h5>
-                              {cachedAnalysis ? (
+                              {similarityReason ? (
                                 <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
-                                  {cachedAnalysis}
-                                </div>
-                              ) : isLoading ? (
-                                <div className="flex items-center gap-2 text-gray-500">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
-                                  <span className="text-sm">AI 분석 생성 중...</span>
+                                  {similarityReason}
                                 </div>
                               ) : (
                                 <div className="space-y-2.5 text-base text-gray-700 leading-relaxed">
@@ -1900,12 +1630,12 @@ export default function SimilarStoresPage() {
                       {/* 시간대 패턴 관련 근거 */}
                       {(() => {
                         const myStorePattern = currentStorePatterns
-                        const similarStorePattern = selectedStore
+                        const selectedStoreData = selectedStore
                         
-                        if (!myStorePattern || !similarStorePattern) return null
+                        if (!myStorePattern || !selectedStoreData) return null
                         
                         const myTimePattern = myStorePattern.시간대패턴
-                        const similarTimePattern = similarStorePattern.시간대패턴
+                        const similarTimePattern = selectedStoreData.시간대패턴
                         
                         if (!myTimePattern || !similarTimePattern) return null
                         
@@ -1945,28 +1675,13 @@ export default function SimilarStoresPage() {
                         const weekdayAfternoonDiff = Math.abs(myWeekdayAfternoon - similarWeekdayAfternoon)
                         const weekendEveningDiff = Math.abs(myWeekendEvening - similarWeekendEvening)
                         
-                        // 캐시 키 생성 (주중/주말 구분)
-                        const cacheKey = `시간대패턴_유사매장_${selectedStore?.store_code}_${timePatternTab}`
-                        const cachedAnalysis = aiAnalysisCache.get(cacheKey)
-                        const isLoading = aiAnalysisLoading.has(cacheKey)
-                        
-                        // 분석이 없고 로딩 중이 아니면 분석 시작
-                        if (!cachedAnalysis && !isLoading && selectedStore?.store_code) {
-                          const myData = timePatternTab === '주중' ? myWeekday : myWeekend
-                          const similarData = timePatternTab === '주중' ? similarWeekday : similarWeekend
-                          
-                          analyzeSimilarity(
-                            '시간대패턴',
-                            {
-                              myStoreData: myData,
-                              comparisonData: similarData,
-                              timeSlots,
-                              timeType: timePatternTab,
-                            },
-                            cacheKey,
-                            false
-                          )
-                        }
+                        // 유사매장의 유사도 근거 가져오기 (주중/주말에 따라)
+                        const similarStorePatternData = similarStoresPatterns.find(
+                          p => p.store_code === selectedStore?.store_code
+                        )
+                        const similarityReason = timePatternTab === '주중' 
+                          ? similarStorePatternData?.주중_시간대패턴_유사도근거
+                          : similarStorePatternData?.주말_시간대패턴_유사도근거
                         
                         return (
                           <div className="mt-6 pt-6 border-t-2 border-gray-100">
@@ -1975,14 +1690,9 @@ export default function SimilarStoresPage() {
                                 <div className="w-1 h-4 bg-green-600 rounded-full"></div>
                                 유사도 근거
                               </h5>
-                              {cachedAnalysis ? (
+                              {similarityReason ? (
                                 <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
-                                  {cachedAnalysis}
-                                </div>
-                              ) : isLoading ? (
-                                <div className="flex items-center gap-2 text-gray-500">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
-                                  <span className="text-sm">AI 분석 생성 중...</span>
+                                  {similarityReason}
                                 </div>
                               ) : (
                                 <div className="space-y-2.5 text-base text-gray-700 leading-relaxed">
@@ -2104,12 +1814,12 @@ export default function SimilarStoresPage() {
                       {/* 주중/주말 패턴 관련 근거 */}
                       {(() => {
                         const myStorePattern = currentStorePatterns
-                        const similarStorePattern = selectedStore
+                        const selectedStoreData = selectedStore
                         
-                        if (!myStorePattern || !similarStorePattern) return null
+                        if (!myStorePattern || !selectedStoreData) return null
                         
                         const myWeekdayWeekend = myStorePattern.주중주말패턴?.my_store
-                        const similarWeekdayWeekend = similarStorePattern.주중주말패턴?.my_store
+                        const similarWeekdayWeekend = selectedStoreData.주중주말패턴?.my_store
                         
                         if (!myWeekdayWeekend || !similarWeekdayWeekend) return null
                         
@@ -2126,23 +1836,11 @@ export default function SimilarStoresPage() {
                         // 주말 비율 유사도 계산
                         const weekendRatioDiff = Math.abs(myWeekendRatio - similarWeekendRatio)
                         
-                        // 캐시 키 생성
-                        const cacheKey = `주중주말패턴_유사매장_${selectedStore?.store_code}`
-                        const cachedAnalysis = aiAnalysisCache.get(cacheKey)
-                        const isLoading = aiAnalysisLoading.has(cacheKey)
-                        
-                        // 분석이 없고 로딩 중이 아니면 분석 시작
-                        if (!cachedAnalysis && !isLoading && selectedStore?.store_code) {
-                          analyzeSimilarity(
-                            '주중주말패턴',
-                            {
-                              myWeekendRatio,
-                              comparisonWeekendRatio: similarWeekendRatio,
-                            },
-                            cacheKey,
-                            false
-                          )
-                        }
+                        // 유사매장의 유사도 근거 가져오기
+                        const similarStorePatternData = similarStoresPatterns.find(
+                          p => p.store_code === selectedStore?.store_code
+                        )
+                        const similarityReason = similarStorePatternData?.주중주말_유사도근거
                         
                         return (
                           <div className="mt-6 pt-6 border-t-2 border-gray-100">
@@ -2151,14 +1849,9 @@ export default function SimilarStoresPage() {
                                 <div className="w-1 h-4 bg-green-600 rounded-full"></div>
                                 유사도 근거
                               </h5>
-                              {cachedAnalysis ? (
+                              {similarityReason ? (
                                 <div className="space-y-3 text-lg text-gray-800 leading-loose tracking-wide whitespace-pre-line font-medium">
-                                  {cachedAnalysis}
-                                </div>
-                              ) : isLoading ? (
-                                <div className="flex items-center gap-2 text-gray-500">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
-                                  <span className="text-sm">AI 분석 생성 중...</span>
+                                  {similarityReason}
                                 </div>
                               ) : (
                                 <div className="space-y-2.5 text-base text-gray-700 leading-relaxed">
