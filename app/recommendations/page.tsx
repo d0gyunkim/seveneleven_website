@@ -1843,7 +1843,7 @@ export default function RecommendationsPage() {
                                     <span className="font-semibold">{itemName}</span>은 최근 판매, 판매량, 매출액을 종합적으로 평가하여 추천된 상품으로, 본점의 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
                                   </p>
                                   <p className="text-base text-slate-900 leading-relaxed">
-                                    유사 매장 평균 <span className="font-semibold text-emerald-700">최근성</span> <span className="font-semibold text-emerald-600">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>, <span className="font-semibold text-emerald-700">판매횟수</span> <span className="font-semibold text-emerald-600">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>, <span className="font-semibold text-emerald-700">수익성</span> <span className="font-semibold text-emerald-600">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점을 기록했으면, 세 지표의 점수를 종합 예측했을 때 고객의 구매 가능성이 높아 발주 추천 상품으로 선정되었습니다.
+                                    유사 매장 평균 (각 10점 만점 기준) <span className="font-semibold text-emerald-600">최근성</span> <span className="font-semibold text-emerald-600">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>점, <span className="font-semibold text-emerald-600">판매횟수</span> <span className="font-semibold text-emerald-600">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>점, <span className="font-semibold text-emerald-600">수익성</span> <span className="font-semibold text-emerald-600">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점으로, 세 지표를 종합적으로 예측했을 때 고객의 구매 가능성이 높아 발주 추천 상품으로 선정되었습니다.
                                   </p>
                                 </div>
                                 
@@ -1937,7 +1937,7 @@ export default function RecommendationsPage() {
                                     <div className="p-4 bg-amber-50 rounded-xl">
                                       <div className="space-y-2">
                                         <p className="text-base text-slate-900 leading-relaxed">
-                                          우리 매장에서 종합적인 판매실적이 낮은 제품입니다. 이 상품은 우리 매장에서 <span className="font-semibold text-amber-700">최근성 점수</span> <span className="font-semibold text-amber-600">{recencyScore !== null ? recencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-700">판매 빈도 점수</span> <span className="font-semibold text-amber-600">{frequencyScore !== null ? frequencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-700">수익성 점수</span> <span className="font-semibold text-amber-600">{monetaryScore !== null ? monetaryScore : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 분석한 결과, 판매 실적이 낮아 발주 제외를 권장드립니다.
+                                          <span className="font-semibold">{selectedProduct.item_nm}</span>은 우리 매장(10점 만점 기준)에서 <span className="font-semibold text-amber-600">최근성 점수</span> <span className="font-semibold text-amber-600">{recencyScore !== null ? recencyScore : 'N/A'}</span>점, <span className="font-semibold text-amber-600">판매 빈도 점수</span> <span className="font-semibold text-amber-600">{frequencyScore !== null ? frequencyScore : 'N/A'}</span>점, <span className="font-semibold text-amber-600">수익성 점수</span> <span className="font-semibold text-amber-600">{monetaryScore !== null ? monetaryScore : 'N/A'}</span>점을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 분석한 결과, 우리 매장에서의 판매 실적이 낮아 발주 제외를 권장드립니다.
                                         </p>
                                       </div>
                                     </div>
@@ -2161,7 +2161,7 @@ export default function RecommendationsPage() {
                                           <span className="font-semibold">{itemName}</span>은 최근 판매, 판매량, 매출액을 종합적으로 평가하여 추천된 상품으로, 본점의 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
                                         </p>
                                         <p className="text-base text-slate-900 leading-relaxed">
-                                          유사 매장 평균 <span className="font-semibold text-emerald-700">최근성</span> <span className="font-semibold text-emerald-600">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>, <span className="font-semibold text-emerald-700">판매횟수</span> <span className="font-semibold text-emerald-600">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>, <span className="font-semibold text-emerald-700">수익성</span> <span className="font-semibold text-emerald-600">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점을 기록했으면, 세 지표의 점수를 종합 예측했을 때 고객의 구매 가능성이 높아 발주 추천 상품으로 선정되었습니다.
+                                          유사 매장 평균 (각 10점 만점 기준) <span className="font-semibold text-emerald-600">최근성</span> <span className="font-semibold text-emerald-600">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>점, <span className="font-semibold text-emerald-600">판매횟수</span> <span className="font-semibold text-emerald-600">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>점, <span className="font-semibold text-emerald-600">수익성</span> <span className="font-semibold text-emerald-600">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점으로, 세 지표를 종합적으로 예측했을 때 고객의 구매 가능성이 높아 발주 추천 상품으로 선정되었습니다.
                                         </p>
                                       </div>
                                       
@@ -2196,7 +2196,7 @@ export default function RecommendationsPage() {
                                           <span className="font-semibold text-xl">{itemName}</span>은 최근 판매, 판매량, 매출액을 종합적으로 평가하여 추천된 상품으로, 본점의 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
                                         </p>
                                         <p className="text-lg text-slate-900 leading-relaxed">
-                                          유사 매장 평균 <span className="font-semibold text-emerald-500 text-xl">최근성</span> <span className="font-semibold text-emerald-600 text-xl">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>, <span className="font-semibold text-emerald-500 text-xl">판매횟수</span> <span className="font-semibold text-emerald-600 text-xl">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>, <span className="font-semibold text-emerald-500 text-xl">수익성</span> <span className="font-semibold text-emerald-600 text-xl">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점을 기록했으면, 세 지표의 점수를 종합 예측했을 때 고객의 구매 가능성이 높아 발주 추천 상품으로 선정되었습니다.
+                                          유사 매장 평균 (각 10점 만점 기준) <span className="font-semibold text-emerald-600 text-xl">최근성</span> <span className="font-semibold text-emerald-600 text-xl">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>점, <span className="font-semibold text-emerald-600 text-xl">판매횟수</span> <span className="font-semibold text-emerald-600 text-xl">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>점, <span className="font-semibold text-emerald-600 text-xl">수익성</span> <span className="font-semibold text-emerald-600 text-xl">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점으로, 세 지표를 종합적으로 예측했을 때 고객의 구매 가능성이 높아 발주 추천 상품으로 선정되었습니다.
                                         </p>
                                   </div>
                                       
@@ -2295,7 +2295,7 @@ export default function RecommendationsPage() {
                                           <div className="p-4 bg-amber-50 rounded-xl">
                                             <div className="space-y-2">
                                     <p className="text-base text-slate-900 leading-relaxed">
-                                                우리 매장에서 종합적인 판매실적이 낮은 제품입니다. 이 상품은 우리 매장에서 <span className="font-semibold text-amber-700">최근성 점수</span> <span className="font-semibold text-amber-600">{recencyScore !== null ? recencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-700">판매 빈도 점수</span> <span className="font-semibold text-amber-600">{frequencyScore !== null ? frequencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-700">수익성 점수</span> <span className="font-semibold text-amber-600">{monetaryScore !== null ? monetaryScore : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 분석한 결과, 판매 실적이 낮아 발주 제외를 권장드립니다.
+                                                <span className="font-semibold">{selectedProduct.item_nm}</span>은 우리 매장(10점 만점 기준)에서 <span className="font-semibold text-amber-600">최근성 점수</span> <span className="font-semibold text-amber-600">{recencyScore !== null ? recencyScore : 'N/A'}</span>점, <span className="font-semibold text-amber-600">판매 빈도 점수</span> <span className="font-semibold text-amber-600">{frequencyScore !== null ? frequencyScore : 'N/A'}</span>점, <span className="font-semibold text-amber-600">수익성 점수</span> <span className="font-semibold text-amber-600">{monetaryScore !== null ? monetaryScore : 'N/A'}</span>점을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 분석한 결과, 우리 매장에서의 판매 실적이 낮아 발주 제외를 권장드립니다.
                                     </p>
                                             </div>
                                   </div>
@@ -2316,8 +2316,8 @@ export default function RecommendationsPage() {
                                                     <div className="text-[10px] text-slate-500 font-medium mb-1.5">최근 판매 기간</div>
                                                     <div className="text-lg font-bold text-amber-600 mb-1">-</div>
                                                     <div className="text-[10px] text-slate-500">팔린 적 없음</div>
-                                                  </div>
-                                                )}
+                                        </div>
+                                      )}
                                                 {frequency !== null ? (
                                                 <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
                                                   <div className="text-[10px] text-slate-500 font-medium mb-1.5">판매 횟수</div>
@@ -2329,8 +2329,8 @@ export default function RecommendationsPage() {
                                                     <div className="text-[10px] text-slate-500 font-medium mb-1.5">판매 횟수</div>
                                                     <div className="text-lg font-bold text-amber-600 mb-1">-</div>
                                                     <div className="text-[10px] text-slate-500">팔린 적 없음</div>
-                                                  </div>
-                                                )}
+                                        </div>
+                                      )}
                                                 {monetary !== null ? (
                                                 <div className="bg-white rounded-xl p-3 text-center border border-amber-200">
                                                   <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 매출액</div>
@@ -2342,8 +2342,8 @@ export default function RecommendationsPage() {
                                                     <div className="text-[10px] text-slate-500 font-medium mb-1.5">총 매출액</div>
                                                     <div className="text-lg font-bold text-amber-600 mb-1">-</div>
                                                     <div className="text-[10px] text-slate-500">팔린 적 없음</div>
-                                                  </div>
-                                                )}
+                                        </div>
+                                      )}
                                               </div>
                                             </div>
                                           ) : (
@@ -2367,7 +2367,7 @@ export default function RecommendationsPage() {
                                         <>
                                           <div className="p-6 bg-white rounded-lg border border-amber-200">
                                             <p className="text-lg text-slate-900 leading-relaxed mb-3">
-                                              우리 매장에서 종합적인 판매실적이 낮은 제품입니다. 이 상품은 우리 매장에서 <span className="font-semibold text-amber-500 text-xl">최근성 점수</span> <span className="font-semibold text-amber-600 text-xl">{recencyScore !== null ? recencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-500 text-xl">판매 빈도 점수</span> <span className="font-semibold text-amber-600 text-xl">{frequencyScore !== null ? frequencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-500 text-xl">수익성 점수</span> <span className="font-semibold text-amber-600 text-xl">{monetaryScore !== null ? monetaryScore : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 분석한 결과, 판매 실적이 낮아 발주 제외를 권장드립니다.
+                                              <span className="font-semibold text-xl">{selectedProduct.item_nm}</span>은 우리 매장(10점 만점 기준)에서 <span className="font-semibold text-amber-600 text-xl">최근성 점수</span> <span className="font-semibold text-amber-600 text-xl">{recencyScore !== null ? recencyScore : 'N/A'}</span>점, <span className="font-semibold text-amber-600 text-xl">판매 빈도 점수</span> <span className="font-semibold text-amber-600 text-xl">{frequencyScore !== null ? frequencyScore : 'N/A'}</span>점, <span className="font-semibold text-amber-600 text-xl">수익성 점수</span> <span className="font-semibold text-amber-600 text-xl">{monetaryScore !== null ? monetaryScore : 'N/A'}</span>점을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 분석한 결과, 우리 매장에서의 판매 실적이 낮아 발주 제외를 권장드립니다.
                                             </p>
                                           </div>
                                           
@@ -2387,8 +2387,8 @@ export default function RecommendationsPage() {
                                                     <div className="text-sm text-slate-500 font-medium mb-3">최근 판매 기간</div>
                                                     <div className="text-3xl font-bold text-amber-600 mb-2">-</div>
                                                     <div className="text-sm text-slate-500">팔린 적 없음</div>
-                                                  </div>
-                                                )}
+                                                </div>
+                                              )}
                                                 {frequency !== null ? (
                                                 <div className="bg-white rounded-lg p-5 text-center border border-amber-200 shadow-sm">
                                                   <div className="text-sm text-slate-500 font-medium mb-3">한 달 판매 횟수</div>
@@ -2400,8 +2400,8 @@ export default function RecommendationsPage() {
                                                     <div className="text-sm text-slate-500 font-medium mb-3">한 달 판매 횟수</div>
                                                     <div className="text-3xl font-bold text-amber-600 mb-2">-</div>
                                                     <div className="text-sm text-slate-500">팔린 적 없음</div>
-                                                  </div>
-                                                )}
+                                                </div>
+                                              )}
                                                 {monetary !== null ? (
                                                 <div className="bg-white rounded-lg p-5 text-center border border-amber-200 shadow-sm">
                                                   <div className="text-sm text-slate-500 font-medium mb-3">총 매출액</div>
@@ -2413,8 +2413,8 @@ export default function RecommendationsPage() {
                                                     <div className="text-sm text-slate-500 font-medium mb-3">총 매출액</div>
                                                     <div className="text-3xl font-bold text-amber-600 mb-2">-</div>
                                                     <div className="text-sm text-slate-500">팔린 적 없음</div>
-                                                  </div>
-                                                )}
+                                                </div>
+                                              )}
                                               </div>
                                             </div>
                                           ) : (
