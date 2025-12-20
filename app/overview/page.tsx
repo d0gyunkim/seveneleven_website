@@ -459,7 +459,8 @@ export default function OverviewPage() {
                   {/* STEP 0 헤더 */}
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-0.5 h-6 bg-green-200"></div>
-                    <span className="text-green-600 font-semibold text-sm">STEP 0 서비스 핵심 요약</span>
+                    <span className="text-green-600 font-semibold text-sm">STEP 0 </span>
+                    <span className="text-gray-900 font-semibold text-sm">서비스 핵심 요약</span>
                   </div>
 
                   {/* 메인 제목 */}
@@ -467,7 +468,7 @@ export default function OverviewPage() {
                     SEVEN PICK <span className="text-green-600">서비스 핵심</span>
                   </h2>
                   <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                    발주에 대한 고민을 해결하기 위해 SEVEN PICK 이 나섭니다.
+                    발주에 대한 고민을 해결하기 위해 SEVEN PICK이 나섭니다.
                   </p>
 
                   {/* 메인 콘텐츠 영역 - 앱 UI */}
@@ -1045,7 +1046,8 @@ export default function OverviewPage() {
               {/* STEP 0 헤더 */}
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-1 h-10 bg-green-200"></div>
-                <span className="text-green-600 font-semibold text-base">STEP 0 서비스 핵심 요약</span>
+                <span className="text-green-600 font-semibold text-base">STEP 0 </span>
+                <span className="text-gray-900 font-semibold text-base">서비스 핵심 요약</span>
               </div>
 
               {/* 메인 제목 */}
@@ -1053,7 +1055,7 @@ export default function OverviewPage() {
                 SEVEN PICK <span className="text-green-600">서비스 핵심</span>
               </h2>
               <p className="text-lg md:text-xl text-gray-600 mb-12 leading-relaxed">
-                발주에 대한 고민을 해결하기 위해 SEVEN PICK 이 나섭니다.
+                발주에 대한 고민을 해결하기 위해 SEVEN PICK이 나섭니다.
               </p>
 
               {/* 메인 콘텐츠 영역 */}
