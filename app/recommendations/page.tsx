@@ -1839,10 +1839,10 @@ export default function RecommendationsPage() {
                             return (
                               <div className="space-y-4">
                                 <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100">
-                                  <p className="text-lg text-slate-900 leading-relaxed mb-4">
+                                  <p className="text-base text-slate-900 leading-relaxed mb-4">
                                     <span className="font-semibold">{itemName}</span>는 판매 트렌드, 판매량, 수익성이라는 3가지 핵심 지표를 종합적으로 평가한 딥러닝 분석을 기반으로 추천된 상품으로, 본점의 판매 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
                                   </p>
-                                  <p className="text-lg text-slate-900 leading-relaxed">
+                                  <p className="text-base text-slate-900 leading-relaxed">
                                     이 상품은 유사 매장에서 평균 <span className="font-semibold text-emerald-700">최근성 점수</span> <span className="font-semibold text-emerald-600">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-emerald-700">판매 빈도 점수</span> <span className="font-semibold text-emerald-600">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-emerald-700">수익성 점수</span> <span className="font-semibold text-emerald-600">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 분석한 결과, 고객의 구매 확률이 높아 주문 추천 상품으로 선정되었습니다.
                                   </p>
                                 </div>
@@ -1936,7 +1936,7 @@ export default function RecommendationsPage() {
                                   <>
                                     <div className="p-4 bg-amber-50 rounded-xl">
                                       <div className="space-y-2">
-                                        <p className="text-lg text-slate-900 leading-relaxed">
+                                        <p className="text-base text-slate-900 leading-relaxed">
                                           우리 매장에서 종합적인 판매실적이 낮은 제품입니다. 이 상품은 우리 매장에서 <span className="font-semibold text-amber-700">최근성 점수</span> <span className="font-semibold text-amber-600">{recencyScore !== null ? recencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-700">판매 빈도 점수</span> <span className="font-semibold text-amber-600">{frequencyScore !== null ? frequencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-700">수익성 점수</span> <span className="font-semibold text-amber-600">{monetaryScore !== null ? monetaryScore : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 분석한 결과, 판매 실적이 낮아 발주 제외를 권장드립니다.
                                         </p>
                                       </div>
@@ -2157,10 +2157,10 @@ export default function RecommendationsPage() {
                                   {isMobile ? (
                                     <div className="space-y-4">
                                       <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100">
-                                        <p className="text-lg text-slate-900 leading-relaxed mb-4">
+                                        <p className="text-base text-slate-900 leading-relaxed mb-4">
                                           <span className="font-semibold">{itemName}</span>는 판매 트렌드, 판매량, 수익성이라는 3가지 핵심 지표를 종합적으로 평가한 딥러닝 분석을 기반으로 추천된 상품으로, 본점의 판매 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
                                         </p>
-                                        <p className="text-lg text-slate-900 leading-relaxed">
+                                        <p className="text-base text-slate-900 leading-relaxed">
                                           이 상품은 유사 매장에서 평균 <span className="font-semibold text-emerald-700">최근성 점수</span> <span className="font-semibold text-emerald-600">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-emerald-700">판매 빈도 점수</span> <span className="font-semibold text-emerald-600">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-emerald-700">수익성 점수</span> <span className="font-semibold text-emerald-600">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 분석한 결과, 고객의 구매 확률이 높아 주문 추천 상품으로 선정되었습니다.
                                         </p>
                                       </div>
@@ -2192,11 +2192,11 @@ export default function RecommendationsPage() {
                                     /* 웹 스타일: 추천 설명 */
                                     <>
                                       <div className="p-6 bg-emerald-50 rounded-lg border border-emerald-100">
-                                        <p className="text-xl text-slate-900 leading-relaxed mb-5">
-                                          <span className="font-semibold text-2xl">{itemName}</span>는 판매 트렌드, 판매량, 수익성이라는 3가지 핵심 지표를 종합적으로 평가한 딥러닝 분석을 기반으로 추천된 상품으로, 본점의 판매 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
+                                        <p className="text-lg text-slate-900 leading-relaxed mb-5">
+                                          <span className="font-semibold text-xl">{itemName}</span>는 판매 트렌드, 판매량, 수익성이라는 3가지 핵심 지표를 종합적으로 평가한 딥러닝 분석을 기반으로 추천된 상품으로, 본점의 판매 흐름과 유사 매장의 실제 판매 실적을 반영한 결과입니다.
                                         </p>
-                                        <p className="text-xl text-slate-900 leading-relaxed">
-                                          이 상품은 유사 매장에서 평균 <span className="font-semibold text-emerald-500 text-2xl">최근성 점수</span> <span className="font-semibold text-emerald-600 text-2xl">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-emerald-500 text-2xl">판매 빈도 점수</span> <span className="font-semibold text-emerald-600 text-2xl">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-emerald-500 text-2xl">수익성 점수</span> <span className="font-semibold text-emerald-600 text-2xl">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 분석한 결과, 고객의 구매 확률이 높아 주문 추천 상품으로 선정되었습니다.
+                                        <p className="text-lg text-slate-900 leading-relaxed">
+                                          이 상품은 유사 매장에서 평균 <span className="font-semibold text-emerald-500 text-xl">최근성 점수</span> <span className="font-semibold text-emerald-600 text-xl">{normalizedRecency !== null ? normalizedRecency.toFixed(1) : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-emerald-500 text-xl">판매 빈도 점수</span> <span className="font-semibold text-emerald-600 text-xl">{normalizedFrequency !== null ? normalizedFrequency.toFixed(1) : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-emerald-500 text-xl">수익성 점수</span> <span className="font-semibold text-emerald-600 text-xl">{normalizedMonetary !== null ? normalizedMonetary.toFixed(1) : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 분석한 결과, 고객의 구매 확률이 높아 주문 추천 상품으로 선정되었습니다.
                                         </p>
                                       </div>
                                       
@@ -2294,7 +2294,7 @@ export default function RecommendationsPage() {
                                         <>
                                           <div className="p-4 bg-amber-50 rounded-xl">
                                             <div className="space-y-2">
-                                    <p className="text-lg text-slate-900 leading-relaxed">
+                                    <p className="text-base text-slate-900 leading-relaxed">
                                                 우리 매장에서 종합적인 판매실적이 낮은 제품입니다. 이 상품은 우리 매장에서 <span className="font-semibold text-amber-700">최근성 점수</span> <span className="font-semibold text-amber-600">{recencyScore !== null ? recencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-700">판매 빈도 점수</span> <span className="font-semibold text-amber-600">{frequencyScore !== null ? frequencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-700">수익성 점수</span> <span className="font-semibold text-amber-600">{monetaryScore !== null ? monetaryScore : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 분석한 결과, 판매 실적이 낮아 발주 제외를 권장드립니다.
                                     </p>
                                             </div>
@@ -2366,8 +2366,8 @@ export default function RecommendationsPage() {
                                       ) : (
                                         <>
                                           <div className="p-6 bg-white rounded-lg border border-amber-200">
-                                            <p className="text-xl text-slate-900 leading-relaxed mb-3">
-                                              우리 매장에서 종합적인 판매실적이 낮은 제품입니다. 이 상품은 우리 매장에서 <span className="font-semibold text-amber-500 text-2xl">최근성 점수</span> <span className="font-semibold text-amber-600 text-2xl">{recencyScore !== null ? recencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-500 text-2xl">판매 빈도 점수</span> <span className="font-semibold text-amber-600 text-2xl">{frequencyScore !== null ? frequencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-500 text-2xl">수익성 점수</span> <span className="font-semibold text-amber-600 text-2xl">{monetaryScore !== null ? monetaryScore : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 분석한 결과, 판매 실적이 낮아 발주 제외를 권장드립니다.
+                                            <p className="text-lg text-slate-900 leading-relaxed mb-3">
+                                              우리 매장에서 종합적인 판매실적이 낮은 제품입니다. 이 상품은 우리 매장에서 <span className="font-semibold text-amber-500 text-xl">최근성 점수</span> <span className="font-semibold text-amber-600 text-xl">{recencyScore !== null ? recencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-500 text-xl">판매 빈도 점수</span> <span className="font-semibold text-amber-600 text-xl">{frequencyScore !== null ? frequencyScore : 'N/A'}</span>점(10점 만점), <span className="font-semibold text-amber-500 text-xl">수익성 점수</span> <span className="font-semibold text-amber-600 text-xl">{monetaryScore !== null ? monetaryScore : 'N/A'}</span>점(10점 만점)을 기록했습니다. 이러한 3가지 지표의 점수를 종합적으로 분석한 결과, 판매 실적이 낮아 발주 제외를 권장드립니다.
                                             </p>
                                           </div>
                                           
