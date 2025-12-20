@@ -438,7 +438,7 @@ export default function OverviewPage() {
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-0.5 h-8 bg-green-200"></div>
                   <h1 className="text-2xl font-extrabold text-green-600">
-                    SEVEN PICK:
+                    SEVEN PICK
                   </h1>
                 </div>
                 <h2 className="text-2xl font-extrabold text-gray-900 mb-4 leading-tight">
@@ -464,10 +464,10 @@ export default function OverviewPage() {
 
                   {/* 메인 제목 */}
                   <h2 className="text-2xl font-extrabold text-gray-900 leading-tight mb-3">
-                    SEVEN PICK: <span className="text-green-600">서비스 핵심</span>
+                    SEVEN PICK <span className="text-green-600">서비스 핵심</span>
                   </h2>
                   <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                    발주에 대한 고민을 해결하기 위해 SEVEN PICK: 이 나섭니다.
+                    발주에 대한 고민을 해결하기 위해 SEVEN PICK 이 나섭니다.
                   </p>
 
                   {/* 메인 콘텐츠 영역 - 앱 UI */}
@@ -593,7 +593,7 @@ export default function OverviewPage() {
                           유사 매장 리포팅
                         </h3>
                         <p className="text-sm">
-                          내 매장과 가장 비슷한 월별 Top5 유사 매장과 유사 매장 평균 데이터를 기반으로 판매 및 운영의 종합적 분석을 제공합니다.
+                          내 매장과 가장 비슷한 월별 상위 5개 유사 매장과 유사 매장 평균 데이터를 기반으로 판매 및 운영의 종합적 분석을 제공합니다.
                         </p>
                         <p className="text-sm">
                           유사 매장의 인기 상품 순위를 확인할 수 있으며, 유사매장 판단 근거에 대한 정보를 제공해드립니다.
@@ -1019,7 +1019,7 @@ export default function OverviewPage() {
                     <h1 className={`text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-green-600 mb-2 leading-tight transition-all duration-1000 delay-300 ${
                       heroVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
                     }`}>
-                      SEVEN PICK:
+                      SEVEN PICK
                     </h1>
                     <h2 className={`text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-black leading-tight transition-all duration-1000 delay-500 ${
                       heroVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
@@ -1050,10 +1050,10 @@ export default function OverviewPage() {
 
               {/* 메인 제목 */}
               <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-4 tracking-tight">
-                SEVEN PICK: <span className="text-green-600">서비스 핵심</span>
+                SEVEN PICK <span className="text-green-600">서비스 핵심</span>
               </h2>
               <p className="text-lg md:text-xl text-gray-600 mb-12 leading-relaxed">
-                발주에 대한 고민을 해결하기 위해 SEVEN PICK: 이 나섭니다.
+                발주에 대한 고민을 해결하기 위해 SEVEN PICK 이 나섭니다.
               </p>
 
               {/* 메인 콘텐츠 영역 */}
@@ -1321,7 +1321,7 @@ export default function OverviewPage() {
                         </h3>
                         <div className="space-y-4 text-gray-700 leading-relaxed">
                           <p className="text-lg">
-                            내 매장과 가장 비슷한 월별 Top5 유사 매장과 유사 매장 평균 데이터를 기반으로 판매 및 운영의 종합적 분석을 제공합니다.
+                            내 매장과 가장 비슷한 월별 상위 5개 유사 매장과 유사 매장 평균 데이터를 기반으로 판매 및 운영의 종합적 분석을 제공합니다.
                           </p>
                           <p className="text-lg">
                             유사 매장의 인기 상품 순위를 확인할 수 있으며, 유사매장 판단 근거에 대한 정보를 제공해드립니다.
