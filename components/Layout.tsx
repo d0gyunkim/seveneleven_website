@@ -12,6 +12,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [storeCode, setStoreCode] = useState<string | null>(null)
   const [storeName, setStoreName] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [isStandalone, setIsStandalone] = useState(true)
+  const [showPwaBanner, setShowPwaBanner] = useState(false)
+
+  useEffect(() => {
+    // PWA(홈화면 추가) 여부: 브라우저 주소창이 있으면 배너 표시
+    const standalone = (window as any).matchMedia?.('(display-mode: standalone)').matches ||
+      (navigator as any).standalone === true ||
+      /standalone/i.test(navigator.userAgent)
+    setIsStandalone(!!standalone)
+    const dismissed = typeof localStorage !== 'undefined' && localStorage.getItem('pwa-banner-dismissed') === '1'
+    setShowPwaBanner(!standalone && !dismissed)
+  }, [])
 
   useEffect(() => {
     // 모바일 감지
@@ -310,6 +322,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className={`flex-1 overflow-auto bg-white w-full ${isMobile ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : ''}`}>
         {children}
       </main>
+
+      {/* 모바일 + 브라우저에서 열었을 때: 홈 화면 추가 안내 (한 번만, 닫기 가능) */}
+      {isMobile && showPwaBanner && (
+        <div className="fixed left-0 right-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 px-3 py-2 mx-3 rounded-xl bg-slate-800/95 text-white text-center shadow-lg border border-slate-600">
+          <p className="text-xs font-medium">앱처럼 사용하려면 <strong>홈 화면에 추가</strong>해 보세요</p>
+          <button
+            type="button"
+            onClick={() => {
+              setShowPwaBanner(false)
+              try { localStorage.setItem('pwa-banner-dismissed', '1') } catch (_) {}
+            }}
+            className="mt-1.5 text-[10px] text-slate-300 underline"
+          >
+            오늘 하루 안 보기
+          </button>
+        </div>
+      )}
 
       {/* 모바일 앱 스타일: 하단 네비게이션 바 (safe-area 대응) */}
       {isMobile && (
