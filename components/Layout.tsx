@@ -108,17 +108,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* 모바일 앱 스타일: 최상단 유틸리티 바 - 간단하게 */}
+    <div className="min-h-screen bg-white flex flex-col app-shell">
+      {/* 모바일 앱 스타일: 최상단 유틸리티 바 - safe-area 대응 */}
       {isMobile && storeCode && (
-        <div className="bg-white px-4 py-2 border-b border-gray-100">
+        <div className="bg-white px-4 py-2 border-b border-gray-100" style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}>
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 truncate flex-1 mr-2">
               {storeName || '매장 정보'}
             </div>
             <Link
               href="/"
-              className="text-sm text-gray-600"
+              className="text-sm text-gray-600 flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center -my-1 -mr-1"
+              aria-label="로그아웃"
             >
               로그아웃
             </Link>
@@ -171,7 +172,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* 모바일 앱 스타일: 간단한 헤더 */}
       {isMobile && (
         <header className="bg-white border-b border-gray-200 px-4 py-3">
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center min-h-[44px]">
             <img 
               src="/KakaoTalk_Photo_2025-12-18-15-20-51.png"
               alt="7-ELEVEN"
@@ -305,62 +306,69 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </aside>
       )}
 
-      {/* 메인 컨텐츠 */}
-      <main className={`flex-1 overflow-auto bg-white w-full ${isMobile ? 'pb-20' : ''}`}>
+      {/* 메인 컨텐츠 - 모바일 시 하단 네비 높이 + safe-area 확보 */}
+      <main className={`flex-1 overflow-auto bg-white w-full ${isMobile ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : ''}`}>
         {children}
       </main>
 
-      {/* 모바일 앱 스타일: 하단 네비게이션 바 */}
+      {/* 모바일 앱 스타일: 하단 네비게이션 바 (safe-area 대응) */}
       {isMobile && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-black text-white z-50 md:hidden">
+        <nav
+          className="fixed bottom-0 left-0 right-0 bg-black text-white z-50 md:hidden safe-area-bottom"
+          style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+        >
           <div className="flex items-center justify-around py-2">
             <Link
               href={getNavHref('/overview')}
-              className={`flex flex-col items-center justify-center px-4 py-2 ${pathname === '/overview' ? 'text-green-400' : 'text-white'}`}
+              className={`flex flex-col items-center justify-center min-h-[44px] min-w-[48px] px-2 py-2 ${pathname === '/overview' ? 'text-green-400' : 'text-white'}`}
+              aria-label="홈"
             >
-              <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 mb-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               <span className="text-xs">홈</span>
             </Link>
-            
             <Link
               href={getTabHref('recommended')}
-              className={`flex flex-col items-center justify-center px-4 py-2 ${isRecommendationsPage && currentTab === 'recommended' ? 'text-green-400' : 'text-white'}`}
+              className={`flex flex-col items-center justify-center min-h-[44px] min-w-[48px] px-2 py-2 ${isRecommendationsPage && currentTab === 'recommended' ? 'text-green-400' : 'text-white'}`}
+              aria-label="추천 상품"
             >
-              <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 mb-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span className="text-xs">추천</span>
             </Link>
-            
             <Link
               href={getTabHref('excluded')}
-              className={`flex flex-col items-center justify-center px-4 py-2 ${isRecommendationsPage && currentTab === 'excluded' ? 'text-green-400' : 'text-white'}`}
+              className={`flex flex-col items-center justify-center min-h-[44px] min-w-[48px] px-2 py-2 ${isRecommendationsPage && currentTab === 'excluded' ? 'text-green-400' : 'text-white'}`}
+              aria-label="부진 상품"
             >
-              <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 mb-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <span className="text-xs">부진</span>
             </Link>
-            
             <Link
               href={getNavHref('/similar-stores')}
-              className={`flex flex-col items-center justify-center px-4 py-2 ${pathname === '/similar-stores' ? 'text-green-400' : 'text-white'}`}
+              className={`flex flex-col items-center justify-center min-h-[44px] min-w-[48px] px-2 py-2 ${pathname === '/similar-stores' ? 'text-green-400' : 'text-white'}`}
+              aria-label="유사 매장"
             >
-              <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 mb-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               <span className="text-xs">매장</span>
             </Link>
-            
-            <div className="flex flex-col items-center justify-center px-4 py-2 text-white">
-              <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <Link
+              href={getNavHref('/overview')}
+              className="flex flex-col items-center justify-center min-h-[44px] min-w-[48px] px-2 py-2 text-white"
+              aria-label="서비스 개요"
+            >
+              <svg className="w-6 h-6 mb-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
               <span className="text-xs">더보기</span>
-            </div>
+            </Link>
           </div>
         </nav>
       )}

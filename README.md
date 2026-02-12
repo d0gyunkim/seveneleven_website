@@ -50,9 +50,9 @@
 
 ### 배포
 
-- **Netlify** - 정적 사이트 호스팅 및 배포
-  - Next.js 플러그인 사용
-  - Node.js 18 환경
+- **Vercel** - GitHub 연동 배포
+  - Next.js 네이티브 지원 (별도 플러그인 불필요)
+  - 프리뷰/프로덕션 자동 배포
 
 ### 외부 API
 
@@ -97,7 +97,6 @@ seven_eleven_agent/
 ├── next.config.js                # Next.js 설정 (이미지 도메인 등)
 ├── tailwind.config.ts            # Tailwind CSS 설정
 ├── postcss.config.js             # PostCSS 설정
-├── netlify.toml                  # Netlify 배포 설정
 └── README.md                     # 프로젝트 문서
 ```
 
@@ -969,15 +968,15 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
 - Tailwind CSS 플러그인
 - Autoprefixer 플러그인
 
-#### `netlify.toml`
+#### Vercel 배포 (GitHub 연동)
 
-**역할**: Netlify 배포 설정 파일입니다.
+**역할**: GitHub 저장소와 Vercel을 연동하면 별도 설정 파일 없이 배포됩니다.
 
-**주요 설정**:
-- 빌드 명령어: `npm run build`
-- 출력 디렉토리: `.next`
-- Node.js 버전: 18
-- Next.js 플러그인 사용
+**동작**:
+- `main` 브랜치 푸시 시 프로덕션 자동 배포
+- PR 생성 시 프리뷰 URL 자동 생성
+- Next.js App Router 및 API 라우트 자동 인식
+- 환경 변수는 Vercel 대시보드에서 설정
 
 ---
 
@@ -1026,12 +1025,12 @@ Supabase를 사용하며, 주요 테이블 구조는 다음과 같습니다:
 
 ## 🚢 배포
 
-### Netlify 배포
+### Vercel 배포 (GitHub 연동)
 
-1. Netlify에 프로젝트 연결
-2. 빌드 설정은 `netlify.toml`에 정의됨
-3. 환경 변수 설정 필요
-4. 자동 배포 설정 가능
+1. [Vercel](https://vercel.com)에서 GitHub 저장소 연동
+2. 프로젝트 임포트 시 Next.js 자동 감지 (빌드 설정 별도 없음)
+3. 환경 변수는 Vercel 프로젝트 설정에서 추가
+4. `main` 푸시 시 자동 배포, PR 시 프리뷰 배포
 
 ### 빌드 명령어
 

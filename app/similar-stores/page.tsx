@@ -714,8 +714,8 @@ export default function SimilarStoresPage() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-white">
-        <div className="max-w-[98%] mx-auto px-4 md:px-6 py-4 md:py-6">
+      <div className="min-h-screen bg-white overflow-x-hidden">
+        <div className="w-full max-w-[98%] mx-auto px-4 md:px-6 py-4 md:py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:pb-6">
           {/* 헤더 */}
           <div className="mb-8">
             <div className="flex items-start justify-between mb-6">

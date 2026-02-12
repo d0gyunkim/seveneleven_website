@@ -430,7 +430,7 @@ export default function OverviewPage() {
           /* 앱 환경: 애플 스타일 모바일 레이아웃 */
           <div className="min-h-screen bg-white">
             {/* 메인 콘텐츠 */}
-            <main className="px-4 py-8 pb-24">
+            <main className="px-4 py-8 pb-[calc(5.5rem+env(safe-area-inset-bottom))] max-w-full overflow-x-hidden">
               {/* 첫 화면 - SEVEN PICK 헤더 */}
               <div className={`mb-8 transition-all duration-1000 ease-out ${
                 heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'

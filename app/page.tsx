@@ -81,7 +81,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 md:p-8" style={{ fontFamily: 'Pretendard, sans-serif' }}>
+    <div
+      className="min-h-screen bg-white flex flex-col items-center justify-center p-4 md:p-8 app-shell overflow-x-hidden safe-area-padding"
+      style={{ fontFamily: 'Pretendard, sans-serif' }}
+    >
       <div className="w-full max-w-md">
         {/* 상단 로고 영역 */}
         <div className="text-center mb-8 md:mb-12">

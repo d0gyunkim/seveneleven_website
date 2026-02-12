@@ -7,12 +7,22 @@
 :root {
   --background: #111827;
   --foreground: #f9fafb;
+  /* 앱/모바일 노치·홈 인디케이터 대응 */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
 }
 
 * {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+}
+
+html {
+  /* iOS 줌 방지 + 앱처럼 보이게 */
+  -webkit-text-size-adjust: 100%;
 }
 
 html,
@@ -25,6 +35,29 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
+}
+
+/* 앱/웹 공통: 레이아웃이 흰 배경일 때 배경색 덮어쓰기 */
+.app-shell {
+  background: #ffffff;
+}
+
+/* 앱 하단 네비 영역 (노치·홈 인디케이터 대응) */
+.safe-area-bottom {
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* 전체 safe-area 패딩 (로그인 등 풀스크린 화면, 모바일만) */
+@media (max-width: 767px) {
+  .safe-area-padding {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
 }
 
 /* 스크롤바 숨김 */

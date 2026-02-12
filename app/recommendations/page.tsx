@@ -836,11 +836,11 @@ export default function RecommendationsPage() {
 
   return (
     <Layout>
-      <div className="bg-white flex justify-center">
-        <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-[1500px] ml-8 md:ml-12 lg:ml-16'}`}>
+      <div className="bg-white flex justify-center min-h-screen overflow-x-hidden">
+        <div className={`w-full ${isMobile ? 'max-w-full px-4 pb-[env(safe-area-inset-bottom)]' : 'max-w-[1500px] ml-8 md:ml-12 lg:ml-16'}`}>
           {/* 모바일 앱 스타일: 대분류 탭 */}
           {isMobile && largeCategories.length > 0 && (
-            <div className="sticky top-0 z-20 bg-white pt-4 pb-3 px-4 border-b border-gray-100 shadow-sm">
+            <div className="sticky top-0 z-20 bg-white pt-4 pb-3 px-4 border-b border-gray-100 shadow-sm" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
               <h2 className="text-center text-xl font-bold text-gray-900 mb-3">대분류 카테고리</h2>
               <div 
                 className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide" 
@@ -900,8 +900,8 @@ export default function RecommendationsPage() {
           </div>
           )}
 
-          {/* 메인 콘텐츠 영역 - 필터 + 상품 그리드 */}
-          <div className={`flex gap-6 pb-6 ${isMobile ? 'px-0' : 'px-4 md:px-6 lg:px-8'}`}>
+          {/* 메인 콘텐츠 영역 - 필터 + 상품 그리드 (모바일 하단 여백은 Layout main에서 처리) */}
+          <div className={`flex gap-6 pb-6 ${isMobile ? 'px-0 pb-24' : 'px-4 md:px-6 lg:px-8'}`}>
             {/* 왼쪽 사이드바 - 중분류 필터 (웹만) */}
             {!isMobile && selectedLargeCategory && middleCategories.length > 0 && (
               <aside className="hidden md:block w-56 flex-shrink-0">
