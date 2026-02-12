@@ -837,13 +837,13 @@ export default function RecommendationsPage() {
   return (
     <Layout>
       <div className="bg-white flex justify-center min-h-screen overflow-x-hidden">
-        <div className={`w-full ${isMobile ? 'max-w-full px-4 pb-[env(safe-area-inset-bottom)]' : 'max-w-[1500px] ml-8 md:ml-12 lg:ml-16'}`}>
+            <div className={`w-full ${isMobile ? 'max-w-full pb-[env(safe-area-inset-bottom)]' : 'max-w-[1500px] ml-8 md:ml-12 lg:ml-16'}`}>
           {/* 모바일 앱 스타일: 대분류 탭 */}
           {isMobile && largeCategories.length > 0 && (
             <div className="sticky top-0 z-20 bg-white pt-4 pb-3 px-4 border-b border-gray-100 shadow-sm" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
-              <h2 className="text-base font-bold text-gray-900 mb-3 px-1">대분류 카테고리</h2>
+              <h2 className="text-base font-bold text-gray-900 mb-3">대분류 카테고리</h2>
               <div 
-                className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1" 
+                className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-hide px-1" 
                 style={{ 
                   scrollbarWidth: 'none', 
                   msOverflowStyle: 'none',
@@ -1099,7 +1099,7 @@ export default function RecommendationsPage() {
               {isMobile && selectedLargeCategory && middleCategories.length > 0 && (
                 <div className="sticky top-[73px] z-10 bg-white px-4 py-3 border-b border-gray-100 mb-3 shadow-sm">
                   <div 
-                    className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1" 
+                    className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide px-1" 
                     style={{ 
                       scrollbarWidth: 'none', 
                       msOverflowStyle: 'none',
@@ -1300,7 +1300,7 @@ export default function RecommendationsPage() {
                   
                   {/* 모바일 앱 스타일: 2열 그리드 상품 리스트 (세로 스크롤, 가독성·터치 개선) */}
                   {isMobile ? (
-                    <div className="grid grid-cols-2 gap-3 pb-4">
+                    <div className="grid grid-cols-2 gap-3 pb-4 px-4">
                     {products.map((product, index) => {
                       const itemId = `${product.store_code}-${product.item_cd}`
                       const isVisible = visibleItems.has(itemId)
@@ -1319,7 +1319,7 @@ export default function RecommendationsPage() {
                           ref={(el) => setItemRef(itemId, el)}
                           data-item-id={itemId}
                           onClick={() => setSelectedProduct(product)}
-                          className="group cursor-pointer flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm active:scale-[0.98] transition-transform duration-150"
+                          className="cursor-pointer flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm active:scale-[0.98] transition-transform duration-150"
                         >
                           {isVisible ? (
                             <>

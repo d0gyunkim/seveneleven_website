@@ -715,15 +715,15 @@ export default function SimilarStoresPage() {
   return (
     <Layout>
       <div className="min-h-screen bg-white overflow-x-hidden">
-        <div className="w-full max-w-[98%] mx-auto px-4 md:px-6 py-4 md:py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:pb-6">
+        <div className="w-full max-w-[98%] mx-auto px-3 md:px-6 py-4 md:py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:pb-6">
           {/* 헤더 */}
-          <div className="mb-8">
-            <div className="flex items-start justify-between mb-6">
+          <div className="mb-6 md:mb-8">
+            <div className="flex items-start justify-between mb-4 md:mb-6">
               <div className="flex-1">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight mb-2">
+                <h2 className="text-xl md:text-3xl font-bold text-gray-900 tracking-tight mb-2">
                   우리 매장과 유사한 매장 찾기
                 </h2>
-                <p className="text-base md:text-lg text-gray-600 leading-relaxed">
+                <p className="text-sm md:text-lg text-gray-600 leading-relaxed">
                   한 달 동안 우리 매장과 가장 유사했던 매장들을 알려드립니다.
                 </p>
               </div>
@@ -731,16 +731,16 @@ export default function SimilarStoresPage() {
             
             {/* 월별 탭 */}
             {currentStoreAvailableMonths.length > 0 && (
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-sm font-semibold text-gray-700">분석 기간</span>
+              <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+                <span className="text-xs md:text-sm font-semibold text-gray-700">분석 기간</span>
                 {currentStoreAvailableMonths.map((month) => (
                   <button
                     key={month}
                     onClick={() => handleCurrentMonthChange(month)}
-                    className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap rounded ${
+                    className={`min-h-[40px] px-3 md:px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap rounded-lg ${
                       currentSelectedMonth === month
                         ? 'bg-green-600 text-white'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                        : 'bg-white text-gray-700 border border-gray-300 active:bg-gray-50'
                     }`}
                   >
                     {month}
@@ -768,9 +768,9 @@ export default function SimilarStoresPage() {
                 {/* 유사매장 목록 */}
                 <div className="bg-white border border-gray-300 overflow-hidden">
                   {/* 목록 헤더 */}
-                  <div className="bg-white border-b border-gray-300 px-4 py-3 md:px-5 md:py-4">
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">유사 매장 순위</h3>
-                    <p className="text-sm text-gray-500">유사 매장들의 선정근거와 각 매장별 인기 상품을 보여드립니다</p>
+                  <div className="bg-white border-b border-gray-300 px-3 md:px-5 py-3 md:py-4">
+                    <h3 className="text-base md:text-lg font-bold text-gray-900 mb-1">유사 매장 순위</h3>
+                    <p className="text-xs md:text-sm text-gray-500">유사 매장들의 선정근거와 각 매장별 인기 상품을 보여드립니다</p>
                   </div>
                   
                   {/* 스크롤 가능한 목록 */}
@@ -781,8 +781,8 @@ export default function SimilarStoresPage() {
                         return (
                         <div
                           key={store.store_code}
-                          className={`px-4 py-6 md:px-6 md:py-5 transition-colors border-b border-gray-100 cursor-pointer active:bg-gray-100 ${
-                            isSelected ? 'bg-green-50 border-l-4 border-l-green-600' : 'hover:bg-gray-50'
+                          className={`px-3 md:px-6 py-5 md:py-5 transition-colors border-b border-gray-100 cursor-pointer active:bg-gray-100 ${
+                            isSelected ? 'bg-green-50 border-l-4 border-l-green-600' : ''
                           }`}
                           onClick={() => handleStoreDetailClick(store.store_code)}
                         >

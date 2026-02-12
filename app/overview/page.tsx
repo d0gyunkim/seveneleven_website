@@ -430,44 +430,42 @@ export default function OverviewPage() {
           /* 앱 환경: 애플 스타일 모바일 레이아웃 */
           <div className="min-h-screen bg-white">
             {/* 메인 콘텐츠 */}
-            <main className="px-4 py-8 pb-[calc(5.5rem+env(safe-area-inset-bottom))] max-w-full overflow-x-hidden">
+            <main className="px-4 py-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] max-w-full overflow-x-hidden space-y-8">
               {/* 첫 화면 - SEVEN PICK 헤더 */}
-              <div className={`mb-8 transition-all duration-1000 ease-out ${
+              <div className={`transition-all duration-1000 ease-out ${
                 heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`}>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-0.5 h-8 bg-green-200"></div>
-                  <h1 className="text-2xl font-extrabold text-green-600">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-0.5 h-7 bg-green-400 rounded-full"></div>
+                  <h1 className="text-xl font-extrabold text-green-600">
                     SEVEN PICK
                   </h1>
                 </div>
-                <h2 className="text-2xl font-extrabold text-gray-900 mb-4 leading-tight">
-                  발주를 바꾸는 새로운 AI 추천
+                <h2 className="text-xl font-extrabold text-gray-900 mb-2 leading-tight">
+                  발주를 바꾸는<br className="sm:hidden"/> 새로운 AI 추천
                 </h2>
+                <p className="text-sm text-gray-600">스마트한 발주 의사결정을 도와드립니다</p>
               </div>
 
-              {/* 구분선 */}
-              <div className="h-px bg-gray-200 mb-8"></div>
-
               {/* 섹션 0: SEVEN PICK 서비스 핵심 */}
-              <section className="mb-12">
+              <section>
                 <div
                   ref={(el) => { sectionRefs.current[0] = el }}
                   className="will-change-transform"
                   style={{ opacity: 0, transform: 'translateY(50px)' }}
                 >
                   {/* STEP 0 헤더 */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-0.5 h-6 bg-green-200"></div>
-                    <span className="text-green-600 font-semibold text-sm">STEP 0 </span>
-                    <span className="text-gray-900 font-semibold text-sm">서비스 핵심 요약</span>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-0.5 h-5 bg-green-400 rounded-full"></div>
+                    <span className="text-green-600 font-bold text-sm">STEP 0</span>
+                    <span className="text-gray-600 font-medium text-sm">서비스 핵심 요약</span>
                   </div>
 
                   {/* 메인 제목 */}
-                  <h2 className="text-2xl font-extrabold text-gray-900 leading-tight mb-3">
+                  <h2 className="text-xl font-bold text-gray-900 leading-tight mb-2">
                     SEVEN PICK <span className="text-green-600">서비스 핵심</span>
                   </h2>
-                  <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                  <p className="text-sm text-gray-600 mb-5 leading-relaxed">
                     발주에 대한 고민을 해결하기 위해 SEVEN PICK이 나섭니다.
                   </p>
 
